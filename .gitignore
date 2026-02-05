@@ -42,6 +42,7 @@ dist/
 1.DATOS_EN_CRUDO/**/*.xml
 1.DATOS_EN_CRUDO/**/*.xlsx
 1.DATOS_EN_CRUDO/**/*.parquet
+1.DATOS_EN_CRUDO/**/*.txt
 
 # Datos limpios / procesados
 3.DATOS_LIMPIOS/**/*.csv
@@ -62,8 +63,13 @@ dist/
 # 🗂️ LOGS, STREAMING Y EXPORTACIONES
 # ──────────────────────────────────────────────────────────────────────────────
 # Logs
-logs/
-*.log
+# Logs
+logs/*.log
+logs/**/*.log
+
+# Permitir informes markdown
+!logs/**/*.md
+
 
 # Exportaciones generadas por la app (CSV, Excel)
 exports/
@@ -120,6 +126,12 @@ Desktop.ini
 htmlcov/
 .tox/
 .nox/
+
+# Temporales pandas / sistema
+*.tmp
+*.bak
+*.swp
+
 
 # ==============================================================================
 # NOTAS:
