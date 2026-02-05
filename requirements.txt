@@ -1,0 +1,36 @@
+# ==============================================================================
+# DATA DETECTIVE - VALENCIA
+# Requisitos completos del proyecto (todas las fases)
+# ==============================================================================
+
+# ─── CORE (procesamiento de datos) ───
+pandas>=2.0.0
+numpy>=1.24.0
+
+# ─── DASHBOARD (FASE 7) ───
+streamlit>=1.29.0
+streamlit-folium>=0.15.0
+
+# ─── VISUALIZACIÓN Y ANÁLISIS ───
+plotly>=5.18.0
+folium>=0.15.0
+matplotlib>=3.7.0
+
+# ─── RECOPILACIÓN DE DATOS (FASES 2–4) ───
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+icalevents>=0.1.27
+
+# ─── PROCESAMIENTO / ETL (FASE 5) ───
+openpyxl>=3.1.0
+python-dotenv>=1.0.0
+
+# ─── AUTOMATIZACIÓN / STREAMING (FASE 3) ───
+schedule>=1.2.0
+
+# ─── BIG DATA / OPTIMIZACIÓN (OPCIONAL) ───
+pyarrow>=14.0.0      # Parquet (mejor rendimiento)
+
+# ─── TESTING Y CALIDAD (FASE 8) ───
+pytest>=7.4.0
