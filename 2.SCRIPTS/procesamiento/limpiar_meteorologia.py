@@ -50,8 +50,6 @@ Autor: Joan
 Fecha: 2026
 Proyecto: Data Detective Valencia
 
-Commit sugerido:
-    feat: add Phase 5.2 meteorological data normalization pipeline
 """
 
 import json
@@ -176,7 +174,8 @@ def cargar_aemet(logger: logging.Logger) -> pd.DataFrame:
     archivos = sorted(AEMET_DIR.glob(patron))
 
     if not archivos:
-        logger.warning(f"AEMET: sin archivos en {AEMET_DIR} con patrón '{patron}'")
+        logger.warning(
+            f"AEMET: sin archivos en {AEMET_DIR} con patrón '{patron}'")
         return pd.DataFrame()
 
     logger.info(f"AEMET: encontrados {len(archivos)} archivos")
@@ -194,11 +193,13 @@ def cargar_aemet(logger: logging.Logger) -> pd.DataFrame:
         return pd.DataFrame()
 
     df_largo = pd.concat(frames, ignore_index=True)
-    logger.info(f"AEMET: {len(df_largo):,} registros totales cargados (formato largo)")
+    logger.info(
+        f"AEMET: {len(df_largo):,} registros totales cargados (formato largo)")
 
     # --- Mapear nombres de variables a canónicos ---
     df_largo["variable"] = df_largo["variable"].map(
-        lambda v: AEMET_VARIABLE_MAP.get(v, AEMET_VARIABLE_MAP.get(v.strip(), None))
+        lambda v: AEMET_VARIABLE_MAP.get(
+            v, AEMET_VARIABLE_MAP.get(v.strip(), None))
     )
 
     # Filtrar solo variables que mapearon correctamente
@@ -304,7 +305,8 @@ def cargar_avamet(logger: logging.Logger) -> pd.DataFrame:
                 fecha_captura = _extraer_fecha_de_nombre(archivo.name)
 
             if fecha_captura is None:
-                logger.warning(f"  {archivo.name}: sin timestamp válido, saltando")
+                logger.warning(
+                    f"  {archivo.name}: sin timestamp válido, saltando")
                 archivos_error += 1
                 continue
 
@@ -369,17 +371,20 @@ def cargar_avamet(logger: logging.Logger) -> pd.DataFrame:
                 # Extraer fecha del nombre del archivo
                 fecha_ref = _extraer_fecha_de_nombre(archivo.name)
                 if fecha_ref is None:
-                    logger.warning(f"  {archivo.name}: sin columna de fecha, saltando")
+                    logger.warning(
+                        f"  {archivo.name}: sin columna de fecha, saltando")
                     archivos_error += 1
                     continue
                 df_csv["_fecha_ref"] = fecha_ref
                 fecha_col = "_fecha_ref"
 
-            df_csv["fecha"] = pd.to_datetime(df_csv[fecha_col], errors="coerce")
+            df_csv["fecha"] = pd.to_datetime(
+                df_csv[fecha_col], errors="coerce")
 
             # Buscar columnas relevantes (tolerancia a variantes de nombre)
             precip_col = _buscar_columna(
-                df_csv, ["precipitacion", "precip", "lluvia", "rain", "mm", "prec"]
+                df_csv, ["precipitacion", "precip",
+                         "lluvia", "rain", "mm", "prec"]
             )
             temp_col = _buscar_columna(
                 df_csv, ["temperatura", "temp", "temp_c", "tmed"]
@@ -694,7 +699,8 @@ def convertir_a_utc(
     else:
         # Asegurar que es datetime
         if not pd.api.types.is_datetime64_any_dtype(df["fecha"]):
-            logger.warning(f"{nombre_fuente}: 'fecha' no es datetime. Convirtiendo...")
+            logger.warning(
+                f"{nombre_fuente}: 'fecha' no es datetime. Convirtiendo...")
             df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
 
         # Localizar a Europe/Madrid → UTC
@@ -806,7 +812,8 @@ def extraer_hora(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
         return df
 
     df["hora"] = df["fecha"].dt.hour
-    logger.debug(f"Columna 'hora' extraída. Distribución: {df['hora'].describe()}")
+    logger.debug(
+        f"Columna 'hora' extraída. Distribución: {df['hora'].describe()}")
 
     return df
 
@@ -867,7 +874,8 @@ def imprimir_resumen(df: pd.DataFrame, logger: logging.Logger) -> None:
         return
 
     logger.info(f"  Total registros: {len(df):,}")
-    logger.info(f"  Rango temporal:  {df['fecha'].min()} → {df['fecha'].max()}")
+    logger.info(
+        f"  Rango temporal:  {df['fecha'].min()} → {df['fecha'].max()}")
     logger.info(f"  Fuentes:         {sorted(df['fuente'].unique())}")
 
     # Desglose por fuente
@@ -1005,7 +1013,8 @@ def main():
         frames_normalizados.append(df_owm)
 
     if not frames_normalizados:
-        logger.error("Ninguna fuente produjo datos tras normalización temporal.")
+        logger.error(
+            "Ninguna fuente produjo datos tras normalización temporal.")
         return
 
     # ------------------------------------------------------------------
@@ -1023,7 +1032,8 @@ def main():
     for col in VARIABLES_CANONICAS:
         if col not in df_all.columns:
             df_all[col] = float("nan")
-            logger.debug(f"Columna '{col}' añadida con NaN (no presente en datos)")
+            logger.debug(
+                f"Columna '{col}' añadida con NaN (no presente en datos)")
 
     # ------------------------------------------------------------------
     # PASO 4: Validar rangos físicos
@@ -1063,7 +1073,8 @@ def main():
     # Verificar que todas las columnas existen
     for col in columnas_finales:
         if col not in df_all.columns:
-            logger.error(f"Columna requerida '{col}' no encontrada. Abortando.")
+            logger.error(
+                f"Columna requerida '{col}' no encontrada. Abortando.")
             return
 
     df_final = df_all[columnas_finales].copy()

@@ -84,8 +84,6 @@ Autor: Joan
 Fecha: 2026
 Proyecto: Data Detective Valencia
 
-Commit sugerido:
-    feat: add Phase 5.3 traffic data processing pipeline
 """
 
 import json
@@ -298,7 +296,7 @@ def extraer_fecha(record: dict) -> Optional[str]:
         String ISO 8601 con timestamp, o None si no hay ninguno
     """
     for campo in ("fecha_creacion", "fecha_version", "fecha_inicio",
-                   "_timestamp_captura"):
+                  "_timestamp_captura"):
         valor = record.get(campo)
         if valor and isinstance(valor, str) and valor.strip():
             return valor.strip()
@@ -660,7 +658,8 @@ def imprimir_resumen(df: pd.DataFrame, logger: logging.Logger) -> None:
         return
 
     logger.info(f"  Total registros:     {len(df):,}")
-    logger.info(f"  Rango temporal:      {df['fecha'].min()} → {df['fecha'].max()}")
+    logger.info(
+        f"  Rango temporal:      {df['fecha'].min()} → {df['fecha'].max()}")
     logger.info(f"  Ubicaciones únicas:  {df['ubicacion'].nunique()}")
 
     # Desglose por calidad
@@ -764,7 +763,8 @@ def main():
     all_records = cargar_dgt(logger)
 
     if not all_records:
-        logger.error("No se encontraron incidencias en ningún archivo. Abortando.")
+        logger.error(
+            "No se encontraron incidencias en ningún archivo. Abortando.")
         print("\n❌ ERROR: Sin datos de entrada. Verifica las rutas.")
         return
 
@@ -849,7 +849,8 @@ def main():
         df = df[COLUMNAS_CANONICAS].copy()
 
         # Asegurar tipos
-        df["hora"] = pd.to_numeric(df["hora"], errors="coerce").fillna(0).astype(int)
+        df["hora"] = pd.to_numeric(
+            df["hora"], errors="coerce").fillna(0).astype(int)
         df["intensidad"] = df["intensidad"].astype(float)
         df["velocidad"] = df["velocidad"].astype(float)
         df["fuente"] = df["fuente"].astype(str)

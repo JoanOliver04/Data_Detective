@@ -43,9 +43,6 @@ Ruta esperada del script:
 Uso:
     python correlacion_eventos.py
 
-Commit sugerido:
-    feat: implement advanced event impact correlation with baseline control
-
 Autor: Joan
 Fecha: 2026
 Proyecto: Data Detective Valencia

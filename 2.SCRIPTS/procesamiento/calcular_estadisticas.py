@@ -36,9 +36,6 @@ Decisiones de diseño:
 Uso:
     python calcular_estadisticas.py
 
-Commit sugerido:
-    feat: add Phase 5.4 aggregated statistics with weighted annual means
-
 Autor: Joan
 Fecha: 2026
 Proyecto: Data Detective Valencia

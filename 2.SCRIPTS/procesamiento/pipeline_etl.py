@@ -43,9 +43,6 @@ Uso con Task Scheduler:
 Ruta esperada del script:
     2.SCRIPTS/procesamiento/pipeline_etl.py
 
-Commit sugerido:
-    feat: pipeline ETL completo
-
 Autor: Joan
 Fecha: 2026
 Proyecto: Data Detective Valencia
@@ -346,7 +343,8 @@ def validate_outputs(logger: logging.Logger) -> Dict[str, Any]:
         import pandas as pd
         pandas_available = True
     except ImportError:
-        logger.warning("  pandas no disponible → validación limitada (solo existencia)")
+        logger.warning(
+            "  pandas no disponible → validación limitada (solo existencia)")
         pandas_available = False
 
     total_checks = len(EXPECTED_OUTPUTS)
@@ -430,7 +428,8 @@ def validate_outputs(logger: logging.Logger) -> Dict[str, Any]:
                 if fmt == "parquet":
                     n_rows = len(pd.read_parquet(file_path))
                 else:
-                    n_rows = sum(1 for _ in open(file_path, encoding="utf-8")) - 1
+                    n_rows = sum(1 for _ in open(
+                        file_path, encoding="utf-8")) - 1
 
                 if n_rows >= min_rows:
                     check_result["rows_ok"] = True
@@ -586,7 +585,8 @@ def main():
 
     logger.info("=" * 70)
     logger.info("PIPELINE ETL MAESTRO - Procesamiento de Datos (Fase 5)")
-    logger.info(f"Inicio (UTC): {timestamp_inicio.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(
+        f"Inicio (UTC): {timestamp_inicio.strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info(f"Módulos a ejecutar: {len(ETL_MODULES)}")
     logger.info(f"Proyecto raíz: {PROJECT_ROOT}")
     logger.info("=" * 70)

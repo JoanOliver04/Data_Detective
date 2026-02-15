@@ -48,8 +48,6 @@ Autor: Joan
 Fecha: 2026
 Proyecto: Data Detective Valencia
 
-Commit sugerido:
-    feat: add Phase 5.1 air pollution data normalization pipeline
 """
 
 import json
@@ -71,7 +69,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 # --- Entradas ---
 GVA_DIR = PROJECT_ROOT / "1.DATOS_EN_CRUDO" / "estaticos" / "contaminacion"
-EEA_FILE = PROJECT_ROOT / "1.DATOS_EN_CRUDO" / "estaticos" / "eea" / "eea_valencia_filtrado.csv"
+EEA_FILE = PROJECT_ROOT / "1.DATOS_EN_CRUDO" / \
+    "estaticos" / "eea" / "eea_valencia_filtrado.csv"
 AQICN_DIR = PROJECT_ROOT / "1.DATOS_EN_CRUDO" / "dinamicos" / "contaminacion"
 
 # --- Salida ---
@@ -255,24 +254,28 @@ def cargar_eea(
             chunks = []
             total_rows = 0
             for i, chunk in enumerate(
-                pd.read_csv(EEA_FILE, parse_dates=["fecha"], chunksize=chunksize)
+                pd.read_csv(EEA_FILE, parse_dates=[
+                            "fecha"], chunksize=chunksize)
             ):
                 chunk["fuente"] = "eea"
                 chunks.append(chunk)
                 total_rows += len(chunk)
-                logger.debug(f"  Chunk {i+1}: {len(chunk):,} filas (acumulado: {total_rows:,})")
+                logger.debug(
+                    f"  Chunk {i+1}: {len(chunk):,} filas (acumulado: {total_rows:,})")
 
             if not chunks:
                 logger.warning("EEA: archivo vacío tras lectura chunked")
                 return pd.DataFrame()
 
             df = pd.concat(chunks, ignore_index=True)
-            logger.info(f"EEA: {len(df):,} registros cargados (chunked) desde {EEA_FILE.name}")
+            logger.info(
+                f"EEA: {len(df):,} registros cargados (chunked) desde {EEA_FILE.name}")
         else:
             # --- Lectura completa (por defecto, más rápido) ---
             df = pd.read_csv(EEA_FILE, parse_dates=["fecha"])
             df["fuente"] = "eea"
-            logger.info(f"EEA: {len(df):,} registros cargados desde {EEA_FILE.name}")
+            logger.info(
+                f"EEA: {len(df):,} registros cargados desde {EEA_FILE.name}")
 
         return df
 
@@ -350,7 +353,8 @@ def cargar_aqicn(logger: logging.Logger) -> pd.DataFrame:
                     if var_canon not in VARIABLES_CANONICAS:
                         continue
 
-                    valor = value_dict.get("v") if isinstance(value_dict, dict) else None
+                    valor = value_dict.get("v") if isinstance(
+                        value_dict, dict) else None
 
                     records.append({
                         "fecha_iso": iso_str,
@@ -411,7 +415,8 @@ def normalizar_variables(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFra
 
     descartadas = antes - len(df)
     if descartadas > 0:
-        logger.info(f"Variables: {descartadas} registros con variables no canónicas descartados")
+        logger.info(
+            f"Variables: {descartadas} registros con variables no canónicas descartados")
 
     return df
 
@@ -459,7 +464,8 @@ def convertir_a_utc(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
         # Esto protege contra columnas que no se parsearon bien
         is_datetime = pd.api.types.is_datetime64_any_dtype(df["fecha"])
         if not is_datetime:
-            logger.warning("Columna 'fecha' no es datetime. Intentando conversión...")
+            logger.warning(
+                "Columna 'fecha' no es datetime. Intentando conversión...")
             df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
 
         # Fechas naïve → localizar a Europe/Madrid y luego a UTC
@@ -471,13 +477,15 @@ def convertir_a_utc(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
                 .dt.tz_convert("UTC")
             )
         except Exception as e:
-            logger.warning(f"Error localizando timezone: {e}. Asignando UTC directo.")
+            logger.warning(
+                f"Error localizando timezone: {e}. Asignando UTC directo.")
             df["fecha_utc"] = df["fecha"].dt.tz_localize("UTC")
 
     # Contar NaT generados por ambigüedad horaria
     nat_count = df["fecha_utc"].isna().sum()
     if nat_count > 0:
-        logger.warning(f"Timezone: {nat_count} fechas ambiguas convertidas a NaT")
+        logger.warning(
+            f"Timezone: {nat_count} fechas ambiguas convertidas a NaT")
 
     return df
 
@@ -491,7 +499,8 @@ def enriquecer_estaciones(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFr
         return df
 
     df["estacion_nombre"] = df["estacion"].map(
-        lambda code: ESTACIONES_VALENCIA.get(str(code), f"Desconocida ({code})")
+        lambda code: ESTACIONES_VALENCIA.get(
+            str(code), f"Desconocida ({code})")
     )
 
     desconocidas = df[df["estacion_nombre"].str.startswith("Desconocida")]
@@ -634,17 +643,21 @@ def guardar_resultados(
 
     # --- Parquet (formato principal) ---
     try:
-        df.to_parquet(OUTPUT_FILE, engine="pyarrow", index=False, compression="snappy")
+        df.to_parquet(OUTPUT_FILE, engine="pyarrow",
+                      index=False, compression="snappy")
         size_mb = OUTPUT_FILE.stat().st_size / (1024 * 1024)
         parquet_path = OUTPUT_FILE
-        logger.info(f"✔ Parquet guardado: {OUTPUT_FILE.name} ({size_mb:.2f} MB)")
+        logger.info(
+            f"✔ Parquet guardado: {OUTPUT_FILE.name} ({size_mb:.2f} MB)")
     except ImportError:
         # Si pyarrow no está instalado, intentar con fastparquet
         try:
-            df.to_parquet(OUTPUT_FILE, engine="fastparquet", index=False, compression="snappy")
+            df.to_parquet(OUTPUT_FILE, engine="fastparquet",
+                          index=False, compression="snappy")
             size_mb = OUTPUT_FILE.stat().st_size / (1024 * 1024)
             parquet_path = OUTPUT_FILE
-            logger.info(f"✔ Parquet guardado (fastparquet): {OUTPUT_FILE.name} ({size_mb:.2f} MB)")
+            logger.info(
+                f"✔ Parquet guardado (fastparquet): {OUTPUT_FILE.name} ({size_mb:.2f} MB)")
         except ImportError:
             logger.error(
                 "No se pudo guardar Parquet: instala pyarrow o fastparquet.\n"
@@ -657,11 +670,13 @@ def guardar_resultados(
     try:
         df_csv = df.copy()
         # Convertir fecha UTC a string ISO para que el CSV sea legible
-        df_csv["fecha_utc"] = df_csv["fecha_utc"].dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        df_csv["fecha_utc"] = df_csv["fecha_utc"].dt.strftime(
+            "%Y-%m-%dT%H:%M:%SZ")
         df_csv.to_csv(OUTPUT_CSV, index=False, encoding="utf-8")
         size_kb = OUTPUT_CSV.stat().st_size / 1024
         csv_path = OUTPUT_CSV
-        logger.info(f"✔ CSV debug guardado: {OUTPUT_CSV.name} ({size_kb:.1f} KB)")
+        logger.info(
+            f"✔ CSV debug guardado: {OUTPUT_CSV.name} ({size_kb:.1f} KB)")
     except Exception as e:
         logger.warning(f"No se pudo guardar CSV de debug: {e}")
 
@@ -687,7 +702,8 @@ def imprimir_resumen(df: pd.DataFrame, logger: logging.Logger) -> None:
 
     # Métricas generales
     logger.info(f"  Total registros: {len(df):,}")
-    logger.info(f"  Rango temporal:  {df['fecha_utc'].min()} → {df['fecha_utc'].max()}")
+    logger.info(
+        f"  Rango temporal:  {df['fecha_utc'].min()} → {df['fecha_utc'].max()}")
     logger.info(f"  Estaciones:      {df['estacion_id'].nunique()}")
     logger.info(f"  Variables:       {sorted(df['variable'].unique())}")
 
@@ -798,7 +814,8 @@ def main():
         # las 12:00 local → centro del período de muestreo.
         # Esto reduce el error temporal máximo de ±12h a ±12h centrado.
         df_gva["fecha"] = df_gva["fecha"] + pd.Timedelta(hours=12)
-        logger.debug("GVA: aplicado anclaje +12h (medias diarias → mediodía local)")
+        logger.debug(
+            "GVA: aplicado anclaje +12h (medias diarias → mediodía local)")
         df_gva = convertir_a_utc(df_gva, logger)
         frames_normalizados.append(df_gva)
 
@@ -809,7 +826,8 @@ def main():
         # Mismo anclaje a mediodía que GVA: los datos EEA "Verified E1a"
         # son medias diarias (AggType=day). Ver comentario en bloque GVA.
         df_eea["fecha"] = df_eea["fecha"] + pd.Timedelta(hours=12)
-        logger.debug("EEA: aplicado anclaje +12h (medias diarias → mediodía local)")
+        logger.debug(
+            "EEA: aplicado anclaje +12h (medias diarias → mediodía local)")
         df_eea = convertir_a_utc(df_eea, logger)
         frames_normalizados.append(df_eea)
 
