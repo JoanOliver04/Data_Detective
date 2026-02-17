@@ -2,7 +2,7 @@
 """
 ==============================================================================
 DATA DETECTIVE - VALENCIA
-Fase 7.2: Dashboard Streamlit - Orquestador Principal
+Fase 7.3: Dashboard Streamlit - Orquestador Principal
 ==============================================================================
 Ejecucion: streamlit run 5.DASHBOARD/app.py
 Ruta: 5.DASHBOARD/app.py | Autor: Joan | Fecha: 2026
@@ -11,6 +11,7 @@ Ruta: 5.DASHBOARD/app.py | Autor: Joan | Fecha: 2026
 from components.maps import render_mapa_contaminacion
 from components.trends import render_grafico_contaminacion, render_tendencia_anual
 from components.kpis import render_kpis_contaminacion
+from components.meteorologia import render_tab_meteorologia
 from components.sidebar import render_sidebar
 from data_loader import (
     cargar_contaminacion, cargar_meteorologia, cargar_trafico,
@@ -195,20 +196,8 @@ def _tab_contaminacion(datos):
 # ==============================================================================
 
 def _tab_precipitaciones(datos):
-    st.markdown(f'<div class="section-header"><h3>{TAB_NAMES["precipitaciones"]}</h3>'
-                f'<p>{DESCRIPCION_TABS["precipitaciones"]}</p></div>', unsafe_allow_html=True)
-    df = datos.get("meteorologia")
-    if df is None:
-        st.error("Sin datos meteorologicos. Ejecuta pipeline_etl.py.")
-        return
-    df_ok = df[df["calidad_dato"] == "ok"]
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Registros", f"{len(df_ok):,}")
-    c2.metric("Precip. media",
-              f"{df_ok['precipitacion_mm'].mean():.2f} mm" if not df_ok.empty else "-")
-    c3.metric("Temp. media",
-              f"{df_ok['temp_c'].mean():.1f} C" if not df_ok.empty else "-")
-    st.info("Componente completo en Fase 7.3: pronostico 72h y tendencias.")
+    """Tab de precipitaciones/meteorologia (Fase 7.3 - COMPLETA)."""
+    render_tab_meteorologia(datos)
 
 
 def _tab_trafico(datos):
