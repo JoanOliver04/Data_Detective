@@ -2,7 +2,7 @@
 """
 ==============================================================================
 DATA DETECTIVE - VALENCIA
-Fase 7.3: Dashboard Streamlit - Orquestador Principal
+Fase 7.4: Dashboard Streamlit - Orquestador Principal
 ==============================================================================
 Ejecucion: streamlit run 5.DASHBOARD/app.py
 Ruta: 5.DASHBOARD/app.py | Autor: Joan | Fecha: 2026
@@ -12,6 +12,7 @@ from components.maps import render_mapa_contaminacion
 from components.trends import render_grafico_contaminacion, render_tendencia_anual
 from components.kpis import render_kpis_contaminacion
 from components.meteorologia import render_tab_meteorologia
+from components.trafico import render_tab_trafico
 from components.sidebar import render_sidebar
 from data_loader import (
     cargar_contaminacion, cargar_meteorologia, cargar_trafico,
@@ -201,16 +202,8 @@ def _tab_precipitaciones(datos):
 
 
 def _tab_trafico(datos):
-    st.markdown(f'<div class="section-header"><h3>{TAB_NAMES["trafico"]}</h3>'
-                f'<p>{DESCRIPCION_TABS["trafico"]}</p></div>', unsafe_allow_html=True)
-    df = datos.get("trafico")
-    if df is None:
-        st.error("Sin datos de trafico. Ejecuta pipeline_etl.py.")
-        return
-    c1, c2 = st.columns(2)
-    c1.metric("Incidencias totales", f"{len(df):,}")
-    c2.metric("Ubicaciones", str(df["ubicacion"].nunique()))
-    st.info("Componente completo en Fase 7.4: mapa trafico y distribuciones.")
+    """Tab de trafico (Fase 7.4 - COMPLETA)."""
+    render_tab_trafico(datos)
 
 
 def _tab_eventos(datos):
