@@ -2,7 +2,7 @@
 """
 ==============================================================================
 DATA DETECTIVE - VALENCIA
-Fase 7.4: Dashboard Streamlit - Orquestador Principal
+Fase 7.5: Dashboard Streamlit - Orquestador Principal
 ==============================================================================
 Ejecucion: streamlit run 5.DASHBOARD/app.py
 Ruta: 5.DASHBOARD/app.py | Autor: Joan | Fecha: 2026
@@ -13,6 +13,7 @@ from components.trends import render_grafico_contaminacion, render_tendencia_anu
 from components.kpis import render_kpis_contaminacion
 from components.meteorologia import render_tab_meteorologia
 from components.trafico import render_tab_trafico
+from components.eventos import render_tab_eventos
 from components.sidebar import render_sidebar
 from data_loader import (
     cargar_contaminacion, cargar_meteorologia, cargar_trafico,
@@ -207,18 +208,8 @@ def _tab_trafico(datos):
 
 
 def _tab_eventos(datos):
-    st.markdown(f'<div class="section-header"><h3>{TAB_NAMES["eventos"]}</h3>'
-                f'<p>{DESCRIPCION_TABS["eventos"]}</p></div>', unsafe_allow_html=True)
-    df = datos.get("eventos")
-    if df is None:
-        st.error("Sin datos de impacto de eventos. Ejecuta correlacion_eventos.py.")
-        return
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Eventos analizados", str(df["evento_id"].nunique()))
-    c2.metric("Tipos de evento", str(df["tipo_evento"].nunique()))
-    imp = df["impacto_pct"].dropna().mean()
-    c3.metric("Impacto medio", f"{imp:+.1f}%" if not pd.isna(imp) else "-")
-    st.info("Componente completo en Fase 7.5: graficos de impacto y timeline.")
+    """Tab de eventos masivos (Fase 7.5 - COMPLETA)."""
+    render_tab_eventos(datos)
 
 
 def _tab_pronostico(datos):
