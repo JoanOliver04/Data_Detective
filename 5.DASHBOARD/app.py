@@ -4,6 +4,12 @@
 DATA DETECTIVE - VALENCIA
 Fase 7.6: Dashboard Streamlit - Orquestador Principal
 ==============================================================================
+
+Changelog:
+  - v2: Integra panel de exportacion (CSV/JSON/XML) en cada tab.
+        Cada tab incluye render_panel_exportacion() al final con los
+        datos filtrados, respetando los filtros globales del sidebar.
+
 Ejecucion: streamlit run 5.DASHBOARD/app.py
 Ruta: 5.DASHBOARD/app.py | Autor: Joan | Fecha: 2026
 """
@@ -16,6 +22,7 @@ from components.trafico import render_tab_trafico
 from components.eventos import render_tab_eventos
 from components.pronostico import render_tab_pronostico
 from components.sidebar import render_sidebar
+from components.exportar import render_panel_exportacion
 from data_loader import (
     cargar_contaminacion, cargar_meteorologia, cargar_trafico,
     cargar_impacto_eventos, cargar_contam_anual_barrio,
@@ -140,6 +147,7 @@ def _tab_contaminacion(datos):
       3. Grafico temporal interactivo (trends.py)
       4. Mapa Folium embebido (maps.py)
       5. Tendencia anual con cambio porcentual (trends.py)
+      6. Panel de exportacion (CSV/JSON/XML)
     """
     var = datos.get("_variable", "NO2")
     df = datos.get("contaminacion")
@@ -193,29 +201,69 @@ def _tab_contaminacion(datos):
             f"**Distritos:** {', '.join(barrios) if barrios else 'Todos'}",
         )
 
+    # --- EXPORTACION ---
+    st.divider()
+    render_panel_exportacion(
+        df=df,
+        nombre_dataset="contaminacion",
+        metadata_extra={
+            "variable_filtrada": var,
+            "periodo": f"{filtros.get('anio_min', '?')}-{filtros.get('anio_max', '?')}",
+            "barrios_filtrados": barrios if barrios else "Todos",
+        },
+    )
+
 
 # ==============================================================================
-# TABS COMPLETADAS (Fases 7.2-7.6)
+# TABS COMPLETADAS (Fases 7.2-7.6) + EXPORTACION
 # ==============================================================================
 
 def _tab_precipitaciones(datos):
     """Tab de precipitaciones/meteorologia (Fase 7.3 - COMPLETA)."""
     render_tab_meteorologia(datos)
 
+    # --- EXPORTACION ---
+    st.divider()
+    render_panel_exportacion(
+        df=datos.get("meteorologia"),
+        nombre_dataset="meteorologia",
+    )
+
 
 def _tab_trafico(datos):
     """Tab de trafico (Fase 7.4 - COMPLETA)."""
     render_tab_trafico(datos)
+
+    # --- EXPORTACION ---
+    st.divider()
+    render_panel_exportacion(
+        df=datos.get("trafico"),
+        nombre_dataset="trafico",
+    )
 
 
 def _tab_eventos(datos):
     """Tab de eventos masivos (Fase 7.5 - COMPLETA)."""
     render_tab_eventos(datos)
 
+    # --- EXPORTACION ---
+    st.divider()
+    render_panel_exportacion(
+        df=datos.get("eventos"),
+        nombre_dataset="eventos",
+    )
+
 
 def _tab_pronostico(datos):
     """Tab de pronostico 72h (Fase 7.6 - COMPLETA)."""
     render_tab_pronostico(datos)
+
+    # --- EXPORTACION ---
+    st.divider()
+    render_panel_exportacion(
+        df=datos.get("pronostico"),
+        nombre_dataset="pronostico",
+    )
 
 
 # ==============================================================================
