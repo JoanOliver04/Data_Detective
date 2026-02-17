@@ -2,12 +2,25 @@
 """
 ==============================================================================
 DATA DETECTIVE - VALENCIA
-Fase 7.1: Dashboard Streamlit - Orquestador Principal
+Fase 7.2: Dashboard Streamlit - Orquestador Principal
 ==============================================================================
 Ejecucion: streamlit run 5.DASHBOARD/app.py
 Ruta: 5.DASHBOARD/app.py | Autor: Joan | Fecha: 2026
 """
 
+from components.maps import render_mapa_contaminacion
+from components.trends import render_grafico_contaminacion, render_tendencia_anual
+from components.kpis import render_kpis_contaminacion
+from components.sidebar import render_sidebar
+from data_loader import (
+    cargar_contaminacion, cargar_meteorologia, cargar_trafico,
+    cargar_impacto_eventos, cargar_contam_anual_barrio,
+    cargar_precip_mensual, cargar_tendencias, cargar_pronostico_72h,
+    diagnostico_datos,
+)
+from config import PAGE_CONFIG, TAB_NAMES, DESCRIPCION_TABS
+import streamlit as st
+import pandas as pd
 import sys
 from pathlib import Path
 
@@ -17,19 +30,8 @@ _DASHBOARD_DIR = str(Path(__file__).resolve().parent)
 if _DASHBOARD_DIR not in sys.path:
     sys.path.insert(0, _DASHBOARD_DIR)
 
-import pandas as pd
-import streamlit as st
 
-from config import PAGE_CONFIG, TAB_NAMES, DESCRIPCION_TABS
 st.set_page_config(**PAGE_CONFIG)
-
-from data_loader import (
-    cargar_contaminacion, cargar_meteorologia, cargar_trafico,
-    cargar_impacto_eventos, cargar_contam_anual_barrio,
-    cargar_precip_mensual, cargar_tendencias, cargar_pronostico_72h,
-    diagnostico_datos,
-)
-from components.sidebar import render_sidebar
 
 
 # ==============================================================================
@@ -123,25 +125,74 @@ def _render_diagnostico():
 
 
 # ==============================================================================
-# TABS PLACEHOLDER (Fase 7.2-7.5 los completaran)
+# TAB CONTAMINACION (Fase 7.2 - COMPLETA)
 # ==============================================================================
 
 def _tab_contaminacion(datos):
+    """
+    Tab de contaminacion completa con componentes modulares:
+      1. Header con descripcion
+      2. KPIs dinamicos (kpis.py)
+      3. Grafico temporal interactivo (trends.py)
+      4. Mapa Folium embebido (maps.py)
+      5. Tendencia anual con cambio porcentual (trends.py)
+    """
     var = datos.get("_variable", "NO2")
     df = datos.get("contaminacion")
-    st.markdown(f'<div class="section-header"><h3>{TAB_NAMES["contaminacion"]}</h3>'
-                f'<p>{DESCRIPCION_TABS["contaminacion"]}</p></div>', unsafe_allow_html=True)
-    if df is None:
-        st.error("Sin datos de contaminacion. Ejecuta pipeline_etl.py.")
-        return
-    df_ok = df[(df["calidad_dato"] == "ok") & (df["variable"] == var)]
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric(f"Registros {var}", f"{len(df_ok):,}")
-    c2.metric(f"Media {var}", f"{df_ok['valor'].mean():.1f} ug/m3" if not df_ok.empty else "-")
-    c3.metric("Periodo", f"{df_ok['anio'].min()}-{df_ok['anio'].max()}" if not df_ok.empty else "-")
-    c4.metric("Estaciones", str(df_ok["estacion_id"].nunique()) if not df_ok.empty else "0")
-    st.info("Componente completo en Fase 7.2: mapas Folium, graficos Plotly, tendencias.")
+    df_contam_anual = datos.get("contam_anual")
 
+    # Header de seccion
+    st.markdown(
+        f'<div class="section-header"><h3>{TAB_NAMES["contaminacion"]}</h3>'
+        f'<p>{DESCRIPCION_TABS["contaminacion"]}</p></div>',
+        unsafe_allow_html=True,
+    )
+
+    # Guard clause: sin datos
+    if df is None:
+        st.error(
+            "Sin datos de contaminacion. "
+            "Ejecuta pipeline_etl.py para generar los datos limpios."
+        )
+        return
+
+    # 1. KPIs
+    render_kpis_contaminacion(df, var)
+
+    st.divider()
+
+    # 2. Grafico temporal interactivo
+    render_grafico_contaminacion(df, var)
+
+    st.divider()
+
+    # 3. Mapa + Tendencia en dos columnas
+    col_mapa, col_tendencia = st.columns([3, 2])
+
+    with col_mapa:
+        render_mapa_contaminacion(df, var, df_contam_anual)
+
+    with col_tendencia:
+        render_tendencia_anual(df, var)
+
+        # Seccion extra: resumen de filtros activos
+        filtros = datos.get("_filtros", {})
+        barrios = filtros.get("barrios", [])
+        anio_min = filtros.get("anio_min", "?")
+        anio_max = filtros.get("anio_max", "?")
+
+        st.markdown("---")
+        st.caption("Filtros activos")
+        st.markdown(
+            f"**Variable:** {var}  \n"
+            f"**Periodo:** {anio_min} - {anio_max}  \n"
+            f"**Distritos:** {', '.join(barrios) if barrios else 'Todos'}",
+        )
+
+
+# ==============================================================================
+# TABS PLACEHOLDER (Fases 7.3-7.5 los completaran)
+# ==============================================================================
 
 def _tab_precipitaciones(datos):
     st.markdown(f'<div class="section-header"><h3>{TAB_NAMES["precipitaciones"]}</h3>'
@@ -153,8 +204,10 @@ def _tab_precipitaciones(datos):
     df_ok = df[df["calidad_dato"] == "ok"]
     c1, c2, c3 = st.columns(3)
     c1.metric("Registros", f"{len(df_ok):,}")
-    c2.metric("Precip. media", f"{df_ok['precipitacion_mm'].mean():.2f} mm" if not df_ok.empty else "-")
-    c3.metric("Temp. media", f"{df_ok['temp_c'].mean():.1f} C" if not df_ok.empty else "-")
+    c2.metric("Precip. media",
+              f"{df_ok['precipitacion_mm'].mean():.2f} mm" if not df_ok.empty else "-")
+    c3.metric("Temp. media",
+              f"{df_ok['temp_c'].mean():.1f} C" if not df_ok.empty else "-")
     st.info("Componente completo en Fase 7.3: pronostico 72h y tendencias.")
 
 
@@ -191,7 +244,8 @@ def _tab_pronostico(datos):
                 f'<p>{DESCRIPCION_TABS["pronostico"]}</p></div>', unsafe_allow_html=True)
     df = datos.get("pronostico")
     if df is None:
-        st.error("Sin pronostico. Ejecuta streaming_openweather.py y generar_pronostico.py.")
+        st.error(
+            "Sin pronostico. Ejecuta streaming_openweather.py y generar_pronostico.py.")
         return
     st.caption(f"Fuente: `{df.attrs.get('archivo_fuente', '?')}` | "
                f"Captura: {df.attrs.get('timestamp_captura', '?')}")
@@ -199,7 +253,8 @@ def _tab_pronostico(datos):
     tmax = df["temp_c"].max()
     c1.metric("Temp. maxima", f"{tmax:.1f} C" if pd.notna(tmax) else "-")
     c2.metric("Lluvia total", f"{df['rain_mm'].sum():.1f} mm")
-    c3.metric("Prob. max. lluvia", f"{df['precip_probability_pct'].max():.0f}%")
+    c3.metric("Prob. max. lluvia",
+              f"{df['precip_probability_pct'].max():.0f}%")
     st.info("Componente completo en Fase 7.5: grafico interactivo pronostico 72h.")
 
 
@@ -213,7 +268,8 @@ def main():
     with st.spinner("Cargando datos del proyecto..."):
         datos = _cargar_todos_los_datos()
 
-    tiene_datos = any(v is not None for k, v in datos.items() if not k.startswith("_"))
+    tiene_datos = any(v is not None for k, v in datos.items()
+                      if not k.startswith("_"))
     if not tiene_datos:
         _render_diagnostico()
         return
