@@ -2,7 +2,7 @@
 """
 ==============================================================================
 DATA DETECTIVE - VALENCIA
-Fase 7.5: Dashboard Streamlit - Orquestador Principal
+Fase 7.6: Dashboard Streamlit - Orquestador Principal
 ==============================================================================
 Ejecucion: streamlit run 5.DASHBOARD/app.py
 Ruta: 5.DASHBOARD/app.py | Autor: Joan | Fecha: 2026
@@ -14,6 +14,7 @@ from components.kpis import render_kpis_contaminacion
 from components.meteorologia import render_tab_meteorologia
 from components.trafico import render_tab_trafico
 from components.eventos import render_tab_eventos
+from components.pronostico import render_tab_pronostico
 from components.sidebar import render_sidebar
 from data_loader import (
     cargar_contaminacion, cargar_meteorologia, cargar_trafico,
@@ -194,7 +195,7 @@ def _tab_contaminacion(datos):
 
 
 # ==============================================================================
-# TABS PLACEHOLDER (Fases 7.3-7.5 los completaran)
+# TABS COMPLETADAS (Fases 7.2-7.6)
 # ==============================================================================
 
 def _tab_precipitaciones(datos):
@@ -213,22 +214,8 @@ def _tab_eventos(datos):
 
 
 def _tab_pronostico(datos):
-    st.markdown(f'<div class="section-header"><h3>{TAB_NAMES["pronostico"]}</h3>'
-                f'<p>{DESCRIPCION_TABS["pronostico"]}</p></div>', unsafe_allow_html=True)
-    df = datos.get("pronostico")
-    if df is None:
-        st.error(
-            "Sin pronostico. Ejecuta streaming_openweather.py y generar_pronostico.py.")
-        return
-    st.caption(f"Fuente: `{df.attrs.get('archivo_fuente', '?')}` | "
-               f"Captura: {df.attrs.get('timestamp_captura', '?')}")
-    c1, c2, c3 = st.columns(3)
-    tmax = df["temp_c"].max()
-    c1.metric("Temp. maxima", f"{tmax:.1f} C" if pd.notna(tmax) else "-")
-    c2.metric("Lluvia total", f"{df['rain_mm'].sum():.1f} mm")
-    c3.metric("Prob. max. lluvia",
-              f"{df['precip_probability_pct'].max():.0f}%")
-    st.info("Componente completo en Fase 7.5: grafico interactivo pronostico 72h.")
+    """Tab de pronostico 72h (Fase 7.6 - COMPLETA)."""
+    render_tab_pronostico(datos)
 
 
 # ==============================================================================
