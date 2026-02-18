@@ -2,31 +2,31 @@
 """
 ==============================================================================
 DATA DETECTIVE - VALENCIA
-Fase 5.5: Correlación Eventos ↔ Contaminación / Tráfico
+Fase 5.5: CorrelaciÃ³n Eventos â†” ContaminaciÃ³n / TrÃ¡fico
 ==============================================================================
 
-Descripción:
+DescripciÃ³n:
     Cuantifica el impacto de eventos masivos (Fallas, partidos Valencia CF,
     conciertos, etc.) sobre:
-      1) Niveles de contaminación (NO₂, O₃, PM10, PM2.5)
-      2) Incidencias de tráfico
+      1) Niveles de contaminaciÃ³n (NOâ‚‚, Oâ‚ƒ, PM10, PM2.5)
+      2) Incidencias de trÃ¡fico
 
-    Metodología quasi-experimental:
-    ─────────────────────────────────
-    Para cada evento se construye un BASELINE de referencia usando días
-    "comparables" que cumplen simultáneamente:
-      • Mismo mes del año (control estacional)
-      • Mismo día de la semana (control de patrón semanal)
-      • Sin solapamiento con ningún otro evento (evitar contaminación cruzada)
-      • Sin lluvia significativa (precipitación ≤ 5mm)
-      • Solo registros con calidad_dato == "ok" (contaminación)
+    MetodologÃ­a quasi-experimental:
+    â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    Para cada evento se construye un BASELINE de referencia usando dÃ­as
+    "comparables" que cumplen simultÃ¡neamente:
+      â€¢ Mismo mes del aÃ±o (control estacional)
+      â€¢ Mismo dÃ­a de la semana (control de patrÃ³n semanal)
+      â€¢ Sin solapamiento con ningÃºn otro evento (evitar contaminaciÃ³n cruzada)
+      â€¢ Sin lluvia significativa (precipitaciÃ³n â‰¤ 5mm)
+      â€¢ Solo registros con calidad_dato == "ok" (contaminaciÃ³n)
 
-    Métrica de impacto:
+    MÃ©trica de impacto:
       impact_pct = ((media_evento - media_baseline) / media_baseline) * 100
 
-    Además se almacenan las condiciones meteorológicas (temp, precip) tanto
+    AdemÃ¡s se almacenan las condiciones meteorolÃ³gicas (temp, precip) tanto
     durante el evento como en el baseline, como CONTROL DESCRIPTIVO
-    (no regresión, sino transparencia para análisis posterior).
+    (no regresiÃ³n, sino transparencia para anÃ¡lisis posterior).
 
 Archivos de entrada:
     3.DATOS_LIMPIOS/contaminacion_normalizada.parquet
@@ -42,6 +42,9 @@ Ruta esperada del script:
 
 Uso:
     python correlacion_eventos.py
+
+Commit sugerido:
+    feat: implement advanced event impact correlation with baseline control
 
 Autor: Joan
 Fecha: 2026
@@ -60,7 +63,7 @@ from typing import Dict, List, Optional, Tuple, Any
 
 
 # ==============================================================================
-# CONFIGURACIÓN
+# CONFIGURACIÃ“N
 # ==============================================================================
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -81,19 +84,19 @@ OUTPUT_FILE = OUTPUT_DIR / "impacto_eventos.csv"
 LOG_DIR = PROJECT_ROOT / "logs"
 
 # --- Umbrales ---
-PRECIPITACION_UMBRAL_MM = 5.0  # Días con >5mm se excluyen del baseline
+PRECIPITACION_UMBRAL_MM = 5.0  # DÃ­as con >5mm se excluyen del baseline
 
 # --- Timezone ---
 TZ_LOCAL = "Europe/Madrid"
 
 
 # ==============================================================================
-# CONFIGURACIÓN DE LOGGING
+# CONFIGURACIÃ“N DE LOGGING
 # ==============================================================================
 
 def setup_logging() -> logging.Logger:
     """
-    Configura logging dual (archivo + consola) siguiendo el patrón del proyecto.
+    Configura logging dual (archivo + consola) siguiendo el patrÃ³n del proyecto.
     Mismo estilo que las fases anteriores (5.1, 5.2, 5.3, 5.4).
     """
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -133,91 +136,91 @@ def load_data(logger: logging.Logger) -> Tuple[
     Optional[List[Dict[str, Any]]]
 ]:
     """
-    Carga los 4 datasets necesarios para el análisis.
+    Carga los 4 datasets necesarios para el anÃ¡lisis.
 
     Returns:
         Tupla: (df_contam, df_trafico, df_meteo, eventos_list)
         Cualquiera puede ser None si falla la carga.
     """
-    logger.info("─" * 40)
+    logger.info("â”€" * 40)
     logger.info("PASO 1: Carga de datos")
-    logger.info("─" * 40)
+    logger.info("â”€" * 40)
 
     df_contam = None
     df_trafico = None
     df_meteo = None
     eventos_list = None
 
-    # --- 1A: Contaminación (Parquet) ---
-    logger.info(f"  1A: Contaminación → {CONTAMINACION_PATH.name}")
+    # --- 1A: ContaminaciÃ³n (Parquet) ---
+    logger.info(f"  1A: ContaminaciÃ³n â†’ {CONTAMINACION_PATH.name}")
     if CONTAMINACION_PATH.exists():
         try:
             df_contam = pd.read_parquet(CONTAMINACION_PATH)
-            logger.info(f"      ✓ {len(df_contam):,} registros cargados")
+            logger.info(f"      âœ“ {len(df_contam):,} registros cargados")
             logger.info(f"      Columnas: {list(df_contam.columns)}")
             logger.info(
-                f"      Rango: {df_contam['fecha_utc'].min()} → "
+                f"      Rango: {df_contam['fecha_utc'].min()} â†’ "
                 f"{df_contam['fecha_utc'].max()}"
             )
         except Exception as e:
-            logger.error(f"      ✘ Error leyendo parquet: {e}")
+            logger.error(f"      âœ˜ Error leyendo parquet: {e}")
     else:
-        logger.warning(f"      ⚠ Archivo no encontrado: {CONTAMINACION_PATH}")
+        logger.warning(f"      âš  Archivo no encontrado: {CONTAMINACION_PATH}")
 
-    # --- 1B: Tráfico (CSV) ---
-    logger.info(f"  1B: Tráfico → {TRAFICO_PATH.name}")
+    # --- 1B: TrÃ¡fico (CSV) ---
+    logger.info(f"  1B: TrÃ¡fico â†’ {TRAFICO_PATH.name}")
     if TRAFICO_PATH.exists():
         try:
             df_trafico = pd.read_csv(TRAFICO_PATH, parse_dates=["fecha"])
-            logger.info(f"      ✓ {len(df_trafico):,} registros cargados")
+            logger.info(f"      âœ“ {len(df_trafico):,} registros cargados")
             logger.info(f"      Columnas: {list(df_trafico.columns)}")
         except Exception as e:
-            logger.error(f"      ✘ Error leyendo CSV tráfico: {e}")
+            logger.error(f"      âœ˜ Error leyendo CSV trÃ¡fico: {e}")
     else:
-        logger.warning(f"      ⚠ Archivo no encontrado: {TRAFICO_PATH}")
+        logger.warning(f"      âš  Archivo no encontrado: {TRAFICO_PATH}")
 
-        # --- 1C: Meteorología (CSV) ---
-    logger.info(f"  1C: Meteorología → {METEOROLOGIA_PATH.name}")
+        # --- 1C: MeteorologÃ­a (CSV) ---
+    logger.info(f"  1C: MeteorologÃ­a â†’ {METEOROLOGIA_PATH.name}")
     if METEOROLOGIA_PATH.exists():
         try:
             # Cargar sin parsear fechas primero
             df_meteo = pd.read_csv(METEOROLOGIA_PATH)
 
-            # Conversión robusta de fechas con ISO8601 (maneja microsegundos)
+            # ConversiÃ³n robusta de fechas con ISO8601 (maneja microsegundos)
             df_meteo["fecha"] = pd.to_datetime(
                 df_meteo["fecha"], format='ISO8601', utc=True, errors='coerce')
 
             fechas_invalidas = df_meteo["fecha"].isna().sum()
             if fechas_invalidas > 0:
                 logger.warning(
-                    f"      ⚠ {fechas_invalidas:,} fechas inválidas encontradas")
+                    f"      âš  {fechas_invalidas:,} fechas invÃ¡lidas encontradas")
                 df_meteo = df_meteo.dropna(subset=["fecha"])
 
-            logger.info(f"      ✓ {len(df_meteo):,} registros cargados")
+            logger.info(f"      âœ“ {len(df_meteo):,} registros cargados")
             logger.info(f"      Columnas: {list(df_meteo.columns)}")
         except Exception as e:
-            logger.error(f"      ✘ Error leyendo CSV meteorología: {e}")
+            logger.error(f"      âœ˜ Error leyendo CSV meteorologÃ­a: {e}")
     else:
-        logger.warning(f"      ⚠ Archivo no encontrado: {METEOROLOGIA_PATH}")
+        logger.warning(f"      âš  Archivo no encontrado: {METEOROLOGIA_PATH}")
 
     # --- 1D: Eventos (JSON) ---
-    logger.info(f"  1D: Eventos → {EVENTOS_PATH.name}")
+    logger.info(f"  1D: Eventos â†’ {EVENTOS_PATH.name}")
     if EVENTOS_PATH.exists():
         try:
             with open(EVENTOS_PATH, "r", encoding="utf-8") as f:
                 data = json.load(f)
             eventos_list = data.get("eventos", [])
-            logger.info(f"      ✓ {len(eventos_list)} eventos cargados")
+            logger.info(f"      âœ“ {len(eventos_list)} eventos cargados")
         except Exception as e:
-            logger.error(f"      ✘ Error leyendo JSON eventos: {e}")
+            logger.error(f"      âœ˜ Error leyendo JSON eventos: {e}")
     else:
-        logger.warning(f"      ⚠ Archivo no encontrado: {EVENTOS_PATH}")
+        logger.warning(f"      âš  Archivo no encontrado: {EVENTOS_PATH}")
 
     return df_contam, df_trafico, df_meteo, eventos_list
 
 
 # ==============================================================================
-# PREPARACIÓN DE DATOS (AGREGACIONES DIARIAS)
+# PREPARACIÃ“N DE DATOS (AGREGACIONES DIARIAS)
 # ==============================================================================
 
 def build_daily_aggregations(
@@ -236,19 +239,19 @@ def build_daily_aggregations(
         o None si los datos de entrada no estaban disponibles.
     """
     logger.info("")
-    logger.info("─" * 40)
+    logger.info("â”€" * 40)
     logger.info("PASO 2: Agregaciones diarias")
-    logger.info("─" * 40)
+    logger.info("â”€" * 40)
 
     contam_diaria = None
     trafico_diario = None
     meteo_diaria = None
 
-    # ─── 2A: Contaminación diaria ───
+    # â”€â”€â”€ 2A: ContaminaciÃ³n diaria â”€â”€â”€
     # Esquema entrada: fecha_utc, variable, valor, calidad_dato
     # Salida: fecha (date) | variable | valor_medio | n_registros
     if df_contam is not None and not df_contam.empty:
-        logger.info("  2A: Agregando contaminación a nivel diario...")
+        logger.info("  2A: Agregando contaminaciÃ³n a nivel diario...")
 
         df_ok = df_contam[df_contam["calidad_dato"] == "ok"].copy()
         logger.info(
@@ -270,24 +273,24 @@ def build_daily_aggregations(
         contam_diaria["fecha"] = pd.to_datetime(contam_diaria["fecha"])
 
         logger.info(
-            f"      ✓ {len(contam_diaria):,} filas "
-            f"({contam_diaria['variable'].nunique()} variables × "
-            f"{contam_diaria['fecha'].nunique()} días)"
+            f"      âœ“ {len(contam_diaria):,} filas "
+            f"({contam_diaria['variable'].nunique()} variables Ã— "
+            f"{contam_diaria['fecha'].nunique()} dÃ­as)"
         )
     else:
-        logger.warning("  2A: Sin datos de contaminación disponibles")
+        logger.warning("  2A: Sin datos de contaminaciÃ³n disponibles")
 
-    # ─── 2B: Tráfico diario ───
+    # â”€â”€â”€ 2B: TrÃ¡fico diario â”€â”€â”€
     # Esquema entrada: fecha, incidencias, calidad_dato
     # Salida: fecha (date) | n_incidencias
     if df_trafico is not None and not df_trafico.empty:
-        logger.info("  2B: Agregando tráfico a nivel diario...")
+        logger.info("  2B: Agregando trÃ¡fico a nivel diario...")
 
         df_traf = df_trafico.copy()
         df_traf["fecha"] = pd.to_datetime(df_traf["fecha"], utc=True)
         df_traf["fecha_dia"] = df_traf["fecha"].dt.date
 
-        # Contar incidencias por día
+        # Contar incidencias por dÃ­a
         trafico_diario = (
             df_traf
             .groupby("fecha_dia", as_index=False)
@@ -297,20 +300,20 @@ def build_daily_aggregations(
         trafico_diario["fecha"] = pd.to_datetime(trafico_diario["fecha"])
 
         logger.info(
-            f"      ✓ {len(trafico_diario):,} días con datos de tráfico"
+            f"      âœ“ {len(trafico_diario):,} dÃ­as con datos de trÃ¡fico"
         )
     else:
-        logger.warning("  2B: Sin datos de tráfico disponibles")
+        logger.warning("  2B: Sin datos de trÃ¡fico disponibles")
 
-      # ─── 2C: Meteorología diaria ───
+      # â”€â”€â”€ 2C: MeteorologÃ­a diaria â”€â”€â”€
     # Esquema entrada: fecha, precipitacion_mm, temp_c, humedad_pct
     # Salida: fecha (date) | precip_media | temp_media
     if df_meteo is not None and not df_meteo.empty:
-        logger.info("  2C: Agregando meteorología a nivel diario...")
+        logger.info("  2C: Agregando meteorologÃ­a a nivel diario...")
 
         df_met = df_meteo.copy()
 
-        # Conversión robusta de fecha con formato ISO8601 (maneja microsegundos)
+        # ConversiÃ³n robusta de fecha con formato ISO8601 (maneja microsegundos)
         try:
             df_met["fecha"] = pd.to_datetime(
                 df_met["fecha"], format='ISO8601', utc=True)
@@ -321,10 +324,10 @@ def build_daily_aggregations(
             fechas_invalidas = df_met["fecha"].isna().sum()
             if fechas_invalidas > 0:
                 logger.warning(
-                    f"      ⚠ {fechas_invalidas:,} fechas inválidas convertidas a NaT")
+                    f"      âš  {fechas_invalidas:,} fechas invÃ¡lidas convertidas a NaT")
                 df_met = df_met.dropna(subset=["fecha"])
 
-        # Extraer fecha del día (date)
+        # Extraer fecha del dÃ­a (date)
         df_met["fecha_dia"] = df_met["fecha"].dt.date
 
         meteo_diaria = (
@@ -339,21 +342,21 @@ def build_daily_aggregations(
         meteo_diaria["fecha"] = pd.to_datetime(meteo_diaria["fecha"])
 
         logger.info(
-            f"      ✓ {len(meteo_diaria):,} días con datos meteorológicos"
+            f"      âœ“ {len(meteo_diaria):,} dÃ­as con datos meteorolÃ³gicos"
         )
     else:
-        logger.warning("  2C: Sin datos de meteorología disponibles")
+        logger.warning("  2C: Sin datos de meteorologÃ­a disponibles")
 
     return contam_diaria, trafico_diario, meteo_diaria
 
 
 # ==============================================================================
-# PARSING Y DEDUPLICACIÓN DE EVENTOS
+# PARSING Y DEDUPLICACIÃ“N DE EVENTOS
 # ==============================================================================
 
 def _parse_event_date(date_str: str) -> Optional[pd.Timestamp]:
     """
-    Intenta parsear una fecha de evento con múltiples formatos.
+    Intenta parsear una fecha de evento con mÃºltiples formatos.
     Los eventos pueden traer formatos variados:
       - "2026-03-15"
       - "15/03/2026"
@@ -382,8 +385,8 @@ def _parse_event_date(date_str: str) -> Optional[pd.Timestamp]:
 
 def _generate_event_id(evento: Dict[str, Any]) -> str:
     """
-    Genera un ID único para un evento basado en nombre + fechas + fuente.
-    Esto permite deduplicar eventos que aparecen en múltiples fuentes.
+    Genera un ID Ãºnico para un evento basado en nombre + fechas + fuente.
+    Esto permite deduplicar eventos que aparecen en mÃºltiples fuentes.
     """
     nombre = evento.get("nombre", evento.get("rival", "desconocido"))
     fecha_ini = evento.get("fecha_inicio", "")
@@ -412,9 +415,9 @@ def parse_and_deduplicate_events(
         Lista de dicts enriquecidos y deduplicados.
     """
     logger.info("")
-    logger.info("─" * 40)
-    logger.info("PASO 3: Parsing y deduplicación de eventos")
-    logger.info("─" * 40)
+    logger.info("â”€" * 40)
+    logger.info("PASO 3: Parsing y deduplicaciÃ³n de eventos")
+    logger.info("â”€" * 40)
 
     parsed = []
     skipped_no_date = 0
@@ -435,12 +438,12 @@ def parse_and_deduplicate_events(
 
             fecha_fin = _parse_event_date(evento.get("fecha_fin", ""))
             if fecha_fin is None:
-                # Evento de un solo día
+                # Evento de un solo dÃ­a
                 fecha_fin = fecha_inicio
 
             # Validar coherencia temporal
             if fecha_fin < fecha_inicio:
-                # Swap si están invertidas
+                # Swap si estÃ¡n invertidas
                 fecha_inicio, fecha_fin = fecha_fin, fecha_inicio
                 logger.debug(f"    Fechas invertidas corregidas: {nombre}")
 
@@ -451,7 +454,11 @@ def parse_and_deduplicate_events(
                 "evento_id": evento_id,
                 "nombre": nombre,
                 "tipo_evento": evento.get("tipo", "desconocido"),
+                "categoria_evento": evento.get("categoria_evento", evento.get("tipo", "desconocido")),
+                "subcategoria_evento": evento.get("subcategoria_evento", "sin_clasificar"),
+                "duracion_tipo": evento.get("duracion_tipo", "puntual"),
                 "impacto_esperado": evento.get("impacto_esperado", "desconocido"),
+                "impacto_score": evento.get("impacto_score", 2),
                 "fuente_evento": evento.get("fuente", "desconocida"),
                 "fecha_inicio": fecha_inicio,
                 "fecha_fin": fecha_fin,
@@ -462,7 +469,7 @@ def parse_and_deduplicate_events(
             logger.debug(f"    Saltado (error): {e}")
 
     logger.info(f"  Eventos parseados correctamente: {len(parsed)}")
-    logger.info(f"  Saltados por fecha inválida:     {skipped_no_date}")
+    logger.info(f"  Saltados por fecha invÃ¡lida:     {skipped_no_date}")
     logger.info(f"  Saltados por error/malformado:   {skipped_malformed}")
 
     # --- Deduplicar por evento_id ---
@@ -477,19 +484,19 @@ def parse_and_deduplicate_events(
     if duplicados > 0:
         logger.info(f"  Duplicados eliminados: {duplicados}")
 
-    logger.info(f"  Eventos finales para análisis: {len(deduped)}")
+    logger.info(f"  Eventos finales para anÃ¡lisis: {len(deduped)}")
 
     return deduped
 
 
 # ==============================================================================
-# CONSTRUCCIÓN DEL BASELINE
+# CONSTRUCCIÃ“N DEL BASELINE
 # ==============================================================================
 
 def _get_all_event_dates(events: List[Dict[str, Any]]) -> set:
     """
-    Construye el conjunto de TODAS las fechas cubiertas por algún evento.
-    Se usa para excluir del baseline días que coinciden con otros eventos.
+    Construye el conjunto de TODAS las fechas cubiertas por algÃºn evento.
+    Se usa para excluir del baseline dÃ­as que coinciden con otros eventos.
 
     Returns:
         Set de datetime.date
@@ -512,14 +519,14 @@ def _build_baseline_mask(
     logger: logging.Logger,
 ) -> pd.Index:
     """
-    Construye la máscara booleana que identifica días válidos para el baseline
+    Construye la mÃ¡scara booleana que identifica dÃ­as vÃ¡lidos para el baseline
     de un evento concreto.
 
     Criterios (todos deben cumplirse):
-      1. Mismo mes que algún día del evento
-      2. Mismo día de la semana que algún día del evento
-      3. No solaparse con NINGÚN otro evento
-      4. No ser día de lluvia significativa (>5mm)
+      1. Mismo mes que algÃºn dÃ­a del evento
+      2. Mismo dÃ­a de la semana que algÃºn dÃ­a del evento
+      3. No solaparse con NINGÃšN otro evento
+      4. No ser dÃ­a de lluvia significativa (>5mm)
 
     Args:
         fechas_serie: Serie pd.DatetimeIndex con las fechas disponibles
@@ -529,7 +536,7 @@ def _build_baseline_mask(
         logger: Logger
 
     Returns:
-        pd.Index con las posiciones de los días baseline
+        pd.Index con las posiciones de los dÃ­as baseline
     """
     start = evento["fecha_inicio"]
     end = evento["fecha_fin"]
@@ -538,7 +545,7 @@ def _build_baseline_mask(
     # Meses del evento
     event_months = set(d.month for d in event_range)
 
-    # Días de la semana del evento (0=Mon, 6=Sun)
+    # DÃ­as de la semana del evento (0=Mon, 6=Sun)
     event_weekdays = set(d.dayofweek for d in event_range)
 
     # Fechas del propio evento (para excluir del baseline)
@@ -547,22 +554,22 @@ def _build_baseline_mask(
     # Criterio 1: mismo mes
     mask_month = fechas_serie.dt.month.isin(event_months)
 
-    # Criterio 2: mismo día de la semana
+    # Criterio 2: mismo dÃ­a de la semana
     mask_weekday = fechas_serie.dt.dayofweek.isin(event_weekdays)
 
-    # Criterio 3: no solaparse con ningún evento
+    # Criterio 3: no solaparse con ningÃºn evento
     mask_no_event = ~fechas_serie.dt.date.isin(all_event_dates)
 
     # Criterio 4: no lluvia significativa
     mask_no_rain = pd.Series(True, index=fechas_serie.index)
     if meteo_diaria is not None and not meteo_diaria.empty:
-        # Crear lookup: fecha → precip_media
+        # Crear lookup: fecha â†’ precip_media
         meteo_lookup = meteo_diaria.set_index(
             meteo_diaria["fecha"].dt.date
         )["precip_media"]
 
         precip_values = fechas_serie.dt.date.map(meteo_lookup)
-        # Días sin dato meteorológico se consideran "no lluvia" (NaN ≤ 5 → True)
+        # DÃ­as sin dato meteorolÃ³gico se consideran "no lluvia" (NaN â‰¤ 5 â†’ True)
         mask_no_rain = (precip_values.isna()) | (
             precip_values <= PRECIPITACION_UMBRAL_MM)
 
@@ -573,7 +580,7 @@ def _build_baseline_mask(
 
 
 # ==============================================================================
-# CÁLCULO DE IMPACTO POR EVENTO
+# CÃLCULO DE IMPACTO POR EVENTO
 # ==============================================================================
 
 def compute_event_impact(
@@ -584,17 +591,17 @@ def compute_event_impact(
     logger: logging.Logger,
 ) -> pd.DataFrame:
     """
-    Para cada evento, calcula el impacto en contaminación y tráfico
+    Para cada evento, calcula el impacto en contaminaciÃ³n y trÃ¡fico
     comparando con el baseline.
 
     Returns:
-        DataFrame con una fila por (evento × variable_contaminante),
-        más el impacto de tráfico incluido en cada fila.
+        DataFrame con una fila por (evento Ã— variable_contaminante),
+        mÃ¡s el impacto de trÃ¡fico incluido en cada fila.
     """
     logger.info("")
-    logger.info("─" * 40)
-    logger.info("PASO 4: Cálculo de impacto por evento")
-    logger.info("─" * 40)
+    logger.info("â”€" * 40)
+    logger.info("PASO 4: CÃ¡lculo de impacto por evento")
+    logger.info("â”€" * 40)
 
     if not events:
         logger.warning("  Sin eventos para procesar")
@@ -603,13 +610,13 @@ def compute_event_impact(
     # Pre-calcular conjunto de todas las fechas con eventos
     all_event_dates = _get_all_event_dates(events)
     logger.info(
-        f"  Fechas cubiertas por eventos: {len(all_event_dates)} días únicos")
+        f"  Fechas cubiertas por eventos: {len(all_event_dates)} dÃ­as Ãºnicos")
 
-    # Variables de contaminación disponibles
+    # Variables de contaminaciÃ³n disponibles
     variables_contam = []
     if contam_diaria is not None and not contam_diaria.empty:
         variables_contam = sorted(contam_diaria["variable"].unique())
-        logger.info(f"  Variables de contaminación: {variables_contam}")
+        logger.info(f"  Variables de contaminaciÃ³n: {variables_contam}")
 
     results = []
     eventos_procesados = 0
@@ -625,10 +632,10 @@ def compute_event_impact(
 
         logger.debug(
             f"  [{i+1}/{len(events)}] {nombre} "
-            f"({start.date()} → {end.date()}, {n_dias_evento}d)"
+            f"({start.date()} â†’ {end.date()}, {n_dias_evento}d)"
         )
 
-        # === METEOROLOGÍA del evento y baseline ===
+        # === METEOROLOGÃA del evento y baseline ===
         media_temp_evento = np.nan
         media_precip_evento = np.nan
         media_temp_baseline = np.nan
@@ -657,17 +664,17 @@ def compute_event_impact(
                 media_temp_baseline = meteo_bl["temp_media"].mean()
                 media_precip_baseline = meteo_bl["precip_media"].mean()
 
-        # === TRÁFICO ===
+        # === TRÃFICO ===
         impacto_trafico_pct = np.nan
 
         if trafico_diario is not None and not trafico_diario.empty:
-            # Tráfico durante el evento
+            # TrÃ¡fico durante el evento
             mask_ev_traf = trafico_diario["fecha"].dt.date.isin(event_dates)
             traf_ev = trafico_diario[mask_ev_traf]
             media_traf_evento = traf_ev["n_incidencias"].mean(
             ) if not traf_ev.empty else np.nan
 
-            # Tráfico baseline
+            # TrÃ¡fico baseline
             mask_bl_traf = _build_baseline_mask(
                 trafico_diario["fecha"],
                 evento,
@@ -689,7 +696,7 @@ def compute_event_impact(
                     / media_traf_baseline * 100
                 )
 
-        # === CONTAMINACIÓN (una fila por variable) ===
+        # === CONTAMINACIÃ“N (una fila por variable) ===
         if variables_contam:
             tiene_datos = False
 
@@ -742,7 +749,11 @@ def compute_event_impact(
                     "evento_id": evento["evento_id"],
                     "nombre_evento": evento["nombre"],
                     "tipo_evento": evento["tipo_evento"],
+                    "categoria_evento": evento.get("categoria_evento", evento["tipo_evento"]),
+                    "subcategoria_evento": evento.get("subcategoria_evento", "sin_clasificar"),
+                    "duracion_tipo": evento.get("duracion_tipo", "puntual"),
                     "impacto_esperado": evento["impacto_esperado"],
+                    "impacto_score": evento.get("impacto_score", 2),
                     "fecha_inicio": start.strftime("%Y-%m-%d"),
                     "fecha_fin": end.strftime("%Y-%m-%d"),
                     "variable": variable,
@@ -764,15 +775,19 @@ def compute_event_impact(
             else:
                 eventos_saltados += 1
                 logger.debug(
-                    f"    → Saltado: sin datos de contaminación para sus fechas")
+                    f"    â†’ Saltado: sin datos de contaminaciÃ³n para sus fechas")
 
         else:
-            # Sin datos de contaminación: generar fila solo con tráfico
+            # Sin datos de contaminaciÃ³n: generar fila solo con trÃ¡fico
             results.append({
                 "evento_id": evento["evento_id"],
                 "nombre_evento": evento["nombre"],
                 "tipo_evento": evento["tipo_evento"],
+                "categoria_evento": evento.get("categoria_evento", evento["tipo_evento"]),
+                "subcategoria_evento": evento.get("subcategoria_evento", "sin_clasificar"),
+                "duracion_tipo": evento.get("duracion_tipo", "puntual"),
                 "impacto_esperado": evento["impacto_esperado"],
+                "impacto_score": evento.get("impacto_score", 2),
                 "fecha_inicio": start.strftime("%Y-%m-%d"),
                 "fecha_fin": end.strftime("%Y-%m-%d"),
                 "variable": "sin_datos",
@@ -807,7 +822,11 @@ def compute_event_impact(
         "evento_id",
         "nombre_evento",
         "tipo_evento",
+        "categoria_evento",
+        "subcategoria_evento",
+        "duracion_tipo",
         "impacto_esperado",
+        "impacto_score",
         "fecha_inicio",
         "fecha_fin",
         "variable",
@@ -846,25 +865,25 @@ def save_results(
         Path al archivo guardado, o None si falla.
     """
     logger.info("")
-    logger.info("─" * 40)
+    logger.info("â”€" * 40)
     logger.info("PASO 5: Guardado de resultados")
-    logger.info("─" * 40)
+    logger.info("â”€" * 40)
 
     if df.empty:
-        logger.warning("  DataFrame vacío - no se guarda nada")
+        logger.warning("  DataFrame vacÃ­o - no se guarda nada")
         return None
 
     try:
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         df.to_csv(OUTPUT_FILE, index=False, encoding="utf-8")
-        logger.info(f"  ✓ Guardado: {OUTPUT_FILE}")
+        logger.info(f"  âœ“ Guardado: {OUTPUT_FILE}")
         logger.info(f"    Filas:    {len(df):,}")
         logger.info(f"    Columnas: {list(df.columns)}")
         logger.info(
-            f"    Tamaño:   {OUTPUT_FILE.stat().st_size / 1024:.1f} KB")
+            f"    TamaÃ±o:   {OUTPUT_FILE.stat().st_size / 1024:.1f} KB")
         return OUTPUT_FILE
     except Exception as e:
-        logger.error(f"  ✘ Error al guardar: {e}")
+        logger.error(f"  âœ˜ Error al guardar: {e}")
         return None
 
 
@@ -879,18 +898,18 @@ def print_summary(
     logger: logging.Logger,
 ) -> None:
     """
-    Imprime un resumen del análisis para el log y la consola.
+    Imprime un resumen del anÃ¡lisis para el log y la consola.
     """
     logger.info("")
     logger.info("=" * 70)
-    logger.info("RESUMEN FINAL - CORRELACIÓN EVENTOS ↔ CONTAMINACIÓN/TRÁFICO")
+    logger.info("RESUMEN FINAL - CORRELACIÃ“N EVENTOS â†” CONTAMINACIÃ“N/TRÃFICO")
     logger.info("=" * 70)
 
     logger.info(f"  Eventos en entrada (JSON):  {n_events_input}")
-    logger.info(f"  Eventos parseados válidos:  {n_events_parsed}")
+    logger.info(f"  Eventos parseados vÃ¡lidos:  {n_events_parsed}")
 
     if df.empty:
-        logger.info("  Sin comparaciones generadas (dataset vacío)")
+        logger.info("  Sin comparaciones generadas (dataset vacÃ­o)")
         logger.info("=" * 70)
         return
 
@@ -922,13 +941,13 @@ def print_summary(
         if n_valid > 0:
             media_impacto = subset["impacto_pct"].mean()
             logger.info(
-                f"    {var:>10}: {n_valid} comparaciones válidas | "
+                f"    {var:>10}: {n_valid} comparaciones vÃ¡lidas | "
                 f"impacto medio = {media_impacto:+.1f}%"
             )
         else:
-            logger.info(f"    {var:>10}: sin comparaciones válidas")
+            logger.info(f"    {var:>10}: sin comparaciones vÃ¡lidas")
 
-    # Tráfico
+    # TrÃ¡fico
     trafico_valid = df["impacto_trafico_pct"].notna()
     n_traf = trafico_valid.sum()
     if n_traf > 0:
@@ -940,15 +959,15 @@ def print_summary(
         )
         logger.info("")
         logger.info(
-            f"  Tráfico: {len(traf_por_evento)} eventos con comparación válida | "
+            f"  TrÃ¡fico: {len(traf_por_evento)} eventos con comparaciÃ³n vÃ¡lida | "
             f"impacto medio = {traf_por_evento.mean():+.1f}%"
         )
 
-    # Top 5 eventos con mayor impacto medio (contaminación)
+    # Top 5 eventos con mayor impacto medio (contaminaciÃ³n)
     valid_impacto = df[df["impacto_pct"].notna()]
     if not valid_impacto.empty:
         logger.info("")
-        logger.info("  Top 5 eventos con mayor impacto medio (contaminación):")
+        logger.info("  Top 5 eventos con mayor impacto medio (contaminaciÃ³n):")
         top = (
             valid_impacto
             .groupby(["evento_id", "nombre_evento"], as_index=False)
@@ -965,15 +984,15 @@ def print_summary(
 
 
 # ==============================================================================
-# FUNCIÓN PRINCIPAL
+# FUNCIÃ“N PRINCIPAL
 # ==============================================================================
 
 def main():
     """
-    Orquesta el pipeline completo de correlación eventos ↔ datos urbanos.
+    Orquesta el pipeline completo de correlaciÃ³n eventos â†” datos urbanos.
 
     Flujo:
-        1. Cargar datos (contaminación, tráfico, meteorología, eventos)
+        1. Cargar datos (contaminaciÃ³n, trÃ¡fico, meteorologÃ­a, eventos)
         2. Agregar a nivel diario
         3. Parsear y deduplicar eventos
         4. Para cada evento: calcular impacto vs baseline
@@ -983,10 +1002,10 @@ def main():
     logger = setup_logging()
 
     logger.info("=" * 70)
-    logger.info("FASE 5.5: CORRELACIÓN EVENTOS ↔ CONTAMINACIÓN / TRÁFICO")
+    logger.info("FASE 5.5: CORRELACIÃ“N EVENTOS â†” CONTAMINACIÃ“N / TRÃFICO")
     logger.info("=" * 70)
     logger.info(f"Timestamp: {datetime.now(timezone.utc).isoformat()}")
-    logger.info(f"Proyecto raíz: {PROJECT_ROOT}")
+    logger.info(f"Proyecto raÃ­z: {PROJECT_ROOT}")
     logger.info("")
 
     # ------------------------------------------------------------------
@@ -996,18 +1015,18 @@ def main():
 
     if eventos_raw is None or len(eventos_raw) == 0:
         logger.error("Sin eventos para analizar. Abortando.")
-        print("\n❌ ERROR: No se encontraron eventos. Verifica eventos_clasificados.json")
+        print("\nâŒ ERROR: No se encontraron eventos. Verifica eventos_clasificados.json")
         return
 
     n_events_input = len(eventos_raw)
 
-    # Verificar que al menos tenemos contaminación O tráfico
+    # Verificar que al menos tenemos contaminaciÃ³n O trÃ¡fico
     if df_contam is None and df_trafico is None:
         logger.error(
-            "Sin datos de contaminación NI tráfico. "
+            "Sin datos de contaminaciÃ³n NI trÃ¡fico. "
             "Se requiere al menos una fuente. Abortando."
         )
-        print("\n❌ ERROR: Se necesita al menos contaminación o tráfico.")
+        print("\nâŒ ERROR: Se necesita al menos contaminaciÃ³n o trÃ¡fico.")
         return
 
     # ------------------------------------------------------------------
@@ -1025,7 +1044,7 @@ def main():
 
     if not events:
         logger.error("Todos los eventos fueron descartados. Abortando.")
-        print("\n❌ ERROR: Ningún evento pudo ser parseado correctamente.")
+        print("\nâŒ ERROR: NingÃºn evento pudo ser parseado correctamente.")
         return
 
     # ------------------------------------------------------------------
@@ -1047,11 +1066,11 @@ def main():
 
     # Mensaje final para consola
     if output_path:
-        print(f"\n✅ CORRELACIÓN COMPLETA: {len(df_results):,} comparaciones")
+        print(f"\nâœ… CORRELACIÃ“N COMPLETA: {len(df_results):,} comparaciones")
         print(f"   Eventos analizados: {df_results['evento_id'].nunique()}")
-        print(f"   → CSV: {output_path}")
+        print(f"   â†’ CSV: {output_path}")
     else:
-        print("\n⚠️  Correlación completada pero sin resultados. Revisa los logs.")
+        print("\nâš ï¸  CorrelaciÃ³n completada pero sin resultados. Revisa los logs.")
 
 
 # ==============================================================================

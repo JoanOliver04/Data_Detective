@@ -30,7 +30,8 @@ IMPACTO_EVENTOS_CSV = DATOS_LIMPIOS_DIR / "impacto_eventos.csv"
 # ==============================================================================
 # RUTAS DE ESTADISTICAS AGREGADAS (Fase 5.4)
 # ==============================================================================
-CONTAM_ANUAL_BARRIO_CSV = ESTADISTICAS_DIR / "contaminacion_media_anual_barrio.csv"
+CONTAM_ANUAL_BARRIO_CSV = ESTADISTICAS_DIR / \
+    "contaminacion_media_anual_barrio.csv"
 PRECIP_MENSUAL_CSV = ESTADISTICAS_DIR / "precipitacion_media_mensual.csv"
 TENDENCIAS_CSV = ESTADISTICAS_DIR / "tendencias_historicas.csv"
 
@@ -167,9 +168,21 @@ ESQUEMA_TRAFICO = [
     "fecha", "ubicacion", "incidencias", "calidad_dato"
 ]
 ESQUEMA_IMPACTO_EVENTOS = [
-    "evento_id", "nombre_evento", "tipo_evento", "variable",
-    "impacto_pct", "fecha_inicio", "fecha_fin"
+    "evento_id",
+    "nombre_evento",
+    "tipo_evento",              # backward compat
+    "categoria_evento",
+    "subcategoria_evento",
+    "duracion_tipo",
+    "impacto_esperado",
+    "impacto_score",
+    "variable",
+    "impacto_pct",
+    "impacto_trafico_pct",
+    "fecha_inicio",
+    "fecha_fin",
 ]
+
 ESQUEMA_CONTAM_ANUAL = [
     "anio", "barrio", "variable", "media_anual", "n_registros"
 ]

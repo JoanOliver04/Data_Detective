@@ -6,13 +6,14 @@ Fase 7.2: Graficos Temporales de Contaminacion
 ==============================================================================
 Componente modular que renderiza:
   1. Serie temporal interactiva (Plotly) con limites OMS/UE
-  2. Tabla de tendencia anual con cambio porcentual
+  2. Tabla de tendencia anual con cambio porcentual (max 4 por fila)
 
 Ruta: 5.DASHBOARD/components/trends.py
 Autor: Joan | Fecha: 2026
 """
 
 import logging
+import math
 from typing import Optional
 
 import pandas as pd
@@ -25,6 +26,9 @@ from config import (
 )
 
 logger = logging.getLogger("Trends")
+
+# Maximo de metricas por fila (evita truncamiento en pantallas normales)
+MAX_METRICAS_POR_FILA = 4
 
 
 # ==============================================================================
@@ -175,7 +179,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
 
 
 # ==============================================================================
-# 2. TENDENCIA ANUAL CON CAMBIO PORCENTUAL
+# 2. TENDENCIA ANUAL CON CAMBIO PORCENTUAL (layout responsive)
 # ==============================================================================
 
 def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
@@ -183,7 +187,11 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
     Muestra la media anual de la variable en toda la ciudad,
     con el cambio porcentual respecto al anio anterior.
 
-    Incluye indicadores visuales (flechas y colores):
+    Layout responsive: maximo MAX_METRICAS_POR_FILA st.metric por fila.
+    Si hay mas anios, se crean filas adicionales automaticamente
+    usando math.ceil para calcular el numero de filas necesarias.
+
+    Indicadores visuales:
       - Rojo + flecha arriba: empeoramiento (sube contaminacion)
       - Verde + flecha abajo: mejora (baja contaminacion)
 
@@ -203,7 +211,7 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
     if df_var.empty:
         return
 
-    # Agrupar por anio (sintaxis compatible con todas las versiones de pandas)
+    # Agrupar por anio
     tendencia = (
         df_var
         .groupby("anio", as_index=False)
@@ -211,15 +219,13 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
     )
 
     tendencia = tendencia.sort_values("anio")
-
-    # Calcular cambio porcentual
     tendencia["cambio_pct"] = tendencia["media"].pct_change() * 100
 
     if len(tendencia) < 2:
         st.caption("Se necesitan al menos 2 anios para calcular tendencia.")
         return
 
-    # --- Renderizar ---
+    # --- Header ---
     st.markdown(
         '<div class="section-header">'
         '<h4>Tendencia anual</h4>'
@@ -229,33 +235,40 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
         unsafe_allow_html=True,
     )
 
-    # Mostrar ultimos 6 anios como maximo para no saturar
-    ultimos = tendencia.tail(6)
-    cols = st.columns(len(ultimos))
+    # Mostrar ultimos N anios (maximo 12 para no saturar)
+    ultimos = tendencia.tail(12)
+    registros = list(ultimos.iterrows())
+    n_total = len(registros)
 
-    for i, (_, row) in enumerate(ultimos.iterrows()):
-        anio = int(row["anio"])
-        media = row["media"]
-        cambio = row["cambio_pct"]
+    # Calcular filas necesarias (max MAX_METRICAS_POR_FILA por fila)
+    n_filas = math.ceil(n_total / MAX_METRICAS_POR_FILA)
 
-        if pd.notna(cambio):
-            # En contaminacion: subir es malo, bajar es bueno
-            if cambio > 0:
-                flecha = "^"
+    for fila_idx in range(n_filas):
+        # Slice de registros para esta fila
+        inicio = fila_idx * MAX_METRICAS_POR_FILA
+        fin = min(inicio + MAX_METRICAS_POR_FILA, n_total)
+        registros_fila = registros[inicio:fin]
+
+        # Crear columnas (siempre MAX_METRICAS_POR_FILA para alineacion uniforme)
+        cols = st.columns(MAX_METRICAS_POR_FILA)
+
+        for col_idx, (_, row) in enumerate(registros_fila):
+            anio = int(row["anio"])
+            media = row["media"]
+            cambio = row["cambio_pct"]
+
+            if pd.notna(cambio):
+                delta_str = f"{cambio:+.1f}%"
                 delta_color = "inverse"
             else:
-                flecha = "v"
-                delta_color = "inverse"
-            delta_str = f"{cambio:+.1f}%"
-        else:
-            delta_str = None
-            delta_color = "off"
+                delta_str = None
+                delta_color = "off"
 
-        cols[i].metric(
-            label=str(anio),
-            value=f"{media:.1f}",
-            delta=delta_str,
-            delta_color=delta_color,
-        )
+            cols[col_idx].metric(
+                label=str(anio),
+                value=f"{media:.1f}",
+                delta=delta_str,
+                delta_color=delta_color,
+            )
 
-    logger.info(f"[Tendencia] {variable}: {len(tendencia)} anios calculados")
+    logger.info(f"[Tendencia] {variable}: {len(tendencia)} anios, {n_filas} filas de metricas")

@@ -160,7 +160,7 @@ def cargar_impacto_eventos():
         return None
     for col in ["fecha_inicio", "fecha_fin"]:
         if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors="coerce")
+            df[col] = pd.to_datetime(df[col], utc=True, errors="coerce")
     logger.info(
         f"[{nombre}] {len(df):,} filas | {df['evento_id'].nunique()} eventos")
     return df

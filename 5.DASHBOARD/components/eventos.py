@@ -44,13 +44,17 @@ COLOR_POSITIVO = "#d62728"         # Rojo = sube contaminacion (malo)
 COLOR_NEGATIVO = "#2ca02c"         # Verde = baja contaminacion (bueno)
 COLOR_NEUTRO = "#7f7f7f"           # Gris
 
-# Paleta para tipos de evento en timeline
+# Paleta para categorias de evento (taxonomia multidimensional v2)
+# Mapea categoria_evento -> color (tipo_evento = categoria_evento)
 PALETA_TIPOS = {
-    "fallas": "#e74c3c",
-    "partido": "#3498db",
-    "concierto": "#9b59b6",
-    "navidad": "#2ecc71",
-    "otro": "#95a5a6",
+    "festivo": "#e74c3c",        # Rojo (Fallas, Navidad, fiestas)
+    "deportivo": "#3498db",      # Azul (Valencia CF, maratones)
+    "musical": "#9b59b6",        # Purpura (conciertos, festivales)
+    "cultural": "#e67e22",       # Naranja (exposiciones, teatro)
+    "institucional": "#1abc9c",  # Turquesa (conferencias, talleres)
+    "comercial": "#f39c12",      # Amarillo (ferias, mercados)
+    "religioso": "#8e44ad",      # Violeta (procesiones)
+    "otro": "#95a5a6",           # Gris (sin clasificar)
 }
 
 
@@ -546,6 +550,6 @@ def render_tab_eventos(datos: dict) -> None:
 
     st.markdown("---")
     st.caption(
-        f"Filtros activos — "
+        f"Filtros activos â€” "
         f"Tipos de evento: {', '.join(tipos_ev) if tipos_ev else 'Todos'}"
     )
