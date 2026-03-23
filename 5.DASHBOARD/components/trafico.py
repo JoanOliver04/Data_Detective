@@ -43,9 +43,9 @@ DIAS_ORDEN = [
     "Friday", "Saturday", "Sunday",
 ]
 DIAS_NOMBRE_ES = {
-    "Monday": "Lunes", "Tuesday": "Martes", "Wednesday": "Miercoles",
+    "Monday": "Lunes", "Tuesday": "Martes", "Wednesday": "Miércoles",
     "Thursday": "Jueves", "Friday": "Viernes",
-    "Saturday": "Sabado", "Sunday": "Domingo",
+    "Saturday": "Sábado", "Sunday": "Domingo",
 }
 
 # Altura del mapa embebido (px)
@@ -107,7 +107,7 @@ def render_kpis_trafico(df: pd.DataFrame) -> None:
     st.markdown(
         f'<div style="border-left:4px solid {COLOR_TRAFICO};padding-left:12px;'
         f'margin-bottom:1rem;">'
-        f'<h4 style="margin:0;">Indicadores de trafico</h4>'
+        f'<h4 style="margin:0;">Indicadores de tráfico</h4>'
         f'<small style="color:#888;">Incidencias en la red viaria</small>'
         f'</div>',
         unsafe_allow_html=True,
@@ -118,29 +118,29 @@ def render_kpis_trafico(df: pd.DataFrame) -> None:
     c1.metric(
         label="Total incidencias",
         value=f"{total:,}",
-        help="Numero total de incidencias de trafico registradas.",
+        help="Número total de incidencias de tráfico registradas.",
     )
 
     c2.metric(
         label="Media diaria",
         value=f"{media_diaria:.1f}",
-        help=f"Incidencias por dia ({dias_unicos:,} dias con datos).",
+        help=f"Incidencias por día ({dias_unicos:,} días con datos).",
     )
 
     c3.metric(
-        label="Dia con mas trafico",
+        label="Día con mas tráfico",
         value=dia_pico,
         delta=f"{val_dia_pico:,} incidencias" if val_dia_pico else None,
         delta_color="off",
-        help="Dia de la semana con mayor numero de incidencias.",
+        help="Día de la semana con mayor número de incidencias.",
     )
 
     c4.metric(
-        label="Anio mas congestionado",
+        label="Año mas congestionado",
         value=str(anio_pico),
         delta=f"{val_anio_pico:,} incidencias" if val_anio_pico else None,
         delta_color="off",
-        help="Anio con mayor volumen de incidencias registradas.",
+        help="Año con mayor volumen de incidencias registradas.",
     )
 
     logger.info(
@@ -208,10 +208,10 @@ def _grafico_trafico_anual(
 
     fig.update_layout(
         title=dict(
-            text=f"Incidencias de trafico anuales ({anio_min}-{anio_max})",
+            text=f"Incidencias de tráfico anuales ({anio_min}-{anio_max})",
             font=dict(size=16),
         ),
-        xaxis_title="Anio",
+        xaxis_title="Año",
         yaxis_title="Incidencias",
         template="plotly_dark",
         height=450,
@@ -263,7 +263,7 @@ def _grafico_trafico_mensual(
 
     fig.update_layout(
         title=dict(
-            text=f"Incidencias de trafico mensuales ({anio_min}-{anio_max})",
+            text=f"Incidencias de tráfico mensuales ({anio_min}-{anio_max})",
             font=dict(size=16),
         ),
         xaxis_title="Fecha",
@@ -349,7 +349,7 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
 
     fig.update_layout(
         title=dict(
-            text="Distribucion de incidencias por dia de la semana",
+            text="Distribución de incidencias por día de la semana",
             font=dict(size=15),
         ),
         xaxis_title="Media de incidencias por semana",
@@ -368,7 +368,7 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
         dia_max = df_semana.loc[idx_max, "dia"]
         val_max = df_semana.loc[idx_max, "media_semanal"]
         st.caption(
-            f"Dia con mas trafico: **{dia_max}** "
+            f"Día con más tráfico: **{dia_max}** "
             f"({val_max:.1f} incidencias/semana de media)."
         )
 
@@ -389,7 +389,7 @@ def render_mapa_trafico() -> None:
         '<div class="section-header">'
         '<h4>Mapa de incidencias de trafico</h4>'
         '<p style="color:#888;font-size:0.85rem;">'
-        'Distribucion espacial de incidencias por distritos'
+        'Distribución espacial de incidencias por distritos'
         '</p></div>',
         unsafe_allow_html=True,
     )
@@ -475,5 +475,5 @@ def render_tab_trafico(datos: dict) -> None:
 
     st.markdown("---")
     st.caption(
-        f"Filtros activos — Periodo: {anio_min}-{anio_max}"
+        f"Filtros activos \u2014 Periodo: {anio_min}-{anio_max}"
     )

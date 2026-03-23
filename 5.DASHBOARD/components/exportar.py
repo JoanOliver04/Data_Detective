@@ -48,7 +48,7 @@ logger = logging.getLogger("PanelExportacion")
 # Esto permite mostrar un badge informativo al usuario
 DATASET_INFO: Dict[str, Dict[str, str]] = {
     "contaminacion": {
-        "label": "Contaminacion atmosferica",
+        "label": "Contaminación atmosférica",
         "origen": "estatico",
         "fuentes": "GVA (Generalitat Valenciana), EEA",
         "descripcion": (
@@ -57,7 +57,7 @@ DATASET_INFO: Dict[str, Dict[str, str]] = {
         ),
     },
     "meteorologia": {
-        "label": "Meteorologia / Precipitaciones",
+        "label": "Meteorología / Precipitaciones",
         "origen": "estatico",
         "fuentes": "AEMET OpenData",
         "descripcion": (
@@ -66,7 +66,7 @@ DATASET_INFO: Dict[str, Dict[str, str]] = {
         ),
     },
     "trafico": {
-        "label": "Trafico",
+        "label": "Tráfico",
         "origen": "estatico",
         "fuentes": "DGT (Direccion General de Trafico)",
         "descripcion": (
@@ -84,25 +84,25 @@ DATASET_INFO: Dict[str, Dict[str, str]] = {
         ),
     },
     "contam_anual": {
-        "label": "Estadisticas anuales de contaminacion",
+        "label": "Estadísticas anuales de contaminación",
         "origen": "estatico",
         "fuentes": "GVA (procesado ETL)",
         "descripcion": "Medias anuales por barrio y contaminante.",
     },
     "precip_mensual": {
-        "label": "Precipitacion media mensual",
+        "label": "Precipitación media mensual",
         "origen": "estatico",
         "fuentes": "AEMET (procesado ETL)",
         "descripcion": "Precipitacion media por mes y anio.",
     },
     "tendencias": {
-        "label": "Tendencias historicas",
+        "label": "Tendencias históricas",
         "origen": "estatico",
         "fuentes": "Multiples (procesado ETL)",
         "descripcion": "Series de tendencia anual de todas las variables.",
     },
     "pronostico": {
-        "label": "Pronostico meteorologico 72h",
+        "label": "Pronóstico meteorológico 72h",
         "origen": "dinamico",
         "fuentes": "OpenWeatherMap API (streaming)",
         "descripcion": (
@@ -219,7 +219,8 @@ def render_panel_exportacion(
 
         # --- Guard clause: sin datos ---
         if df is None or df.empty:
-            st.warning("No hay datos disponibles para exportar con los filtros actuales.")
+            st.warning(
+                "No hay datos disponibles para exportar con los filtros actuales.")
             return
 
         # --- Info del dataset ---

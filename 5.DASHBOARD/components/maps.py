@@ -282,7 +282,7 @@ def _crear_leyenda_html(variable: str, umbral_oms: float) -> str:
         <span style="color:#2ca02c;">&#9679;</span> Bueno (&lt;75% OMS)<br>
         <span style="color:#ffbb33;">&#9679;</span> Moderado (75-100% OMS)<br>
         <span style="color:#ff7f0e;">&#9679;</span> Alto (&gt;100% OMS)<br>
-        <span style="color:#d62728;">&#9679;</span> Critico (&gt;150% OMS)<br>
+        <span style="color:#d62728;">&#9679;</span> Crítico (&gt;150% OMS)<br>
         <small>Umbral OMS: {umbral_oms} ug/m3</small>
     </div>
     """

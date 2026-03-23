@@ -41,7 +41,8 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
         variable: Variable seleccionada (NO2, O3, PM10, PM2.5...).
     """
     if df is None or df.empty:
-        st.warning("No hay datos de contaminacion para los filtros seleccionados.")
+        st.warning(
+            "No hay datos de contaminacion para los filtros seleccionados.")
         return
 
     # Filtrar por variable y registros validos
@@ -51,7 +52,8 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
     df_var = df[mask].copy()
 
     if df_var.empty:
-        st.warning(f"No hay registros validos de {variable} en el periodo seleccionado.")
+        st.warning(
+            f"No hay registros validos de {variable} en el periodo seleccionado.")
         return
 
     # --- Calculos ---
@@ -94,9 +96,9 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
 
     # KPI 1: Registros validos
     c1.metric(
-        label="Registros validos",
+        label="Registros válidos",
         value=f"{n_registros:,}",
-        help=f"Total de mediciones de {variable} con calidad 'ok'.",
+        help=f"Total de mediciones de {variable} con calidad \u2018ok\u2019.",
     )
 
     # KPI 2: Media con delta OMS
@@ -106,10 +108,10 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
         delta=delta_str,
         delta_color=delta_color,
         help=(
-            f"Media aritmetica de {variable}. "
-            f"Umbral OMS: {umbral_oms} ug/m3. "
-            f"Umbral UE: {umbral_ue} ug/m3."
-            if umbral_oms else f"Media aritmetica de {variable}."
+            f"Media aritmética de {variable}. "
+            f"Umbral OMS: {umbral_oms} \u00b5g/m\u00b3. "
+            f"Umbral UE: {umbral_ue} \u00b5g/m\u00b3."
+            if umbral_oms else f"Media aritmética de {variable}."
         ),
     )
 
@@ -129,7 +131,7 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
             delta_color="inverse" if pct_sobre_oms > 25 else "normal",
             help=(
                 f"Porcentaje de mediciones que superan el umbral OMS "
-                f"de {umbral_oms} ug/m3 para {variable}."
+                f"de {umbral_oms} \u00b5g/m\u00b3 para {variable}."
             ),
         )
     else:
@@ -143,7 +145,7 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
     c4.metric(
         label="Estaciones activas",
         value=str(n_estaciones),
-        help="Numero de estaciones de medicion con datos en el periodo.",
+        help="Número de estaciones de medición con datos en el periodo.",
     )
 
     logger.info(

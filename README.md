@@ -28,12 +28,14 @@ _Designed and built independently as a portfolio-level demonstration of data eng
 | **Data sources integrated**      | 8 (APIs, web scraping, XML feeds, .ics calendars)               |
 | **Historical depth**             | 70 years (meteorology since 1956, air quality since 1963)       |
 | **Real-time stations monitored** | 5 air quality + weather + traffic sensors                       |
-| **Pollutants tracked**           | 6 (NO₂, O₃, PM10, PM2.5, SO₂, CO)                               |
+| **Pollutants tracked**           | 6 (NO₂, O₃, PM10, PM2.5, SO₂, CO)                             |
 | **Event sources**                | 3 (Visit Valencia, City Council, Valencia CF)                   |
 | **Streaming frequency**          | Every 5–60 min via Windows Task Scheduler                       |
 | **ETL pipeline modules**         | 5 sequential stages with integrity validation                   |
 | **Dashboard tabs**               | 5 (Air Quality, Precipitation, Traffic, Event Impact, Forecast) |
-| **Total Python scripts**         | 30+ (collection, processing, visualization, dashboard)          |
+| **Export formats**               | 3 (CSV with European `;` separator, JSON with metadata, XML)   |
+| **Data provenance tracking**     | Every dataset labeled as Static, Dynamic, or Mixed              |
+| **Total Python scripts**         | 37 (collection, processing, visualization, dashboard)           |
 
 ## 📌 The Problem
 
@@ -49,6 +51,7 @@ Data Detective is an **end-to-end data engineering and analytics platform** that
 2. **Processes** raw data through a modular ETL pipeline — normalizing pollutant concentrations against WHO/EU thresholds, cleaning meteorological records, and parsing traffic feeds.
 3. **Correlates** pollution and traffic anomalies with a classified event calendar using a quasi-experimental baseline comparison model.
 4. **Visualizes** everything through an interactive Streamlit dashboard with geospatial heatmaps, historical trend analysis, and 72-hour air quality risk forecasts.
+5. **Exports** filtered datasets in three formats (CSV, JSON, XML), with full provenance metadata and European locale compatibility.
 
 ## 🖼️ Dashboard Preview
 
@@ -79,8 +82,11 @@ Data Detective is an **end-to-end data engineering and analytics platform** that
 - **Event impact analysis** — quasi-experimental baseline model quantifying NO₂, PM2.5, and traffic deviation during mass events
 - **72-hour air quality forecast** — heuristic risk model combining precipitation probability with atmospheric washout effects
 - **WHO/EU threshold monitoring** — every pollutant reading is validated against both WHO and European Union air quality guidelines
-- **Modular architecture** — 30+ scripts, each self-contained, documented, and independently executable
+- **Data provenance tracking** — every dataset and dashboard section is labeled with its origin type: `STATIC` (historical archives), `DYNAMIC` (real-time streaming), or `MIXED` (combined sources) — giving users immediate context about data freshness and reliability
+- **Multi-format data export** — filtered datasets can be downloaded as CSV (European `;` separator with UTF-8 BOM for Excel compatibility), JSON (with project metadata envelope), or XML (sanitized element names) — directly from each dashboard tab
+- **Modular architecture** — 37 scripts, each self-contained, documented, and independently executable
 - **Production-grade logging** — structured logs with rotation, centralized for monitoring scheduled tasks
+- **Full UTF-8 compliance** — proper Spanish character rendering (ñ, tildes, em dashes) throughout the interface, with explicit Unicode escapes to prevent encoding drift
 
 ## 🧪 Methodology
 
@@ -120,7 +126,7 @@ This classification enables grouped analysis — for example, comparing whether 
 
 | Category    | Variables                            | Source                 |
 | ----------- | ------------------------------------ | ---------------------- |
-| Air quality | NO₂, O₃, PM10, PM2.5 (µg/m³)         | GVA + EEA + AQICN      |
+| Air quality | NO₂, O₃, PM10, PM2.5 (µg/m³)       | GVA + EEA + AQICN      |
 | Traffic     | Incident count delta                 | DGT DATEX II           |
 | Controls    | Temperature (°C), Precipitation (mm) | AEMET + OpenWeatherMap |
 
@@ -153,10 +159,23 @@ Data_Detective/
 ├── 4.VISUALIZACIONES/             # Generated: Folium HTML maps + Plotly charts
 │
 ├── 5.DASHBOARD/                   # Streamlit Application
-│   ├── app.py                     #   Main orchestrator
-│   ├── config.py                  #   Centralized paths, thresholds, palettes
+│   ├── app.py                     #   Main orchestrator + global filters
+│   ├── config.py                  #   Centralized paths, thresholds, palettes,
+│   │                              #     data origin registry (ORIGEN_DATOS)
 │   ├── data_loader.py             #   Cached data loading layer
-│   └── components/                #   8 modular UI components
+│   └── components/                #   10 modular UI components:
+│       ├── sidebar.py             #     Global filters + data status panel
+│       ├── kpis.py                #     Air quality KPI metrics
+│       ├── maps.py                #     Folium geospatial maps
+│       ├── trends.py              #     Temporal charts + annual trends
+│       ├── meteorologia.py        #     Precipitation tab (adaptive granularity)
+│       ├── trafico.py             #     Traffic tab (weekly distribution + map)
+│       ├── eventos.py             #     Event impact tab (Gantt timeline)
+│       ├── pronostico.py          #     72h forecast tab (risk heuristic)
+│       ├── exportar.py            #     Export panel (CSV/JSON/XML download)
+│       └── utils/
+│           ├── exportador.py      #       Format converters (BOM, sanitization)
+│           └── formatters.py      #       Number/percentage formatting
 │
 ├── logs/                          # Structured logging (file rotation)
 ├── .env                           # API keys (git-ignored)
@@ -194,36 +213,81 @@ Data_Detective/
                               ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                     📊 STREAMLIT DASHBOARD                                  │
-│      KPIs · Heatmaps · Trends · Event Impact · 72h Forecast                │
+│  ┌────────────────┐ ┌─────────────────────────────────────────────────┐    │
+│  │ Sidebar        │ │  5 Tabs with origin badges:                     │    │
+│  │ ─────────────  │ │                                                 │    │
+│  │ Filters        │ │  🏭 Air Quality    [STATIC]                     │    │
+│  │ Data Status:   │ │  🌧️ Precipitation  [STATIC]                     │    │
+│  │ ✅ Contam.     │ │  🚗 Traffic        [STATIC]                     │    │
+│  │    [STATIC]    │ │  🎆 Event Impact   [MIXED]                      │    │
+│  │ ✅ Forecast    │ │  🔮 72h Forecast   [DYNAMIC]                    │    │
+│  │    [DYNAMIC]   │ │                                                 │    │
+│  │ ─────────────  │ │  Each tab includes:                             │    │
+│  │ Legend:        │ │  · KPIs · Charts · Maps                         │    │
+│  │ 🔵 Static     │ │  · Export panel (CSV / JSON / XML)              │    │
+│  │ 🟢 Dynamic    │ │                                                 │    │
+│  │ 🟠 Mixed      │ └─────────────────────────────────────────────────┘    │
+│  └────────────────┘                                                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 📡 Data Sources
 
-| Source                            | Type            | Data                                 | Period         | Format             | Auth           |
-| --------------------------------- | --------------- | ------------------------------------ | -------------- | ------------------ | -------------- |
-| **GVA** (Generalitat Valenciana)  | REST API        | NO₂, O₃, PM10, PM2.5                 | 1963–present   | JSON               | None           |
-| **AEMET** OpenData                | REST API        | Temperature, humidity, precipitation | 1956–present   | JSON               | API Key (free) |
-| **European Environment Agency**   | Bulk download   | EU air quality records               | Multi-decade   | Parquet (multi-GB) | None           |
-| **AQICN / WAQI**                  | REST API        | Real-time AQI from 5 stations        | Live           | JSON               | Token (free)   |
-| **OpenWeatherMap**                | REST API        | Current weather + 72h forecast       | Live           | JSON               | API Key (free) |
-| **AVAMET**                        | Web scraping    | Precipitation, temperature           | Live           | HTML → parsed      | None           |
-| **DGT** (Traffic Authority)       | DATEX II        | Traffic intensity, speed, incidents  | Live           | XML                | None           |
-| **Visit Valencia / City Council** | .ics + scraping | Mass events calendar                 | Current season | .ics / HTML        | None           |
+| Source                            | Type            | Data                                 | Period         | Format             | Auth           | Origin   |
+| --------------------------------- | --------------- | ------------------------------------ | -------------- | ------------------ | -------------- | -------- |
+| **GVA** (Generalitat Valenciana)  | REST API        | NO₂, O₃, PM10, PM2.5                | 1963–present   | JSON               | None           | Static   |
+| **AEMET** OpenData                | REST API        | Temperature, humidity, precipitation | 1956–present   | JSON               | API Key (free) | Static   |
+| **European Environment Agency**   | Bulk download   | EU air quality records               | Multi-decade   | Parquet (multi-GB) | None           | Static   |
+| **AQICN / WAQI**                  | REST API        | Real-time AQI from 5 stations        | Live           | JSON               | Token (free)   | Dynamic  |
+| **OpenWeatherMap**                | REST API        | Current weather + 72h forecast       | Live           | JSON               | API Key (free) | Dynamic  |
+| **AVAMET**                        | Web scraping    | Precipitation, temperature           | Live           | HTML → parsed      | None           | Dynamic  |
+| **DGT** (Traffic Authority)       | DATEX II        | Traffic intensity, speed, incidents  | Live           | XML                | None           | Dynamic  |
+| **Visit Valencia / City Council** | .ics + scraping | Mass events calendar                 | Current season | .ics / HTML        | None           | Mixed    |
 
 ## 📊 Interactive Dashboard
 
-The Streamlit dashboard provides five analytical tabs:
+The Streamlit dashboard provides five analytical tabs, each with **data origin badges** and **built-in export functionality**:
 
-| Tab                  | What It Shows                                                                                                                               |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **🏭 Air Quality**   | Real-time pollutant levels, Folium heatmaps by neighborhood, historical trends with WHO/EU threshold overlays, annual averages per district |
-| **🌧️ Precipitation** | Current conditions, monthly climatology with standard deviation bands, 70-year precipitation patterns                                       |
-| **🚗 Traffic**       | Live traffic intensity map, incident feed, comparison against historical baselines                                                          |
-| **🎆 Event Impact**  | NO₂/PM2.5/traffic deviation during Fallas, Valencia CF matches, and concerts — grouped by event type and expected impact                    |
-| **🔮 72h Forecast**  | Air quality risk prediction combining precipitation forecasts with atmospheric washout heuristics                                           |
+| Tab                  | Origin        | What It Shows                                                                                                                               |
+| -------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **🏭 Air Quality**   | `STATIC`      | Real-time pollutant levels, Folium heatmaps by neighborhood, historical trends with WHO/EU threshold overlays, annual averages per district |
+| **🌧️ Precipitation** | `STATIC`      | Current conditions, monthly climatology with standard deviation bands, 70-year precipitation patterns                                       |
+| **🚗 Traffic**       | `STATIC`      | Live traffic intensity map, incident feed, comparison against historical baselines                                                          |
+| **🎆 Event Impact**  | `MIXED`       | NO₂/PM2.5/traffic deviation during Fallas, Valencia CF matches, and concerts — grouped by event type and expected impact                    |
+| **🔮 72h Forecast**  | `DYNAMIC`     | Air quality risk prediction combining precipitation forecasts with atmospheric washout heuristics                                           |
 
-**Sidebar filters** allow slicing all views by date range, neighborhood/district, and specific pollutant.
+**Sidebar filters** allow slicing all views by date range, neighborhood/district, and specific pollutant. The sidebar also displays **data status** for all five datasets with their origin badges and a color-coded legend.
+
+### Data Provenance Badges
+
+Every tab header and sidebar entry displays a colored badge indicating the data origin:
+
+| Badge          | Color      | Meaning                                                                              |
+| -------------- | ---------- | ------------------------------------------------------------------------------------ |
+| **`STATIC`**   | 🔵 Blue   | Historical data from bulk archives (GVA, AEMET, EEA). Does not change once ingested. |
+| **`DYNAMIC`**  | 🟢 Green  | Real-time streaming data (AQICN, OpenWeatherMap, DGT). Refreshes periodically.       |
+| **`MIXED`**    | 🟠 Orange | Combines static baselines with dynamic event feeds.                                  |
+
+This is centralized in `config.py` via the `ORIGEN_DATOS` registry and the `badge_origen_html()` function, ensuring a single source of truth across all components.
+
+### Data Export System
+
+Every tab includes a collapsible **Export Data** panel that allows downloading the currently filtered dataset in three formats:
+
+| Format   | Features                                                                                          |
+| -------- | ------------------------------------------------------------------------------------------------- |
+| **CSV**  | European `;` separator (comma-as-decimal safe), UTF-8 with BOM (Excel opens accents correctly)    |
+| **JSON** | `records` format wrapped in a metadata envelope (`_metadata`, `total_registros`, `columnas`, `datos`) |
+| **XML**  | Auto-sanitized element names (e.g., `PM2.5` → `PM2_5`), `<dataset>/<registro>` structure          |
+
+The export panel also shows:
+
+- **Origin badge** — whether the dataset is static, dynamic, or mixed
+- **Source attribution** — which official data sources contributed
+- **Record count** — number of rows × columns being exported
+- **Data preview** — popover with the first 50 rows before downloading
+
+Implementation: `exportar.py` (UI component) + `exportador.py` (format converters).
 
 ## 🚀 Getting Started
 
@@ -298,7 +362,7 @@ To schedule streaming data capture every 10 minutes:
 | **4** | Event parsing & heuristic classification              | `eventos_visitvalencia.py`, `eventos_ayuntamiento.py`, `eventos_valenciacf.py`, `clasificar_eventos.py` | ✅ Complete |
 | **5** | ETL pipeline (normalize, clean, aggregate, correlate) | `pipeline_etl.py` orchestrating 5 processing scripts                                                    | ✅ Complete |
 | **6** | Visualization generation (maps, charts, forecasts)    | `generar_mapas.py`, `generar_graficos.py`, `generar_pronostico.py`                                      | ✅ Complete |
-| **7** | Interactive Streamlit dashboard                       | `app.py` + 8 modular components                                                                         | ✅ Complete |
+| **7** | Interactive Streamlit dashboard                       | `app.py` + 10 modular components + export system                                                        | ✅ Complete |
 
 ## 🛠️ Tech Stack
 
@@ -308,7 +372,8 @@ To schedule streaming data capture every 10 minutes:
 | **Data Processing** | pandas, NumPy (chunk-based processing for multi-GB datasets)          |
 | **Data Collection** | requests, BeautifulSoup4, icalevents                                  |
 | **Visualization**   | Streamlit, Plotly, Folium, Matplotlib                                 |
-| **Geospatial**      | Folium (Leaflet.js) — heatmaps, marker clusters                       |
+| **Geospatial**      | Folium (Leaflet.js) — heatmaps, marker clusters                      |
+| **Data Export**      | CSV (BOM UTF-8), JSON (metadata envelope), XML (etree sanitization)  |
 | **Automation**      | Windows Task Scheduler, `schedule` library                            |
 | **Security**        | python-dotenv (API key management)                                    |
 | **Logging**         | Python `logging` module with file rotation                            |
@@ -325,8 +390,11 @@ This project showcases a broad set of **data engineering** and **analytics** com
 - **Web Scraping** — Ethical scraping with custom headers, rate limiting, `robots.txt` compliance, and retry logic
 - **Big Data Handling** — Chunk-based processing for multi-GB European Environment Agency datasets; memory-efficient generators
 - **Data Cleaning & Normalization** — WHO/EU threshold mapping, outlier detection, temporal alignment across heterogeneous sources with quality flags
+- **Data Provenance & Lineage** — Centralized origin registry classifying every dataset as static/dynamic/mixed, with visual badges propagated across sidebar, tab headers, and export panels
+- **Multi-Format Data Export** — CSV with European locale (`;` separator, UTF-8 BOM), JSON with metadata envelopes, XML with auto-sanitized element names — all integrated into the dashboard UI
 - **Geospatial Analysis** — Folium heatmaps with station-level granularity and neighborhood-based aggregations
-- **Dashboard Development** — Production-grade Streamlit app with caching (`@st.cache_data`), modular components, and responsive layout
+- **Dashboard Development** — Production-grade Streamlit app with caching (`@st.cache_data`), 10 modular components, and responsive layout
+- **Internationalization (i18n)** — Full Spanish UI with proper Unicode handling (explicit escapes for ñ, tildes, em dashes) to prevent encoding drift across Windows environments
 - **Automation** — Windows Task Scheduler integration for continuous data ingestion
 - **Security Best Practices** — `.env`-based secret management, comprehensive `.gitignore`, no credentials in code
 - **Software Engineering** — Modular architecture, type hints, docstrings, conventional commits, reproducible environments
@@ -341,7 +409,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ## 👤 Author
 
-**Joan** — Data Engineering & Analytics
+**Joan V. Oliver Rosell** — Data Engineering & Analytics
 
 If you'd like to discuss this project or potential opportunities, feel free to reach out.
 

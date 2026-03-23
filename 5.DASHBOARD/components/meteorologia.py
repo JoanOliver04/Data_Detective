@@ -76,7 +76,8 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
     precip_anual = df_ok.groupby("anio", as_index=False).agg(
         acumulado=("precipitacion_mm", "sum"),
     )
-    media_anual = precip_anual["acumulado"].mean() if not precip_anual.empty else 0
+    media_anual = precip_anual["acumulado"].mean(
+    ) if not precip_anual.empty else 0
 
     # Anio mas lluvioso y mas seco
     if not precip_anual.empty:
@@ -94,7 +95,7 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
     st.markdown(
         f'<div style="border-left:4px solid {COLOR_PRECIP};padding-left:12px;'
         f'margin-bottom:1rem;">'
-        f'<h4 style="margin:0;">Indicadores de precipitacion</h4>'
+        f'<h4 style="margin:0;">Indicadores de precipitación</h4>'
         f'<small style="color:#888;">Datos con calidad validada</small>'
         f'</div>',
         unsafe_allow_html=True,
@@ -105,29 +106,30 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
     c1.metric(
         label="Precip. acumulada",
         value=f"{precip_total:,.1f} mm",
-        help="Suma total de precipitacion en el periodo seleccionado.",
+        help="Suma total de precipitación en el periodo seleccionado.",
     )
 
     c2.metric(
         label="Media anual",
         value=f"{media_anual:,.1f} mm/anio",
-        help="Media de la precipitacion acumulada por anio.",
+        help="Media de la precipitación acumulada por anio.",
     )
 
     c3.metric(
-        label="Anio mas lluvioso",
+        label="Año más lluvioso",
         value=str(anio_lluvioso),
-        delta=f"{val_lluvioso:,.1f} mm" if isinstance(anio_lluvioso, int) else None,
+        delta=f"{val_lluvioso:,.1f} mm" if isinstance(
+            anio_lluvioso, int) else None,
         delta_color="off",
-        help="Anio con mayor precipitacion acumulada en el periodo.",
+        help="Año con mayor precipitación acumulada en el periodo.",
     )
 
     c4.metric(
-        label="Anio mas seco",
+        label="Año mas seco",
         value=str(anio_seco),
         delta=f"{val_seco:,.1f} mm" if isinstance(anio_seco, int) else None,
         delta_color="off",
-        help="Anio con menor precipitacion acumulada en el periodo.",
+        help="Año con menor precipitación acumulada en el periodo.",
     )
 
     logger.info(
@@ -214,12 +216,12 @@ def _grafico_anual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
 
     fig.update_layout(
         title=dict(
-            text=f"Precipitacion anual acumulada ({anio_min}-{anio_max})",
+            text=f"Precipitación anual acumulada ({anio_min}-{anio_max})",
             font=dict(size=16),
         ),
-        xaxis_title="Anio",
+        xaxis_title="Año",
         yaxis=dict(
-            title="Precipitacion (mm)",
+            title="Precipitación (mm)",
             side="left",
             showgrid=True,
             gridcolor="rgba(255,255,255,0.1)",
@@ -245,12 +247,12 @@ def _grafico_anual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
     st.plotly_chart(fig, width="stretch")
 
     logger.info(
-        f"[Grafico] Precipitacion anual: {len(serie)} puntos"
+        f"[Grafico] Precipitación anual: {len(serie)} puntos"
     )
 
 
 def _grafico_mensual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
-    """Linea de precipitacion acumulada mensual."""
+    """Linea de precipitación acumulada mensual."""
     # Crear columna periodo YYYY-MM para ordenar correctamente
     df = df.copy()
     df["periodo"] = pd.to_datetime(
@@ -395,11 +397,11 @@ def render_climatologia_mensual(df: pd.DataFrame) -> None:
 
     fig.update_layout(
         title=dict(
-            text=f"Climatologia mensual historica ({anio_min}-{anio_max})",
+            text=f"Climatología mensual histórica ({anio_min}-{anio_max})",
             font=dict(size=16),
         ),
         xaxis_title="Mes",
-        yaxis_title="Precipitacion media (mm)",
+        yaxis_title="Precipitación media (mm)",
         template="plotly_dark",
         height=400,
         margin=dict(l=60, r=30, t=60, b=50),
@@ -420,7 +422,7 @@ def render_climatologia_mensual(df: pd.DataFrame) -> None:
         mes_max = clima.loc[idx_max, "mes_nombre"]
         val_max = clima.loc[idx_max, "media"]
         st.caption(
-            f"Mes mas lluvioso historicamente: **{mes_max}** "
+            f"Mes más lluvioso históricamente: **{mes_max}** "
             f"con {val_max:.1f} mm de media."
         )
 
@@ -486,5 +488,5 @@ def render_tab_meteorologia(datos: dict) -> None:
 
     st.markdown("---")
     st.caption(
-        f"Filtros activos — Periodo: {anio_min}-{anio_max}"
+        f"Filtros activos \u2014 Periodo: {anio_min}-{anio_max}"
     )

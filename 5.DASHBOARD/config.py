@@ -68,7 +68,7 @@ FORECAST_GLOB_PATTERN = "openweather_*.json"
 # ==============================================================================
 PAGE_CONFIG = {
     "page_title": "Data Detective - Valencia",
-    "page_icon": "🔍",
+    "page_icon": "\U0001f50d",
     "layout": "wide",
     "initial_sidebar_state": "expanded",
 }
@@ -126,32 +126,32 @@ VARIABLE_COLORS = {
 # NOMBRES DE TABS Y DESCRIPCIONES
 # ==============================================================================
 TAB_NAMES = {
-    "contaminacion": "Contaminacion",
+    "contaminacion": "Contaminación",
     "precipitaciones": "Precipitaciones",
-    "trafico": "Trafico",
+    "trafico": "Tráfico",
     "eventos": "Eventos Masivos",
-    "pronostico": "Pronostico 72h",
+    "pronostico": "Pronóstico 72h",
 }
 DESCRIPCION_TABS = {
     "contaminacion": (
-        "Analisis de calidad del aire en Valencia: NO2, O3, PM10, PM2.5. "
-        "Datos historicos desde 1963 y sensores en tiempo real."
+        "Análisis de calidad del aire en Valencia: NO₂, O₃, PM10, PM2.5. "
+        "Datos históricos desde 1963 y sensores en tiempo real."
     ),
     "precipitaciones": (
-        "Registro de precipitaciones y condiciones meteorologicas. "
-        "Datos AEMET historicos y streaming OpenWeatherMap."
+        "Registro de precipitaciones y condiciones meteorológicas. "
+        "Datos AEMET históricos y streaming OpenWeatherMap."
     ),
     "trafico": (
-        "Incidencias de trafico en la red viaria. "
+        "Incidencias de tráfico en la red viaria. "
         "Datos DGT para la Comunidad Valenciana."
     ),
     "eventos": (
         "Impacto de eventos masivos (Fallas, Valencia CF, conciertos) "
-        "sobre contaminacion y trafico, comparado con baseline."
+        "sobre contaminación y tráfico, comparado con baseline."
     ),
     "pronostico": (
-        "Pronostico meteorologico de 72 horas con indicadores "
-        "heuristicos de riesgo de calidad del aire."
+        "Pronóstico meteorológico de 72 horas con indicadores "
+        "heurísticos de riesgo de calidad del aire."
     ),
 }
 

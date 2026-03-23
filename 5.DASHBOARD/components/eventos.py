@@ -102,7 +102,8 @@ def render_kpis_eventos(df: pd.DataFrame) -> None:
 
     # Impacto medio NO2 (filtrar filas donde variable == NO2)
     df_no2 = df[df["variable"] == "NO2"] if "variable" in df.columns else df
-    media_no2 = df_no2["impacto_pct"].dropna().mean() if not df_no2.empty else np.nan
+    media_no2 = df_no2["impacto_pct"].dropna(
+    ).mean() if not df_no2.empty else np.nan
 
     # Impacto medio trafico (impacto_trafico_pct existe una vez por fila,
     # pero se repite por variable; tomar media por evento unico)
@@ -139,7 +140,7 @@ def render_kpis_eventos(df: pd.DataFrame) -> None:
         f'margin-bottom:1rem;">'
         f'<h4 style="margin:0;">Indicadores de impacto de eventos</h4>'
         f'<small style="color:#888;">'
-        f'Analisis quasi-experimental vs. baseline de dias comparables'
+        f'Análisis quasi-experimental vs. baseline de días comparables'
         f'</small></div>',
         unsafe_allow_html=True,
     )
@@ -149,7 +150,7 @@ def render_kpis_eventos(df: pd.DataFrame) -> None:
     c1.metric(
         label="Eventos analizados",
         value=str(n_eventos),
-        help="Numero de eventos unicos con datos de impacto calculados.",
+        help="Número de eventos únicos con datos de impacto calculados.",
     )
 
     c2.metric(
@@ -161,19 +162,19 @@ def render_kpis_eventos(df: pd.DataFrame) -> None:
         delta_color="inverse",
         help=(
             "Cambio porcentual medio de NO2 durante eventos "
-            "respecto al baseline de dias comparables."
+            "respecto al baseline de días comparables."
         ),
     )
 
     c3.metric(
-        label="Impacto medio trafico",
+        label="Impacto medio tráfico",
         value=f"{media_trafico:+.1f}%" if pd.notna(media_trafico) else "-",
         delta="Sube" if pd.notna(media_trafico) and media_trafico > 0 else (
             "Baja" if pd.notna(media_trafico) else None
         ),
         delta_color="inverse",
         help=(
-            "Cambio porcentual medio de incidencias de trafico "
+            "Cambio porcentual medio de incidencias de tráfico "
             "durante eventos respecto al baseline."
         ),
     )
@@ -183,7 +184,7 @@ def render_kpis_eventos(df: pd.DataFrame) -> None:
         value=str(tipo_max),
         delta=f"{val_tipo_max:+.1f}%" if val_tipo_max is not None else None,
         delta_color="off",
-        help="Tipo de evento con mayor impacto absoluto medio en contaminacion.",
+        help="Tipo de evento con mayor impacto absoluto medio en contaminación.",
     )
 
     logger.info(
@@ -270,7 +271,7 @@ def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
 
     fig.update_layout(
         title=dict(
-            text="Impacto en contaminacion por tipo de evento",
+            text="Impacto en contaminación por tipo de evento",
             font=dict(size=16),
         ),
         xaxis_title="Tipo de evento",
@@ -291,7 +292,7 @@ def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
 
     # Insight
     st.caption(
-        "Valores positivos (+) indican aumento de contaminacion durante el evento. "
+        "Valores positivos (+) indican aumento de contaminación durante el evento. "
         "Valores negativos (-) indican mejora respecto al baseline."
     )
 
@@ -306,14 +307,14 @@ def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
 
 def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
     """
-    Barras de impacto medio (%) en trafico por tipo de evento.
-    Color segun positivo (rojo) o negativo (verde).
+    Barras de impacto medio (%) en tráfico por tipo de evento.
+    Color según positivo (rojo) o negativo (verde).
 
     Args:
         df: DataFrame de impacto_eventos filtrado.
     """
     if df is None or df.empty:
-        st.info("Sin datos para el grafico de impacto en trafico.")
+        st.info("Sin datos para el gráfico de impacto en tráfico.")
         return
 
     if "impacto_trafico_pct" not in df.columns or "tipo_evento" not in df.columns:
@@ -332,7 +333,7 @@ def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
     )
 
     if agg.empty:
-        st.info("Sin datos agregados de impacto en trafico.")
+        st.info("Sin datos agregados de impacto en tráfico.")
         return
 
     agg = agg.sort_values("impacto_trafico_pct", ascending=True)
@@ -349,7 +350,7 @@ def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
         opacity=0.85,
         hovertemplate=(
             "<b>%{x}</b><br>"
-            "Impacto trafico: %{y:+.1f}%<br>"
+            "Impacto tráfico: %{y:+.1f}%<br>"
             "<extra></extra>"
         ),
     ))
@@ -378,7 +379,7 @@ def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
     st.plotly_chart(fig, width="stretch")
 
     st.caption(
-        "Rojo = mas incidencias de trafico durante el evento. "
+        "Rojo = más incidencias de tráfico durante el evento. "
         "Verde = menos incidencias que el baseline."
     )
 
@@ -434,7 +435,7 @@ def render_timeline_eventos(df: pd.DataFrame) -> None:
         nombre = row["nombre_evento"]
         impacto_str = ""
         if "impacto_trafico_pct" in row and pd.notna(row["impacto_trafico_pct"]):
-            impacto_str = f"<br>Impacto trafico: {row['impacto_trafico_pct']:+.1f}%"
+            impacto_str = f"<br>Impacto tráfico: {row['impacto_trafico_pct']:+.1f}%"
 
         fig.add_trace(go.Scatter(
             x=[row["fecha_inicio"], row["fecha_fin"]],
@@ -550,6 +551,6 @@ def render_tab_eventos(datos: dict) -> None:
 
     st.markdown("---")
     st.caption(
-        f"Filtros activos â€” "
+        f"Filtros activos \u2014 "
         f"Tipos de evento: {', '.join(tipos_ev) if tipos_ev else 'Todos'}"
     )

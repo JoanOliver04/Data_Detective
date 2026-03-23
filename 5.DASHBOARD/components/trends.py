@@ -76,7 +76,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
             .mean()
             .rename(columns={"anio": "periodo", "valor": "media"})
         )
-        x_label = "Anio"
+        x_label = "Año"
         titulo_granularidad = "Media anual"
         hover_template = "<b>%{x}</b><br>Media: %{y:.1f} ug/m3<extra></extra>"
     else:
@@ -152,7 +152,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
     # Layout profesional
     fig.update_layout(
         title=dict(
-            text=f"Evolucion de {variable} en Valencia ({titulo_granularidad})",
+            text=f"Evolución de {variable} en Valencia ({titulo_granularidad})",
             font=dict(size=16),
         ),
         xaxis_title=x_label,
@@ -230,7 +230,7 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
         '<div class="section-header">'
         '<h4>Tendencia anual</h4>'
         '<p style="color:#888;font-size:0.85rem;">'
-        'Media anual de toda la ciudad con cambio respecto al anio anterior'
+        'Media anual de toda la ciudad con cambio respecto al año anterior'
         '</p></div>',
         unsafe_allow_html=True,
     )
@@ -271,4 +271,5 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
                 delta_color=delta_color,
             )
 
-    logger.info(f"[Tendencia] {variable}: {len(tendencia)} anios, {n_filas} filas de metricas")
+    logger.info(
+        f"[Tendencia] {variable}: {len(tendencia)} anios, {n_filas} filas de metricas")

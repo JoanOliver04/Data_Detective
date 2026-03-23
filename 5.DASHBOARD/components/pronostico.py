@@ -43,9 +43,9 @@ POP_THRESHOLD_MOD = 60.0         # % prob. max. -> riesgo moderado
 
 # Colores de riesgo
 RIESGO_CONFIG = {
-    "BAJO": {"color": "#2ca02c", "emoji": "🟢", "desc": "Washout atmosferico probable"},
-    "MODERADO": {"color": "#ff7f0e", "emoji": "🟡", "desc": "Posible limpieza parcial"},
-    "ALTO": {"color": "#d62728", "emoji": "🔴", "desc": "Acumulacion de contaminantes probable"},
+    "BAJO": {"color": "#2ca02c", "emoji": "\U0001f7e2", "desc": "Washout atmosférico probable"},
+    "MODERADO": {"color": "#ff7f0e", "emoji": "\U0001f7e1", "desc": "Posible limpieza parcial"},
+    "ALTO": {"color": "#d62728", "emoji": "\U0001f534", "desc": "Acumulación de contaminantes probable"},
 }
 
 # Altura del grafico embebido (px)
@@ -114,7 +114,7 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
     st.markdown(
         f'<div style="border-left:4px solid {COLOR_PRONOSTICO};padding-left:12px;'
         f'margin-bottom:1rem;">'
-        f'<h4 style="margin:0;">Pronostico proximas 72 horas</h4>'
+        f'<h4 style="margin:0;">Pronóstico próximas 72 horas</h4>'
         f'<small style="color:#888;">'
         f'Fuente: OpenWeatherMap | Archivo: {archivo} | Captura: {captura}'
         f'</small></div>',
@@ -131,21 +131,21 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
             f"Min: {temp_min:.1f} C" if pd.notna(temp_min) else None
         ),
         delta_color="off",
-        help="Temperatura maxima y minima previstas en las proximas 72 horas.",
+        help="Temperatura maxima y minima previstas en las próximas 72 horas.",
     )
 
     # KPI 2: Lluvia total
     c2.metric(
         label="Lluvia total 72h",
         value=f"{lluvia_total:.1f} mm",
-        help="Precipitacion acumulada prevista para las proximas 72 horas.",
+        help="Precipitación acumulada prevista para las próximas 72 horas.",
     )
 
     # KPI 3: Probabilidad maxima
     c3.metric(
         label="Prob. max. lluvia",
         value=f"{prob_max:.0f}%",
-        help="Probabilidad maxima de precipitacion en cualquier franja de 3h.",
+        help="Probabilidad maxima de precipitación en cualquier franja de 3h.",
     )
 
     # KPI 4: Nivel de riesgo
@@ -155,7 +155,7 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
         delta=razon,
         delta_color="off",
         help=(
-            "Indicador heuristico basado en el efecto washout de la lluvia. "
+            "Indicador heurístico basado en el efecto washout de la lluvia. "
             "BAJO = lluvia limpia el aire. ALTO = sin lluvia, contaminantes se acumulan."
         ),
     )
@@ -260,20 +260,20 @@ def render_tab_pronostico(datos: dict) -> None:
     st.divider()
 
     # 3. Explicacion de la heuristica
-    with st.expander("Como se calcula el indicador de riesgo?", expanded=False):
+    with st.expander("\u00bfCómo se calcula el indicador de riesgo?", expanded=False):
         st.markdown(
             "El indicador de riesgo de calidad del aire se basa en el "
-            "**efecto washout** (lavado atmosferico): la lluvia arrastra "
-            "particulas contaminantes, limpiando el aire.\n\n"
-            f"- **Lluvia total > {RAIN_THRESHOLD_LOW} mm** → "
+            "**efecto washout** (lavado atmosférico): la lluvia arrastra "
+            "partículas contaminantes, limpiando el aire.\n\n"
+            f"- **Lluvia total > {RAIN_THRESHOLD_LOW} mm** \u2192 "
             f"Riesgo **BAJO** {RIESGO_CONFIG['BAJO']['emoji']} "
             f"(washout efectivo)\n"
-            f"- **Prob. max. > {POP_THRESHOLD_MOD:.0f}%** → "
+            f"- **Prob. max. > {POP_THRESHOLD_MOD:.0f}%** \u2192 "
             f"Riesgo **MODERADO** {RIESGO_CONFIG['MODERADO']['emoji']} "
             f"(posible limpieza parcial)\n"
-            f"- **Sin lluvia significativa** → "
+            f"- **Sin lluvia significativa** \u2192 "
             f"Riesgo **ALTO** {RIESGO_CONFIG['ALTO']['emoji']} "
-            f"(acumulacion de contaminantes)\n\n"
-            "*Fuente: heuristica implementada en generar_pronostico.py, "
-            "basada en literatura sobre deposicion humeda de contaminantes.*"
+            f"(acumulación de contaminantes)\n\n"
+            "*Fuente: heurística implementada en generar_pronostico.py, "
+            "basada en literatura sobre deposición húmeda de contaminantes.*"
         )
