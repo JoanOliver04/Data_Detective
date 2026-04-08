@@ -19,6 +19,7 @@ from components.trends import render_grafico_contaminacion, render_tendencia_anu
 from components.kpis import render_kpis_contaminacion, render_indice_calidad
 from components.ranking_barrios import render_ranking_barrios
 from components.alertas import render_alertas
+from components.comparador import render_comparador
 from components.meteorologia import render_tab_meteorologia
 from components.trafico import render_tab_trafico
 from components.eventos import render_tab_eventos
@@ -266,6 +267,19 @@ def _tab_eventos(datos):
     )
 
 
+def _tab_comparador(datos):
+    """Tab del comparador historico (Evento vs Baseline / Periodo vs Periodo)."""
+    st.markdown(
+        f'<div class="section-header"><h3>{TAB_NAMES["comparador"]}</h3>'
+        f'<p>{DESCRIPCION_TABS["comparador"]}</p></div>',
+        unsafe_allow_html=True,
+    )
+    render_comparador(
+        df_contaminacion=datos.get("contaminacion"),
+        df_eventos=datos.get("eventos"),
+    )
+
+
 def _tab_pronostico(datos):
     """Tab de pronostico 72h (Fase 7.6 - COMPLETA)."""
     render_tab_pronostico(datos)
@@ -307,7 +321,8 @@ def main():
 
     tabs = st.tabs([
         TAB_NAMES["contaminacion"], TAB_NAMES["precipitaciones"],
-        TAB_NAMES["trafico"], TAB_NAMES["eventos"], TAB_NAMES["pronostico"],
+        TAB_NAMES["trafico"], TAB_NAMES["eventos"],
+        TAB_NAMES["comparador"], TAB_NAMES["pronostico"],
     ])
 
     with tabs[0]:
@@ -319,6 +334,8 @@ def main():
     with tabs[3]:
         _tab_eventos(datos_f)
     with tabs[4]:
+        _tab_comparador(datos_f)
+    with tabs[5]:
         _tab_pronostico(datos_f)
 
     st.markdown('<p class="footer-text">Data Detective Valencia - Big Data 2026 - Joan</p>',

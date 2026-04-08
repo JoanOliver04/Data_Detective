@@ -139,11 +139,12 @@ VARIABLE_COLORS = {
 # NOMBRES DE TABS Y DESCRIPCIONES
 # ==============================================================================
 TAB_NAMES = {
-    "contaminacion": "Contaminación",
+    "contaminacion":  "Contaminación",
     "precipitaciones": "Precipitaciones",
-    "trafico": "Tráfico",
-    "eventos": "Eventos Masivos",
-    "pronostico": "Pronóstico 72h",
+    "trafico":        "Tráfico",
+    "eventos":        "Eventos Masivos",
+    "comparador":     "📊 Comparador",
+    "pronostico":     "Pronóstico 72h",
 }
 DESCRIPCION_TABS = {
     "contaminacion": (
@@ -161,6 +162,10 @@ DESCRIPCION_TABS = {
     "eventos": (
         "Impacto de eventos masivos (Fallas, Valencia CF, conciertos) "
         "sobre contaminación y tráfico, comparado con baseline."
+    ),
+    "comparador": (
+        "Compara contaminación entre un evento y su baseline, "
+        "o entre dos periodos históricos libremente seleccionables."
     ),
     "pronostico": (
         "Pronóstico meteorológico de 72 horas con indicadores "
