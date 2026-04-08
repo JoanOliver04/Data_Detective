@@ -32,14 +32,6 @@ from data_loader import (
 from config import PAGE_CONFIG, TAB_NAMES, DESCRIPCION_TABS
 import streamlit as st
 import pandas as pd
-import sys
-from pathlib import Path
-
-# Asegurar que el directorio del dashboard esta en sys.path
-# (necesario cuando se ejecuta desde la raiz: streamlit run 5.DASHBOARD/app.py)
-_DASHBOARD_DIR = str(Path(__file__).resolve().parent)
-if _DASHBOARD_DIR not in sys.path:
-    sys.path.insert(0, _DASHBOARD_DIR)
 
 
 st.set_page_config(**PAGE_CONFIG)

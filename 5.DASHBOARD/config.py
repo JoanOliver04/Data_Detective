@@ -8,16 +8,27 @@ Ruta: 5.DASHBOARD/config.py
 Autor: Joan | Fecha: 2026
 """
 
+import sys
 from pathlib import Path
+
+# Asegurar que la raiz del proyecto esta en sys.path para importar utils.paths
+# (necesario cuando se ejecuta desde cualquier directorio de trabajo)
+_CONFIG_DIR = Path(__file__).resolve().parent  # 5.DASHBOARD/
+_PROJECT_ROOT_CANDIDATE = _CONFIG_DIR.parent   # DATA_DETECTIVE/
+if str(_PROJECT_ROOT_CANDIDATE) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT_CANDIDATE))
+
+from utils.paths import (  # noqa: E402
+    PROJECT_ROOT,
+    DATOS_LIMPIOS_DIR,
+    VISUALIZACIONES_DIR,
+    DATOS_CRUDOS_DIR,
+)
 
 # ==============================================================================
 # RUTAS BASE
 # ==============================================================================
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATOS_LIMPIOS_DIR = PROJECT_ROOT / "3.DATOS_LIMPIOS"
 ESTADISTICAS_DIR = DATOS_LIMPIOS_DIR / "estadisticas"
-VISUALIZACIONES_DIR = PROJECT_ROOT / "4.VISUALIZACIONES"
-DATOS_CRUDOS_DIR = PROJECT_ROOT / "1.DATOS_EN_CRUDO"
 
 # ==============================================================================
 # RUTAS DE DATOS LIMPIOS (Fases 5.1 - 5.5)
