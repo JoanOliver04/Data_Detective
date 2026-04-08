@@ -17,6 +17,7 @@ Ruta: 5.DASHBOARD/app.py | Autor: Joan | Fecha: 2026
 from components.maps import render_mapa_contaminacion
 from components.trends import render_grafico_contaminacion, render_tendencia_anual
 from components.kpis import render_kpis_contaminacion, render_indice_calidad
+from components.ranking_barrios import render_ranking_barrios
 from components.meteorologia import render_tab_meteorologia
 from components.trafico import render_tab_trafico
 from components.eventos import render_tab_eventos
@@ -202,6 +203,11 @@ def _tab_contaminacion(datos):
             f"**Periodo:** {anio_min} - {anio_max}  \n"
             f"**Distritos:** {', '.join(barrios) if barrios else 'Todos'}",
         )
+
+    # 4. Ranking de barrios
+    st.divider()
+    with st.expander("🏆 Ranking de barrios por calidad del aire"):
+        render_ranking_barrios(df)
 
     # --- EXPORTACION ---
     st.divider()
