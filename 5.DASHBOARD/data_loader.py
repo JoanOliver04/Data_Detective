@@ -221,7 +221,7 @@ def cargar_tendencias():
 # CARGA DE PRONOSTICO (dato dinamico mas reciente)
 # ==============================================================================
 
-@st.cache_data(ttl=1800, show_spinner="Cargando pronostico 72h...")
+@st.cache_data(ttl=300, show_spinner="Cargando pronostico 72h...")
 def cargar_pronostico_72h():
     nombre = "Pronostico 72h"
     if not METEO_DINAMICA_DIR.exists():

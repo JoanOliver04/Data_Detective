@@ -33,6 +33,11 @@ from config import PAGE_CONFIG, TAB_NAMES, DESCRIPCION_TABS
 import streamlit as st
 import pandas as pd
 
+try:
+    from streamlit_autorefresh import st_autorefresh
+except ImportError:
+    st_autorefresh = None
+
 
 st.set_page_config(**PAGE_CONFIG)
 
@@ -264,6 +269,11 @@ def _tab_pronostico(datos):
 
 def main():
     _aplicar_estilos()
+
+    if st_autorefresh:
+        st_autorefresh(interval=300000, limit=None, key="data_refresh")
+    else:
+        st.info("Auto-refresh no disponible. Instala streamlit-autorefresh==1.0.1")
 
     with st.spinner("Cargando datos del proyecto..."):
         datos = _cargar_todos_los_datos()

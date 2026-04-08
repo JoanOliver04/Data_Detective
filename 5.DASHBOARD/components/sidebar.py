@@ -8,6 +8,7 @@ Ruta: 5.DASHBOARD/components/sidebar.py
 Autor: Joan | Fecha: 2026
 """
 
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 import pandas as pd
 import streamlit as st
@@ -44,6 +45,10 @@ def render_sidebar(
 
         st.divider()
         _render_info_datos(df_contam, df_eventos)
+
+        hora_actual = datetime.now().strftime("%H:%M:%S")
+        st.caption(f"Ultima actualizacion: {hora_actual}")
+
         return filtros
 
 
