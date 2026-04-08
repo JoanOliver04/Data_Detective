@@ -8,22 +8,24 @@ Ruta: 5.DASHBOARD/config.py
 Autor: Joan | Fecha: 2026
 """
 
-import sys
+import importlib.util
 from pathlib import Path
 
-# Asegurar que la raiz del proyecto esta en sys.path para importar utils.paths
-# (necesario cuando se ejecuta desde cualquier directorio de trabajo)
-_CONFIG_DIR = Path(__file__).resolve().parent  # 5.DASHBOARD/
-_PROJECT_ROOT_CANDIDATE = _CONFIG_DIR.parent   # DATA_DETECTIVE/
-if str(_PROJECT_ROOT_CANDIDATE) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT_CANDIDATE))
+# Cargamos utils/paths.py por su ruta absoluta para evitar colision de nombres
+# con 5.DASHBOARD/utils/ (el paquete utils del dashboard tiene exportador.py).
+# NO modificamos sys.path: el dashboard mantiene su propio 'utils' intacto.
+_CONFIG_DIR = Path(__file__).resolve().parent          # 5.DASHBOARD/
+_PROJECT_ROOT_CANDIDATE = _CONFIG_DIR.parent           # DATA_DETECTIVE/
+_PATHS_PY = _PROJECT_ROOT_CANDIDATE / "utils" / "paths.py"
 
-from utils.paths import (  # noqa: E402
-    PROJECT_ROOT,
-    DATOS_LIMPIOS_DIR,
-    VISUALIZACIONES_DIR,
-    DATOS_CRUDOS_DIR,
-)
+_spec = importlib.util.spec_from_file_location("project_utils.paths", _PATHS_PY)
+_paths_module = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_paths_module)
+
+PROJECT_ROOT: Path = _paths_module.PROJECT_ROOT
+DATOS_LIMPIOS_DIR: Path = _paths_module.DATOS_LIMPIOS_DIR
+VISUALIZACIONES_DIR: Path = _paths_module.VISUALIZACIONES_DIR
+DATOS_CRUDOS_DIR: Path = _paths_module.DATOS_CRUDOS_DIR
 
 # ==============================================================================
 # RUTAS BASE
