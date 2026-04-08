@@ -16,7 +16,7 @@ Ruta: 5.DASHBOARD/app.py | Autor: Joan | Fecha: 2026
 
 from components.maps import render_mapa_contaminacion
 from components.trends import render_grafico_contaminacion, render_tendencia_anual
-from components.kpis import render_kpis_contaminacion
+from components.kpis import render_kpis_contaminacion, render_indice_calidad
 from components.meteorologia import render_tab_meteorologia
 from components.trafico import render_tab_trafico
 from components.eventos import render_tab_eventos
@@ -165,7 +165,12 @@ def _tab_contaminacion(datos):
         )
         return
 
-    # 1. KPIs
+    # 1. Indice sintetico de calidad del aire (KPI principal)
+    render_indice_calidad(df)
+
+    st.divider()
+
+    # 2. KPIs por variable seleccionada
     render_kpis_contaminacion(df, var)
 
     st.divider()

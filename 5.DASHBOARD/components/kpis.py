@@ -18,6 +18,7 @@ import pandas as pd
 import streamlit as st
 
 from config import UMBRALES_OMS, UMBRALES_UE, VARIABLE_COLORS
+from utils.quality_index import calcular_indice_calidad
 
 logger = logging.getLogger("KPIs")
 
@@ -152,3 +153,131 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
         f"[KPIs] {variable}: {n_registros:,} registros, "
         f"media={media:.2f}, estaciones={n_estaciones}"
     )
+
+
+# ==============================================================================
+# INDICE SINTETICO DE CALIDAD DEL AIRE
+# ==============================================================================
+
+def render_indice_calidad(df: pd.DataFrame) -> None:
+    """
+    Renderiza el indice sintetico de calidad del aire (0-10) como KPI principal.
+
+    Muestra:
+      - Score global con nivel y emoji
+      - Barra de progreso visual
+      - Expander con desglose por variable
+
+    Args:
+        df: DataFrame filtrado de contaminacion (con filtros globales aplicados).
+    """
+    if df is None or df.empty:
+        st.warning("Sin datos para calcular el indice de calidad del aire.")
+        return
+
+    indice = calcular_indice_calidad(df, UMBRALES_OMS)
+
+    if indice is None:
+        st.warning("Sin registros validos para calcular el indice de calidad.")
+        return
+
+    score  = indice["score"]
+    nivel  = indice["nivel"]
+    color  = indice["color"]
+    emoji  = indice["emoji"]
+    detalle = indice["detalle_variables"]
+
+    # --- Cabecera ---
+    st.markdown(
+        '<div class="section-header">'
+        '<h4>Indice de Calidad del Aire</h4>'
+        '<p style="color:#888;font-size:0.85rem;">'
+        'Score sintetico 0-10 basado en umbrales OMS (10 = optimo)'
+        '</p></div>',
+        unsafe_allow_html=True,
+    )
+
+    # --- Fila principal: score grande + nivel + barra ---
+    col_score, col_nivel, col_barra = st.columns([1, 2, 3])
+
+    with col_score:
+        st.metric(
+            label="Score global",
+            value=f"{score:.1f} / 10",
+            help=(
+                "Media ponderada de los sub-scores por contaminante. "
+                "Pesos: NO2 30%, PM2.5 30%, PM10 15%, O3 15%, SO2 5%, CO 5%."
+            ),
+        )
+
+    with col_nivel:
+        st.markdown(
+            f'<div style="padding-top:0.6rem;">'
+            f'<span style="font-size:2rem;">{emoji}</span> '
+            f'<span style="font-size:1.4rem;font-weight:700;color:{color};">'
+            f'{nivel}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    with col_barra:
+        st.markdown(
+            '<p style="margin-bottom:0.3rem;color:#888;font-size:0.8rem;">'
+            'Nivel de calidad</p>',
+            unsafe_allow_html=True,
+        )
+        # Barra de progreso: score/10
+        st.progress(
+            value=score / 10.0,
+            text=f"{score:.1f} / 10",
+        )
+
+    # --- Expander: desglose por variable ---
+    with st.expander("Desglose por contaminante"):
+        if not detalle:
+            st.info("Sin datos de desglose disponibles.")
+            return
+
+        cols = st.columns(len(detalle))
+        for col, (variable, datos) in zip(cols, sorted(detalle.items())):
+            var_color = VARIABLE_COLORS.get(variable, "#888")
+            var_score = datos["score"]
+            var_ratio = datos["ratio"]
+            var_media = datos["media"]
+            umbral    = UMBRALES_OMS.get(variable, "-")
+            var_nivel, var_nivel_color, var_emoji = _nivel_variable(var_score)
+
+            with col:
+                st.markdown(
+                    f'<div style="border-left:3px solid {var_color};'
+                    f'padding-left:8px;margin-bottom:0.5rem;">'
+                    f'<b style="color:{var_color};">{variable}</b><br>'
+                    f'<span style="font-size:1.3rem;font-weight:700;">'
+                    f'{var_score:.1f}</span>'
+                    f'<span style="color:#888;font-size:0.75rem;"> / 10</span><br>'
+                    f'<span style="color:{var_nivel_color};font-size:0.8rem;">'
+                    f'{var_emoji} {var_nivel}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+                st.caption(
+                    f"Media: {var_media:.1f} µg/m³  \n"
+                    f"Umbral OMS: {umbral} µg/m³  \n"
+                    f"Ratio: {var_ratio:.2f}x"
+                )
+
+    logger.info(f"[IndiceCalidad] Renderizado: score={score} nivel={nivel}")
+
+
+def _nivel_variable(score: float):
+    """
+    Retorna (nivel, color, emoji) para el score de una variable individual.
+
+    Args:
+        score: Score 0-10 de la variable.
+
+    Returns:
+        Tupla (nivel, color_hex, emoji).
+    """
+    from utils.quality_index import nivel_desde_score
+    return nivel_desde_score(score)
