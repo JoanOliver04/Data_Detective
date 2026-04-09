@@ -26,6 +26,7 @@ from typing import Optional
 import streamlit as st
 
 from config import UMBRALES_OMS, ESTACION_BARRIO_MAP
+from streaming_background import estado_streaming
 
 logger = logging.getLogger("Realtime")
 
@@ -323,6 +324,43 @@ def _render_trafico(trafico_rt: Optional[dict]) -> None:
 
 
 # ==============================================================================
+# INDICADOR DE AUTO-ACTUALIZACION
+# ==============================================================================
+
+def _render_estado_streaming() -> None:
+    """Muestra una línea con el estado del thread de streaming en background."""
+    ultima = estado_streaming.get("ultima_ejecucion")
+    en_curso = estado_streaming.get("en_ejecucion", False)
+    ciclos = estado_streaming.get("ciclos_completados", 0)
+
+    if ultima is None and not en_curso:
+        st.caption("🔄 Auto-actualización en background: pendiente de primer ciclo...")
+        return
+
+    partes = []
+    if en_curso:
+        partes.append("⏳ Capturando datos ahora...")
+    elif ultima is not None:
+        frescura = _calcular_frescura(ultima.isoformat())
+        partes.append(f"🔄 Última captura automática: {frescura}")
+
+    if ciclos > 0:
+        partes.append(f"({ciclos} ciclo{'s' if ciclos != 1 else ''} completado{'s' if ciclos != 1 else ''})")
+
+    # Mostrar resultados del último ciclo
+    resultados = estado_streaming.get("resultado_ultimo_ciclo")
+    if resultados:
+        exitosos = sum(1 for r in resultados if r.get("estado") == "exitoso")
+        total = len(resultados)
+        if exitosos == total:
+            partes.append(f"— {exitosos}/{total} fuentes OK")
+        else:
+            partes.append(f"— {exitosos}/{total} fuentes OK")
+
+    st.caption(" ".join(partes))
+
+
+# ==============================================================================
 # COMPONENTE PRINCIPAL
 # ==============================================================================
 
@@ -355,5 +393,8 @@ def render_datos_realtime(datos: dict) -> None:
 
         with col_trafico:
             _render_trafico(trafico_rt)
+
+        # Indicador de auto-actualización en background
+        _render_estado_streaming()
 
     logger.info("[Realtime] Panel renderizado")

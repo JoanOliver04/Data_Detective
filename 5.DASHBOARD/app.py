@@ -36,6 +36,7 @@ from data_loader import (
     diagnostico_datos,
 )
 from config import PAGE_CONFIG, TAB_NAMES, DESCRIPCION_TABS
+from streaming_background import iniciar_streaming_background, estado_streaming
 import streamlit as st
 import pandas as pd
 
@@ -46,6 +47,9 @@ except ImportError:
 
 
 st.set_page_config(**PAGE_CONFIG)
+
+# --- Lanzar thread de streaming en background (una sola vez por proceso) ---
+iniciar_streaming_background()
 
 
 # ==============================================================================
