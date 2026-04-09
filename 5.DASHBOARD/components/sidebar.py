@@ -47,7 +47,7 @@ def render_sidebar(
         _render_info_datos(df_contam, df_eventos)
 
         hora_actual = datetime.now().strftime("%H:%M:%S")
-        st.caption(f"Ultima actualizacion: {hora_actual}")
+        st.caption(f"🔄 Última actualización: {hora_actual}")
 
         return filtros
 

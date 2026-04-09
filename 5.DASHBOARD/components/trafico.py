@@ -68,7 +68,7 @@ def render_kpis_trafico(df: pd.DataFrame) -> None:
         df: DataFrame de trafico filtrado.
     """
     if df is None or df.empty:
-        st.warning("No hay datos de trafico para los filtros seleccionados.")
+        st.warning("No hay datos de tráfico para los filtros seleccionados.")
         return
 
     # --- Calculos ---
@@ -128,7 +128,7 @@ def render_kpis_trafico(df: pd.DataFrame) -> None:
     )
 
     c3.metric(
-        label="Día con mas tráfico",
+        label="Día con más tráfico",
         value=dia_pico,
         delta=f"{val_dia_pico:,} incidencias" if val_dia_pico else None,
         delta_color="off",
@@ -136,7 +136,7 @@ def render_kpis_trafico(df: pd.DataFrame) -> None:
     )
 
     c4.metric(
-        label="Año mas congestionado",
+        label="Año más congestionado",
         value=str(anio_pico),
         delta=f"{val_anio_pico:,} incidencias" if val_anio_pico else None,
         delta_color="off",
@@ -163,11 +163,11 @@ def render_grafico_trafico(df: pd.DataFrame) -> None:
         df: DataFrame de trafico filtrado.
     """
     if df is None or df.empty:
-        st.info("Sin datos para generar el grafico de trafico.")
+        st.info("Sin datos para generar el gráfico de tráfico.")
         return
 
     if "anio" not in df.columns:
-        st.info("Columna 'anio' no disponible para graficar.")
+        st.info("Columna de año no disponible para graficar.")
         return
 
     anio_min = int(df["anio"].min())
@@ -208,7 +208,7 @@ def _grafico_trafico_anual(
 
     fig.update_layout(
         title=dict(
-            text=f"Incidencias de tráfico anuales ({anio_min}-{anio_max})",
+            text=f"Incidencias de tráfico anuales ({anio_min}\u2013{anio_max})",
             font=dict(size=16),
         ),
         xaxis_title="Año",
@@ -263,7 +263,7 @@ def _grafico_trafico_mensual(
 
     fig.update_layout(
         title=dict(
-            text=f"Incidencias de tráfico mensuales ({anio_min}-{anio_max})",
+            text=f"Incidencias de tráfico mensuales ({anio_min}\u2013{anio_max})",
             font=dict(size=16),
         ),
         xaxis_title="Fecha",
@@ -291,7 +291,7 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
         df: DataFrame de trafico filtrado.
     """
     if df is None or df.empty:
-        st.info("Sin datos para la distribucion semanal.")
+        st.info("Sin datos para la distribución semanal.")
         return
 
     if "dia_semana" not in df.columns:
@@ -387,7 +387,7 @@ def render_mapa_trafico() -> None:
     """
     st.markdown(
         '<div class="section-header">'
-        '<h4>Mapa de incidencias de trafico</h4>'
+        '<h4>Mapa de incidencias de tráfico</h4>'
         '<p style="color:#888;font-size:0.85rem;">'
         'Distribución espacial de incidencias por distritos'
         '</p></div>',
@@ -406,7 +406,7 @@ def render_mapa_trafico() -> None:
 
     # Fallback: sin mapa
     st.info(
-        "Mapa de trafico no disponible. "
+        "Mapa de tráfico no disponible. "
         "Genera el mapa ejecutando:\n\n"
         "`python 2.SCRIPTS/procesamiento/generar_mapas.py`"
     )
@@ -444,7 +444,7 @@ def render_tab_trafico(datos: dict) -> None:
     # Guard clause
     if df is None:
         st.error(
-            "Sin datos de trafico. "
+            "Sin datos de tráfico. "
             "Ejecuta pipeline_etl.py para generar los datos limpios."
         )
         return

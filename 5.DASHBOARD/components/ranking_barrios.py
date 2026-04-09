@@ -87,7 +87,7 @@ def render_ranking_barrios(df_contaminacion: pd.DataFrame) -> None:
         df_contaminacion: DataFrame filtrado de contaminacion (filtros globales ya aplicados).
     """
     if df_contaminacion is None or df_contaminacion.empty:
-        st.warning("Sin datos de contaminacion para generar el ranking.")
+        st.warning("Sin datos de contaminación para generar el ranking.")
         return
 
     if "barrio" not in df_contaminacion.columns:
@@ -132,7 +132,7 @@ def render_ranking_barrios(df_contaminacion: pd.DataFrame) -> None:
         })
 
     if not filas:
-        st.warning("No se pudo calcular el indice para ningun barrio.")
+        st.warning("No se pudo calcular el índice para ningún barrio.")
         return
 
     # Ordenar de mejor (score alto) a peor (score bajo)
@@ -156,7 +156,7 @@ def render_ranking_barrios(df_contaminacion: pd.DataFrame) -> None:
     barrios_aviso = [f["barrio"] for f in filas if f["pocos_datos"]]
     if barrios_aviso:
         st.caption(
-            f"⚠️ Datos limitados (<{MIN_REGISTROS} registros validos): "
+            f"⚠️ Datos limitados (<{MIN_REGISTROS} registros válidos): "
             + ", ".join(barrios_aviso)
             + ". Los scores pueden no ser representativos."
         )

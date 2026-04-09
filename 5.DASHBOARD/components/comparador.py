@@ -61,7 +61,7 @@ def render_comparador(
         df_eventos: DataFrame de impacto de eventos masivos.
     """
     modo = st.radio(
-        "Modo de comparacion",
+        "Modo de comparación",
         [_MODO_EVENTO, _MODO_PERIODO],
         horizontal=True,
         help=(
@@ -199,7 +199,7 @@ def _render_kpis_evento(fila: pd.Series, variable: str) -> None:
             value=f"{media_ev:.1f} µg/m³",
             delta=delta_c,
             delta_color="inverse",
-            help=f"Media baseline: {media_bl:.1f} µg/m³ ({n_dias_bl} dias)",
+            help=f"Media baseline: {media_bl:.1f} µg/m³ ({n_dias_bl} días)",
         )
     else:
         c1.metric(label=f"{variable} durante evento", value="-")
@@ -207,26 +207,26 @@ def _render_kpis_evento(fila: pd.Series, variable: str) -> None:
     # KPI 2: Impacto %
     if imp_pct is not None:
         c2.metric(
-            label="Impacto en contaminacion",
+            label="Impacto en contaminación",
             value=f"{imp_pct:+.1f}%",
-            delta="Aumento" if imp_pct > 0 else "Reduccion",
+            delta="Aumento" if imp_pct > 0 else "Reducción",
             delta_color="inverse" if imp_pct > 0 else "normal",
             help="Cambio porcentual de la media durante el evento vs baseline.",
         )
     else:
-        c2.metric(label="Impacto en contaminacion", value="-")
+        c2.metric(label="Impacto en contaminación", value="-")
 
     # KPI 3: Trafico
     if traf_pct is not None:
         c3.metric(
-            label="Impacto en trafico",
+            label="Impacto en tráfico",
             value=f"{traf_pct:+.1f}%",
-            delta="Mas trafico" if traf_pct > 0 else "Menos trafico",
+            delta="Más tráfico" if traf_pct > 0 else "Menos tráfico",
             delta_color="inverse" if traf_pct > 0 else "normal",
-            help="Cambio porcentual de incidencias de trafico durante el evento.",
+            help="Cambio porcentual de incidencias de tráfico durante el evento.",
         )
     else:
-        c3.metric(label="Impacto en trafico", value="-")
+        c3.metric(label="Impacto en tráfico", value="-")
 
     # KPI 4: Temperatura
     if temp_ev is not None and temp_bl is not None:
@@ -297,7 +297,7 @@ def _grafico_comparativo_barras(
         medias_bl.append(mb if mb is not None else 0.0)
 
     if not labels_x:
-        return go.Figure().update_layout(title="Sin datos para el grafico")
+        return go.Figure().update_layout(title="Sin datos para el gráfico")
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -310,7 +310,7 @@ def _grafico_comparativo_barras(
         textposition="outside",
     ))
     fig.add_trace(go.Bar(
-        name="Baseline (dias normales)",
+        name="Baseline (días normales)",
         x=labels_x,
         y=medias_bl,
         marker_color=_COLOR_BASE,
@@ -320,7 +320,7 @@ def _grafico_comparativo_barras(
     ))
 
     fig.update_layout(
-        title=f"{nombre_evento} — Contaminacion: Evento vs Baseline",
+        title=f"{nombre_evento} — Contaminación: Evento vs Baseline",
         xaxis_title="Variable",
         yaxis_title="Media (µg/m³)",
         barmode="group",
@@ -430,9 +430,9 @@ def _render_modo_periodo(
         st.caption(f"Periodo B: {label_b} — {n_b:,} registros")
 
     if not medias_a:
-        st.warning(f"Sin datos validos en el Periodo A ({label_a}).")
+        st.warning(f"Sin datos válidos en el Periodo A ({label_a}).")
     if not medias_b:
-        st.warning(f"Sin datos validos en el Periodo B ({label_b}).")
+        st.warning(f"Sin datos válidos en el Periodo B ({label_b}).")
 
     if not medias_a or not medias_b:
         return None
@@ -536,7 +536,7 @@ def _grafico_radar_periodos(
     ]
 
     if not variables_radar:
-        return go.Figure().update_layout(title="Sin datos para el radar")
+        return go.Figure().update_layout(title="Sin datos para el gráfico radar")
 
     # Normalizar: valor / umbral_OMS  (1.0 = limite OMS)
     def _normalizar(medias: Dict[str, float], variables: list) -> list:
@@ -575,7 +575,7 @@ def _grafico_radar_periodos(
     ))
 
     fig.update_layout(
-        title="Comparacion de periodos (valores normalizados al umbral OMS)",
+        title="Comparación de periodos (valores normalizados al umbral OMS)",
         polar=dict(
             radialaxis=dict(
                 visible=True,

@@ -210,7 +210,7 @@ def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
         df: DataFrame de impacto_eventos filtrado.
     """
     if df is None or df.empty:
-        st.info("Sin datos para el grafico de impacto en contaminacion.")
+        st.info("Sin datos para el gráfico de impacto en contaminación.")
         return
 
     if "variable" not in df.columns or "tipo_evento" not in df.columns:
@@ -318,7 +318,7 @@ def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
         return
 
     if "impacto_trafico_pct" not in df.columns or "tipo_evento" not in df.columns:
-        st.info("Columnas de impacto de trafico no disponibles.")
+        st.info("Columnas de impacto de tráfico no disponibles.")
         return
 
     # Tomar una fila por evento (impacto_trafico_pct es igual en todas las
@@ -364,7 +364,7 @@ def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
 
     fig.update_layout(
         title=dict(
-            text="Impacto en trafico por tipo de evento",
+            text="Impacto en tráfico por tipo de evento",
             font=dict(size=16),
         ),
         xaxis_title="Tipo de evento",
@@ -402,7 +402,7 @@ def render_timeline_eventos(df: pd.DataFrame) -> None:
         df: DataFrame de impacto_eventos filtrado.
     """
     if df is None or df.empty:
-        st.info("Sin datos para la timeline de eventos.")
+        st.info("Sin datos para la línea de tiempo de eventos.")
         return
 
     for col in ["fecha_inicio", "fecha_fin", "nombre_evento"]:
@@ -421,7 +421,7 @@ def render_timeline_eventos(df: pd.DataFrame) -> None:
     df_ev = df_ev.dropna(subset=["fecha_inicio", "fecha_fin"])
 
     if df_ev.empty:
-        st.info("Sin eventos con fechas validas para la timeline.")
+        st.info("Sin eventos con fechas válidas para la línea de tiempo.")
         return
 
     df_ev = df_ev.sort_values("fecha_inicio")
@@ -522,7 +522,7 @@ def render_tab_eventos(datos: dict) -> None:
     if df is None:
         st.error(
             "Sin datos de impacto de eventos. "
-            "Ejecuta correlacion_eventos.py para generar el analisis."
+            "Ejecuta correlacion_eventos.py para generar el análisis."
         )
         return
 

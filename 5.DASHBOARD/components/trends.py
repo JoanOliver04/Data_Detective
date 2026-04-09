@@ -50,7 +50,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
         variable: Variable seleccionada (NO2, O3, PM10, PM2.5...).
     """
     if df is None or df.empty:
-        st.info("Sin datos para generar el grafico temporal.")
+        st.info("Sin datos para generar el gráfico temporal.")
         return
 
     # Filtrar por variable y calidad
@@ -60,7 +60,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
     df_var = df[mask].copy()
 
     if df_var.empty:
-        st.info(f"Sin registros validos de {variable} para graficar.")
+        st.info(f"Sin registros válidos de {variable} para graficar.")
         return
 
     # --- Decidir granularidad automaticamente ---
@@ -78,7 +78,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
         )
         x_label = "Año"
         titulo_granularidad = "Media anual"
-        hover_template = "<b>%{x}</b><br>Media: %{y:.1f} ug/m3<extra></extra>"
+        hover_template = "<b>%{x}</b><br>Media: %{y:.1f} µg/m³<extra></extra>"
     else:
         # Granularidad MENSUAL
         if "fecha_utc" in df_var.columns:
@@ -101,10 +101,10 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
             )
         x_label = "Fecha"
         titulo_granularidad = "Media mensual"
-        hover_template = "<b>%{x}</b><br>Media: %{y:.1f} ug/m3<extra></extra>"
+        hover_template = "<b>%{x}</b><br>Media: %{y:.1f} µg/m³<extra></extra>"
 
     if serie.empty:
-        st.info("Sin datos agregados para el grafico.")
+        st.info("Sin datos agregados para el gráfico.")
         return
 
     # --- Construir grafico Plotly ---
@@ -156,7 +156,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
             font=dict(size=16),
         ),
         xaxis_title=x_label,
-        yaxis_title=f"{variable} (ug/m3)",
+        yaxis_title=f"{variable} (µg/m³)",
         template="plotly_dark",
         height=450,
         margin=dict(l=60, r=30, t=60, b=50),
@@ -222,7 +222,7 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
     tendencia["cambio_pct"] = tendencia["media"].pct_change() * 100
 
     if len(tendencia) < 2:
-        st.caption("Se necesitan al menos 2 anios para calcular tendencia.")
+        st.caption("Se necesitan al menos 2 años para calcular la tendencia.")
         return
 
     # --- Header ---

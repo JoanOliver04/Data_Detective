@@ -43,7 +43,7 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
     """
     if df is None or df.empty:
         st.warning(
-            "No hay datos de contaminacion para los filtros seleccionados.")
+            "No hay datos de contaminación para los filtros seleccionados.")
         return
 
     # Filtrar por variable y registros validos
@@ -54,7 +54,7 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
 
     if df_var.empty:
         st.warning(
-            f"No hay registros validos de {variable} en el periodo seleccionado.")
+            f"No hay registros válidos de {variable} en el periodo seleccionado.")
         return
 
     # --- Calculos ---
@@ -105,7 +105,7 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
     # KPI 2: Media con delta OMS
     c2.metric(
         label=f"Media {variable}",
-        value=f"{media:.1f} ug/m3" if pd.notna(media) else "-",
+        value=f"{media:.1f} µg/m³" if pd.notna(media) else "-",
         delta=delta_str,
         delta_color=delta_color,
         help=(
@@ -172,13 +172,13 @@ def render_indice_calidad(df: pd.DataFrame) -> None:
         df: DataFrame filtrado de contaminacion (con filtros globales aplicados).
     """
     if df is None or df.empty:
-        st.warning("Sin datos para calcular el indice de calidad del aire.")
+        st.warning("Sin datos para calcular el índice de calidad del aire.")
         return
 
     indice = calcular_indice_calidad(df, UMBRALES_OMS)
 
     if indice is None:
-        st.warning("Sin registros validos para calcular el indice de calidad.")
+        st.warning("Sin registros válidos para calcular el índice de calidad.")
         return
 
     score  = indice["score"]
@@ -190,9 +190,9 @@ def render_indice_calidad(df: pd.DataFrame) -> None:
     # --- Cabecera ---
     st.markdown(
         '<div class="section-header">'
-        '<h4>Indice de Calidad del Aire</h4>'
+        '<h4>Índice de Calidad del Aire</h4>'
         '<p style="color:#888;font-size:0.85rem;">'
-        'Score sintetico 0-10 basado en umbrales OMS (10 = optimo)'
+        'Score sintético 0-10 basado en umbrales OMS (10 = óptimo)'
         '</p></div>',
         unsafe_allow_html=True,
     )

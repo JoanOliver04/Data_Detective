@@ -72,7 +72,7 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
             temp_c, rain_mm, precip_probability_pct.
     """
     if df is None or df.empty:
-        st.warning("No hay datos de pronostico disponibles.")
+        st.warning("No hay datos de pronóstico disponibles.")
         return
 
     # --- Calculos ---
@@ -94,14 +94,14 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
     elif prob_max > POP_THRESHOLD_MOD:
         riesgo = "MODERADO"
         razon = (
-            f"Prob. max. precipitacion ({prob_max:.0f}%) > "
+            f"Prob. máx. precipitación ({prob_max:.0f}%) > "
             f"{POP_THRESHOLD_MOD:.0f}%: posible limpieza parcial"
         )
     else:
         riesgo = "ALTO"
         razon = (
             "Sin lluvia significativa prevista: "
-            "acumulacion de contaminantes probable"
+            "acumulación de contaminantes probable"
         )
 
     cfg = RIESGO_CONFIG[riesgo]
@@ -125,13 +125,13 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
 
     # KPI 1: Temperatura maxima
     c1.metric(
-        label="Temp. maxima",
-        value=f"{temp_max:.1f} C" if pd.notna(temp_max) else "-",
+        label="Temp. máxima",
+        value=f"{temp_max:.1f} °C" if pd.notna(temp_max) else "-",
         delta=(
-            f"Min: {temp_min:.1f} C" if pd.notna(temp_min) else None
+            f"Mín: {temp_min:.1f} °C" if pd.notna(temp_min) else None
         ),
         delta_color="off",
-        help="Temperatura maxima y minima previstas en las próximas 72 horas.",
+        help="Temperatura máxima y mínima previstas en las próximas 72 horas.",
     )
 
     # KPI 2: Lluvia total
@@ -145,7 +145,7 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
     c3.metric(
         label="Prob. max. lluvia",
         value=f"{prob_max:.0f}%",
-        help="Probabilidad maxima de precipitación en cualquier franja de 3h.",
+        help="Probabilidad máxima de precipitación en cualquier franja de 3h.",
     )
 
     # KPI 4: Nivel de riesgo
@@ -184,9 +184,9 @@ def render_grafico_pronostico(df: pd.DataFrame) -> None:
     """
     st.markdown(
         '<div class="section-header">'
-        '<h4>Evolucion prevista 72h</h4>'
+        '<h4>Evolución prevista 72h</h4>'
         '<p style="color:#888;font-size:0.85rem;">'
-        'Temperatura, precipitacion y probabilidad de lluvia'
+        'Temperatura, precipitación y probabilidad de lluvia'
         '</p></div>',
         unsafe_allow_html=True,
     )
@@ -196,7 +196,7 @@ def render_grafico_pronostico(df: pd.DataFrame) -> None:
         html_content = leer_html_visualizacion(str(VIS_PRONOSTICO_72H_HTML))
         if html_content:
             st.caption(
-                f"Grafico pre-generado: `{VIS_PRONOSTICO_72H_HTML.name}` "
+                f"Gráfico pre-generado: `{VIS_PRONOSTICO_72H_HTML.name}` "
                 f"(regenerar con generar_pronostico.py)"
             )
             components.html(html_content, height=CHART_HEIGHT, scrolling=False)
@@ -204,8 +204,8 @@ def render_grafico_pronostico(df: pd.DataFrame) -> None:
 
     # Estrategia 2: Mensaje informativo
     st.info(
-        "Grafico de pronostico no disponible. "
-        "Genera la visualizacion ejecutando:\n\n"
+        "Gráfico de pronóstico no disponible. "
+        "Genera la visualización ejecutando:\n\n"
         "`python 2.SCRIPTS/procesamiento/generar_pronostico.py`\n\n"
         "Esto requiere datos de OpenWeatherMap en "
         "`1.DATOS_EN_CRUDO/dinamicos/meteorologia/`."
@@ -243,9 +243,9 @@ def render_tab_pronostico(datos: dict) -> None:
     # Guard clause
     if df is None:
         st.error(
-            "Sin datos de pronostico. "
+            "Sin datos de pronóstico. "
             "Ejecuta streaming_openweather.py para capturar datos "
-            "y generar_pronostico.py para generar la visualizacion."
+            "y generar_pronostico.py para generar la visualización."
         )
         return
 

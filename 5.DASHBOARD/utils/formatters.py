@@ -12,7 +12,7 @@ def formato_porcentaje(valor, con_signo=True):
     if valor is None: return "-"
     return f"{valor:+.1f}%" if con_signo else f"{valor:.1f}%"
 
-def formato_concentracion(valor, unidad="ug/m3"):
+def formato_concentracion(valor, unidad="µg/m³"):
     if valor is None: return "-"
     return f"{valor:.1f} {unidad}"
 

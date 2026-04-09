@@ -57,7 +57,7 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
         df: DataFrame de meteorologia filtrado (con columnas anio, precipitacion_mm).
     """
     if df is None or df.empty:
-        st.warning("No hay datos meteorologicos para los filtros seleccionados.")
+        st.warning("No hay datos meteorológicos para los filtros seleccionados.")
         return
 
     # Filtrar registros validos
@@ -66,7 +66,7 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
         df_ok = df_ok[df_ok["calidad_dato"] == "ok"]
 
     if df_ok.empty:
-        st.warning("No hay registros meteorologicos validos en el periodo.")
+        st.warning("No hay registros meteorológicos válidos en el periodo.")
         return
 
     # --- Calculos ---
@@ -111,8 +111,8 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
 
     c2.metric(
         label="Media anual",
-        value=f"{media_anual:,.1f} mm/anio",
-        help="Media de la precipitación acumulada por anio.",
+        value=f"{media_anual:,.1f} mm/año",
+        help="Media de la precipitación acumulada por año.",
     )
 
     c3.metric(
@@ -125,7 +125,7 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
     )
 
     c4.metric(
-        label="Año mas seco",
+        label="Año más seco",
         value=str(anio_seco),
         delta=f"{val_seco:,.1f} mm" if isinstance(anio_seco, int) else None,
         delta_color="off",
@@ -153,7 +153,7 @@ def render_grafico_precipitacion(df: pd.DataFrame) -> None:
         df: DataFrame de meteorologia filtrado.
     """
     if df is None or df.empty:
-        st.info("Sin datos para generar el grafico de precipitaciones.")
+        st.info("Sin datos para generar el gráfico de precipitaciones.")
         return
 
     df_ok = df.copy()
@@ -161,7 +161,7 @@ def render_grafico_precipitacion(df: pd.DataFrame) -> None:
         df_ok = df_ok[df_ok["calidad_dato"] == "ok"]
 
     if df_ok.empty:
-        st.info("Sin registros validos para graficar.")
+        st.info("Sin registros válidos para graficar.")
         return
 
     anio_min = int(df_ok["anio"].min())
@@ -193,7 +193,7 @@ def _grafico_anual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
         opacity=0.85,
         hovertemplate=(
             "<b>%{x}</b><br>"
-            "Precipitacion: %{y:,.1f} mm<br>"
+            "Precipitación: %{y:,.1f} mm<br>"
             "<extra></extra>"
         ),
     ))
@@ -209,7 +209,7 @@ def _grafico_anual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
         yaxis="y2",
         hovertemplate=(
             "<b>%{x}</b><br>"
-            "Temp. media: %{y:.1f} C<br>"
+            "Temp. media: %{y:.1f} °C<br>"
             "<extra></extra>"
         ),
     ))
@@ -227,7 +227,7 @@ def _grafico_anual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
             gridcolor="rgba(255,255,255,0.1)",
         ),
         yaxis2=dict(
-            title="Temperatura (C)",
+            title="Temperatura (°C)",
             side="right",
             overlaying="y",
             showgrid=False,
@@ -278,18 +278,18 @@ def _grafico_mensual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
         fillcolor="rgba(23,190,207,0.15)",
         hovertemplate=(
             "<b>%{x|%b %Y}</b><br>"
-            "Precipitacion: %{y:,.1f} mm<br>"
+            "Precipitación: %{y:,.1f} mm<br>"
             "<extra></extra>"
         ),
     ))
 
     fig.update_layout(
         title=dict(
-            text=f"Precipitacion mensual ({anio_min}-{anio_max})",
+            text=f"Precipitación mensual ({anio_min}-{anio_max})",
             font=dict(size=16),
         ),
         xaxis_title="Fecha",
-        yaxis_title="Precipitacion (mm)",
+        yaxis_title="Precipitación (mm)",
         template="plotly_dark",
         height=450,
         margin=dict(l=60, r=30, t=60, b=50),
@@ -321,7 +321,7 @@ def render_climatologia_mensual(df: pd.DataFrame) -> None:
         df: DataFrame de meteorologia (puede ser con o sin filtro de anio).
     """
     if df is None or df.empty:
-        st.info("Sin datos para calcular climatologia mensual.")
+        st.info("Sin datos para calcular la climatología mensual.")
         return
 
     df_ok = df.copy()
@@ -329,7 +329,7 @@ def render_climatologia_mensual(df: pd.DataFrame) -> None:
         df_ok = df_ok[df_ok["calidad_dato"] == "ok"]
 
     if df_ok.empty or "mes" not in df_ok.columns:
-        st.info("Sin datos mensuales para climatologia.")
+        st.info("Sin datos mensuales para la climatología.")
         return
 
     # Paso 1: acumulado mensual por anio-mes
@@ -463,7 +463,7 @@ def render_tab_meteorologia(datos: dict) -> None:
     # Guard clause
     if df is None:
         st.error(
-            "Sin datos meteorologicos. "
+            "Sin datos meteorológicos. "
             "Ejecuta pipeline_etl.py para generar los datos limpios."
         )
         return

@@ -161,7 +161,7 @@ def _generar_mapa_dinamico(df: pd.DataFrame, variable: str) -> None:
         df_valido = df_valido[df_valido["calidad_dato"] == "ok"]
 
     if df_valido.empty:
-        st.info("Sin registros validos para el mapa.")
+        st.info("Sin registros válidos para el mapa.")
         return
 
     # --- Estadisticas por estacion x variable (TODAS las variables) ---

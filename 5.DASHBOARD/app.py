@@ -118,9 +118,9 @@ def _aplicar_filtros_globales(datos, filtros):
 # ==============================================================================
 
 def _render_diagnostico():
-    st.warning("Algunos datasets no estan disponibles.")
+    st.warning("Algunos datasets no están disponibles.")
     informe = diagnostico_datos()
-    st.markdown("### Estado de los Datasets")
+    st.markdown("### Estado de los datasets")
     for nombre, info in informe.items():
         estado = "OK" if info["existe"] else "No encontrado"
         tam = f" ({info['tamanio_kb']} KB)" if info["existe"] else ""
@@ -163,7 +163,7 @@ def _tab_contaminacion(datos):
     # Guard clause: sin datos
     if df is None:
         st.error(
-            "Sin datos de contaminacion. "
+            "Sin datos de contaminación. "
             "Ejecuta pipeline_etl.py para generar los datos limpios."
         )
         return
@@ -338,8 +338,12 @@ def main():
     with tabs[5]:
         _tab_pronostico(datos_f)
 
-    st.markdown('<p class="footer-text">Data Detective Valencia - Big Data 2026 - Joan</p>',
-                unsafe_allow_html=True)
+    st.markdown(
+        '<p class="footer-text">'
+        '🔍 Data Detective Valencia | Proyecto Big Data | Universitat de València | 2026 | Joan'
+        '</p>',
+        unsafe_allow_html=True,
+    )
 
 
 if __name__ == "__main__":

@@ -198,7 +198,7 @@ def render_alertas(df_contaminacion: Optional[pd.DataFrame]) -> None:
                           (con filtros globales ya aplicados).
     """
     if df_contaminacion is None or df_contaminacion.empty:
-        st.info("Sin datos de contaminacion para evaluar alertas.")
+        st.info("Sin datos de contaminación para evaluar alertas.")
         return
 
     if "barrio" not in df_contaminacion.columns:
@@ -218,7 +218,7 @@ def render_alertas(df_contaminacion: Optional[pd.DataFrame]) -> None:
     # --- Cabecera del panel ---
     n_barrios = df_reciente["barrio"].nunique() if "barrio" in df_reciente.columns else "?"
     st.caption(
-        f"Evaluacion sobre {n_barrios} barrios | Periodo: {descripcion_periodo}"
+        f"Evaluación sobre {n_barrios} barrios | Periodo: {descripcion_periodo}"
     )
 
     # --- Caso: sin alertas ---

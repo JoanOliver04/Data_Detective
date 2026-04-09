@@ -88,7 +88,7 @@ def _safe_to_datetime(df, col):
 # CARGA DE DATOS PRINCIPALES
 # ==============================================================================
 
-@st.cache_data(ttl=3600, show_spinner="Cargando datos de contaminacion...")
+@st.cache_data(ttl=3600, show_spinner="Cargando datos de contaminación...")
 def cargar_contaminacion():
     nombre = "Contaminacion"
     if not _archivo_existe_y_no_vacio(CONTAMINACION_PARQUET, nombre):
@@ -107,7 +107,7 @@ def cargar_contaminacion():
     return df
 
 
-@st.cache_data(ttl=3600, show_spinner="Cargando datos meteorologicos...")
+@st.cache_data(ttl=3600, show_spinner="Cargando datos meteorológicos...")
 def cargar_meteorologia():
     nombre = "Meteorologia"
     if not _archivo_existe_y_no_vacio(METEOROLOGIA_CSV, nombre):
@@ -126,7 +126,7 @@ def cargar_meteorologia():
     return df
 
 
-@st.cache_data(ttl=3600, show_spinner="Cargando datos de trafico...")
+@st.cache_data(ttl=3600, show_spinner="Cargando datos de tráfico...")
 def cargar_trafico():
     nombre = "Trafico"
     if not _archivo_existe_y_no_vacio(TRAFICO_CSV, nombre):
@@ -170,7 +170,7 @@ def cargar_impacto_eventos():
 # CARGA DE ESTADISTICAS AGREGADAS (Fase 5.4)
 # ==============================================================================
 
-@st.cache_data(ttl=3600, show_spinner="Cargando estadisticas anuales...")
+@st.cache_data(ttl=3600, show_spinner="Cargando estadísticas anuales...")
 def cargar_contam_anual_barrio():
     nombre = "Contam. Anual/Barrio"
     if not _archivo_existe_y_no_vacio(CONTAM_ANUAL_BARRIO_CSV, nombre):
@@ -202,7 +202,7 @@ def cargar_precip_mensual():
     return df
 
 
-@st.cache_data(ttl=3600, show_spinner="Cargando tendencias historicas...")
+@st.cache_data(ttl=3600, show_spinner="Cargando tendencias históricas...")
 def cargar_tendencias():
     nombre = "Tendencias"
     if not _archivo_existe_y_no_vacio(TENDENCIAS_CSV, nombre):
@@ -221,7 +221,7 @@ def cargar_tendencias():
 # CARGA DE PRONOSTICO (dato dinamico mas reciente)
 # ==============================================================================
 
-@st.cache_data(ttl=300, show_spinner="Cargando pronostico 72h...")
+@st.cache_data(ttl=300, show_spinner="Cargando pronóstico 72h...")
 def cargar_pronostico_72h():
     nombre = "Pronostico 72h"
     if not METEO_DINAMICA_DIR.exists():
