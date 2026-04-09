@@ -282,6 +282,8 @@ def _tab_contaminacion(datos):
         render_mapa_contaminacion(
             df, var, df_contam_anual,
             trafico_rt=datos.get("trafico_rt"),
+            contam_rt=datos.get("contam_rt"),
+            meteo_rt=datos.get("meteo_rt"),
         )
 
     with col_tendencia:

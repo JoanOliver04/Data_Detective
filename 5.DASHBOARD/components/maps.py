@@ -20,6 +20,7 @@ Autor: Joan | Fecha: 2026
 """
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, List
 
@@ -104,6 +105,8 @@ def render_mapa_contaminacion(
     variable: str,
     df_contam_anual: Optional[pd.DataFrame] = None,
     trafico_rt: Optional[dict] = None,
+    contam_rt: Optional[dict] = None,
+    meteo_rt: Optional[dict] = None,
 ) -> None:
     """
     Renderiza el mapa de contaminacion embebido en Streamlit.
@@ -115,8 +118,11 @@ def render_mapa_contaminacion(
         df: DataFrame filtrado de contaminacion.
         variable: Variable seleccionada en el sidebar (determina color de marcadores).
         df_contam_anual: No utilizado en el mapa dinamico (backward compat).
-        trafico_rt: Diccionario de cargar_trafico_realtime() con incidencias en
-                    tiempo real. Si presente, se anaden marcadores de trafico al mapa.
+        trafico_rt: Diccionario de cargar_trafico_realtime() con incidencias RT.
+        contam_rt: Diccionario de cargar_contaminacion_realtime() con AQI y
+                   contaminantes actuales por estacion. Enriquece los popups.
+        meteo_rt: Diccionario de cargar_meteo_realtime() con temperatura y
+                  humedad actuales (ciudad-wide). Aparece en todos los popups.
     """
     st.markdown(
         '<div class="section-header">'
@@ -144,7 +150,12 @@ def render_mapa_contaminacion(
     logger.info(
         "[Mapa] Sin pre-generado para %s; generando mapa dinamico.", variable
     )
-    _generar_mapa_dinamico(df, variable, trafico_rt=trafico_rt)
+    _generar_mapa_dinamico(
+        df, variable,
+        trafico_rt=trafico_rt,
+        contam_rt=contam_rt,
+        meteo_rt=meteo_rt,
+    )
 
 
 # ==============================================================================
@@ -155,6 +166,8 @@ def _generar_mapa_dinamico(
     df: pd.DataFrame,
     variable: str,
     trafico_rt: Optional[dict] = None,
+    contam_rt: Optional[dict] = None,
+    meteo_rt: Optional[dict] = None,
 ) -> None:
     """
     Genera un mapa Folium dinamico con:
@@ -162,6 +175,7 @@ def _generar_mapa_dinamico(
       - Popups con tabla multi-variable (todas las variables de la estacion)
       - Score de calidad 0-10 por estacion
       - Tooltip: barrio + score + variable seleccionada
+      - Seccion RT en cada popup: AQI actual, contaminantes, temp/humedad
       - PolyLine del Jardin del Turia
       - Marcador especial Avinguda del Turia
       - (Opcional) Capa de incidencias de trafico en tiempo real
@@ -170,6 +184,8 @@ def _generar_mapa_dinamico(
         df: DataFrame filtrado de contaminacion.
         variable: Variable que determina el color de los CircleMarkers.
         trafico_rt: Diccionario de trafico RT con 'incidencias_valencia'.
+        contam_rt: Resultado de cargar_contaminacion_realtime(). Enriquece popups.
+        meteo_rt: Resultado de cargar_meteo_realtime(). Aparece en todos los popups.
     """
     try:
         import folium
@@ -208,6 +224,15 @@ def _generar_mapa_dinamico(
     )
 
     estaciones_con_datos = stats_multivariable["estacion_id"].unique()
+
+    # --- Lookup RT por estacion_id (incluye timestamp compartido) ---
+    rt_por_estacion: Dict[str, dict] = {}
+    if contam_rt:
+        rt_ts = contam_rt.get("timestamp", "")
+        for e in contam_rt.get("estaciones", []):
+            entry = dict(e)
+            entry["_timestamp"] = rt_ts
+            rt_por_estacion[str(e["estacion_id"])] = entry
 
     # --- Mapa base ---
     m = folium.Map(
@@ -254,6 +279,8 @@ def _generar_mapa_dinamico(
             color_nivel=color_nivel,
             n_total=n_total,
             variable_seleccionada=variable,
+            rt_data=rt_por_estacion.get(est_id),
+            meteo_rt=meteo_rt,
         )
 
         # --- Tooltip ---
@@ -284,7 +311,16 @@ def _generar_mapa_dinamico(
         for uid, distrito in ESTACION_DISTRITO_MAP.items()
         if (coords_key := _UID_A_COORDS_KEY.get(uid)) and coords_key in ESTACION_COORDS
     }
-    _anadir_marcadores_distritos(m, DISTRITOS_VALENCIA, distritos_sensores)
+    # Datos RT para distritos que tienen sensor asignado
+    distritos_rt: Dict[str, dict] = {
+        distrito: rt_por_estacion[coords_key]
+        for uid, distrito in ESTACION_DISTRITO_MAP.items()
+        if (coords_key := _UID_A_COORDS_KEY.get(uid)) and coords_key in rt_por_estacion
+    }
+    _anadir_marcadores_distritos(
+        m, DISTRITOS_VALENCIA, distritos_sensores,
+        distritos_rt=distritos_rt, meteo_rt=meteo_rt,
+    )
 
     # --- Capa de trafico en tiempo real ---
     n_trafico = _anadir_capa_trafico(m, trafico_rt)
@@ -383,11 +419,16 @@ def _construir_popup(
     color_nivel: str,
     n_total: int,
     variable_seleccionada: str,
+    rt_data: Optional[dict] = None,
+    meteo_rt: Optional[dict] = None,
 ) -> str:
     """
     Genera el HTML completo del popup para una estacion.
 
-    Incluye cabecera, score de calidad, tabla multi-variable y pie de pagina.
+    Incluye dos secciones claramente separadas:
+      - DATOS HISTORICOS: score de calidad + tabla multi-variable con medias.
+      - DATOS EN TIEMPO REAL: AQI actual, contaminantes RT, temp/humedad y
+        timestamp de captura. Solo aparece si rt_data o meteo_rt estan disponibles.
 
     Args:
         nombre_est: Nombre legible de la estacion.
@@ -399,6 +440,10 @@ def _construir_popup(
         color_nivel: Color hex asociado al nivel.
         n_total: Total de registros de todas las variables.
         variable_seleccionada: Variable activa en el sidebar (se resalta).
+        rt_data: Dict con AQI y contaminantes actuales de esta estacion.
+                 Incluye clave '_timestamp'. None si no hay datos RT.
+        meteo_rt: Dict con temperatura y humedad actuales (ciudad-wide).
+                  None si no hay datos de meteorologia RT.
 
     Returns:
         String HTML listo para folium.Popup.
@@ -415,7 +460,7 @@ def _construir_popup(
     filas_tabla = _filas_tabla_variables(stats, variable_seleccionada)
 
     tabla_html = (
-        '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px;">'
+        '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:4px;">'
         '<thead>'
         '<tr style="background:#2a2a3a;color:#ccc;">'
         '<th style="padding:3px 5px;text-align:left;">Variable</th>'
@@ -440,19 +485,32 @@ def _construir_popup(
         f'</div>'
     )
 
+    historico_header = (
+        '<div style="font-size:10px;color:#666;font-weight:600;letter-spacing:0.5px;'
+        'margin-top:4px;">── DATOS HISTÓRICOS ──</div>'
+    )
+
+    footer_html = (
+        f'<div style="margin-top:6px;color:#555;font-size:10px;">'
+        f'Total registros (todas las variables): {n_total:,}'
+        f'</div>'
+    )
+
+    rt_html = _seccion_rt_popup(rt_data, meteo_rt)
+
     return (
-        f'<div style="font-family:Arial,sans-serif;min-width:260px;max-width:310px;'
-        f'background:#141424;color:#ddd;padding:2px;">'
+        f'<div style="font-family:Arial,sans-serif;min-width:260px;max-width:320px;'
+        f'background:#1a1a2e;color:#ddd;padding:4px;">'
         f'<b style="font-size:13px;">{nombre_est}</b><br>'
         f'<span style="color:#aaa;font-size:11px;">Barrio: {barrio} | '
         f'ID: {est_id}</span>'
         f'<hr style="margin:5px 0;border-color:#333;">'
         + score_html
-        + tabla_html +
-        f'<div style="margin-top:6px;color:#666;font-size:10px;">'
-        f'Total registros (todas las variables): {n_total:,}'
-        f'</div>'
-        f'</div>'
+        + historico_header
+        + tabla_html
+        + footer_html
+        + rt_html
+        + '</div>'
     )
 
 
@@ -520,6 +578,142 @@ def _filas_tabla_variables(
 
 
 # ==============================================================================
+# HELPERS PARA LA SECCION RT DE LOS POPUPS
+# ==============================================================================
+
+# Mapeo (label display, clave en rt_data, clave en VARIABLE_COLORS)
+_CONTAM_RT_CAMPOS = [
+    ("NO₂",   "no2",  "NO2"),
+    ("O₃",    "o3",   "O3"),
+    ("PM10",  "pm10", "PM10"),
+    ("PM2.5", "pm25", "PM2.5"),
+    ("SO₂",   "so2",  "SO2"),
+    ("CO",    "co",   "CO"),
+]
+
+
+def _frescura_rt(timestamp_str: str) -> str:
+    """
+    Convierte un timestamp ISO a string legible para popups HTML.
+
+    Args:
+        timestamp_str: Timestamp ISO (puede tener timezone).
+
+    Returns:
+        String como 'hace 5 min', 'hace 2h', o '' si no parseable.
+    """
+    if not timestamp_str:
+        return ""
+    try:
+        ts = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+        delta = datetime.now() - ts.replace(tzinfo=None)
+        minutos = int(delta.total_seconds() / 60)
+        if minutos < 1:
+            return "hace menos de 1 min"
+        if minutos < 60:
+            return f"hace {minutos} min"
+        horas = minutos // 60
+        return f"hace {horas}h"
+    except (ValueError, TypeError):
+        return ""
+
+
+def _seccion_rt_popup(
+    rt_data: Optional[dict],
+    meteo_rt: Optional[dict],
+) -> str:
+    """
+    Genera el bloque HTML de la seccion 'DATOS EN TIEMPO REAL' del popup.
+
+    Solo incluye campos que tienen valor (None se omite silenciosamente).
+    Devuelve cadena vacia si no hay ningun dato RT disponible.
+
+    Args:
+        rt_data: Dict con AQI, contaminantes y '_timestamp' de esta estacion.
+        meteo_rt: Dict con temp y humedad actuales (ciudad-wide).
+
+    Returns:
+        String HTML con la seccion RT, o '' si rt_data y meteo_rt son None.
+    """
+    tiene_contam = rt_data is not None
+    tiene_meteo = meteo_rt is not None and (
+        meteo_rt.get("temp") is not None or meteo_rt.get("humedad") is not None
+    )
+    if not tiene_contam and not tiene_meteo:
+        return ""
+
+    partes = [
+        '<hr style="margin:6px 0;border-color:#2a3a4a;">',
+        '<div style="font-size:10px;color:#17becf;font-weight:600;'
+        'letter-spacing:0.5px;margin-bottom:4px;">── DATOS EN TIEMPO REAL ──</div>',
+    ]
+
+    # AQI
+    if tiene_contam:
+        aqi = rt_data.get("aqi")
+        if aqi is not None:
+            if aqi <= 50:
+                color_aqi, icono_aqi, nivel_aqi = "#2ca02c", "🟢", "Buena"
+            elif aqi <= 100:
+                color_aqi, icono_aqi, nivel_aqi = "#ffbb33", "🟡", "Moderada"
+            elif aqi <= 150:
+                color_aqi, icono_aqi, nivel_aqi = "#ff7f0e", "🟠", "Dañina (sensibles)"
+            else:
+                color_aqi, icono_aqi, nivel_aqi = "#d62728", "🔴", "Dañina"
+            partes.append(
+                f'<div style="margin-bottom:3px;">'
+                f'<b style="color:{color_aqi};">AQI: {aqi}</b> {icono_aqi} '
+                f'<span style="color:#aaa;font-size:10px;">{nivel_aqi}</span>'
+                f'</div>'
+            )
+
+        # Contaminantes RT
+        filas_rt = []
+        for label, key, color_key in _CONTAM_RT_CAMPOS:
+            val = rt_data.get(key)
+            if val is None:
+                continue
+            color_var = VARIABLE_COLORS.get(color_key, "#888")
+            filas_rt.append(
+                f'<div style="margin:1px 0;font-size:11px;">'
+                f'<span style="color:{color_var};">{label}:</span> '
+                f'<b>{val:.1f} µg/m³</b>'
+                f'</div>'
+            )
+        partes.extend(filas_rt)
+
+    # Temperatura y humedad (meteo_rt es ciudad-wide, misma para todas las estaciones)
+    if tiene_meteo:
+        meteo_partes = []
+        temp = meteo_rt.get("temp")
+        humedad = meteo_rt.get("humedad")
+        if temp is not None:
+            meteo_partes.append(f"🌡️ {temp:.1f}°C")
+        if humedad is not None:
+            meteo_partes.append(f"💧 {int(humedad)}%")
+        if meteo_partes:
+            partes.append(
+                f'<div style="margin-top:3px;font-size:11px;color:#ccc;">'
+                + " &nbsp; ".join(meteo_partes)
+                + "</div>"
+            )
+
+    # Timestamp de la captura
+    ts_str = rt_data.get("_timestamp", "") if tiene_contam else ""
+    if not ts_str and tiene_meteo:
+        ts_str = meteo_rt.get("timestamp", "")  # type: ignore[union-attr]
+    frescura = _frescura_rt(ts_str)
+    if frescura:
+        partes.append(
+            f'<div style="margin-top:4px;color:#555;font-size:10px;">'
+            f'Última captura: {frescura}'
+            f'</div>'
+        )
+
+    return "".join(partes)
+
+
+# ==============================================================================
 # CAPA DE DISTRITOS DE VALENCIA
 # ==============================================================================
 
@@ -527,6 +721,8 @@ def _anadir_marcadores_distritos(
     m,
     distritos: Dict[str, Dict],
     distritos_con_sensor: Dict[str, str],
+    distritos_rt: Optional[Dict[str, dict]] = None,
+    meteo_rt: Optional[dict] = None,
 ) -> None:
     """
     Añade una FeatureGroup toggleable con los 19 distritos de Valencia al mapa.
@@ -534,6 +730,7 @@ def _anadir_marcadores_distritos(
     Para cada distrito muestra un marcador con icono 'building':
       - Azul si el distrito tiene una estación de contaminación activa.
       - Gris si el distrito no tiene sensor (datos interpolados de estaciones cercanas).
+    Los distritos con sensor incluyen la seccion RT si hay datos disponibles.
 
     Args:
         m: Objeto folium.Map al que se añade la capa.
@@ -541,6 +738,8 @@ def _anadir_marcadores_distritos(
             (lat, lon, habitantes, descripcion).
         distritos_con_sensor: Dict {nombre_distrito: nombre_estacion} con los
             distritos que disponen de sensor activo.
+        distritos_rt: Dict {nombre_distrito: rt_data} con datos RT por distrito.
+        meteo_rt: Dict con temperatura y humedad actuales (ciudad-wide).
     """
     try:
         import folium
@@ -548,6 +747,7 @@ def _anadir_marcadores_distritos(
         return
 
     fg = folium.FeatureGroup(name="🏘️ Distritos")
+    _dr = distritos_rt or {}
 
     for nombre_distrito, datos in distritos.items():
         lat = datos["lat"]
@@ -559,25 +759,27 @@ def _anadir_marcadores_distritos(
 
         if tiene_sensor:
             color_icono = "blue"
+            rt_bloque = _seccion_rt_popup(_dr.get(nombre_distrito), meteo_rt)
             popup_content = (
                 f'<div style="font-family:Arial,sans-serif;font-size:12px;'
-                f'min-width:190px;max-width:240px;">'
+                f'min-width:200px;max-width:260px;background:#1a1a2e;color:#ddd;padding:4px;">'
                 f'<b>{nombre_distrito}</b><br>'
                 f'<span style="color:#888;font-size:11px;">{descripcion}</span>'
-                f'<hr style="margin:4px 0;border-color:#ddd;">'
-                f'<b>Habitantes:</b> {habitantes:,}<br>'
+                f'<hr style="margin:4px 0;border-color:#333;">'
+                f'<span style="color:#ccc;"><b>Habitantes:</b> {habitantes:,}</span><br>'
                 f'<b style="color:#3498db;">Sensor:</b> {nombre_estacion}'
-                f'</div>'
+                + rt_bloque
+                + '</div>'
             )
         else:
             color_icono = "gray"
             popup_content = (
                 f'<div style="font-family:Arial,sans-serif;font-size:12px;'
-                f'min-width:190px;max-width:240px;">'
+                f'min-width:200px;max-width:260px;background:#1a1a2e;color:#ddd;padding:4px;">'
                 f'<b>{nombre_distrito}</b><br>'
                 f'<span style="color:#888;font-size:11px;">{descripcion}</span>'
-                f'<hr style="margin:4px 0;border-color:#ddd;">'
-                f'<b>Habitantes:</b> {habitantes:,}<br>'
+                f'<hr style="margin:4px 0;border-color:#333;">'
+                f'<span style="color:#ccc;"><b>Habitantes:</b> {habitantes:,}</span><br>'
                 f'<span style="color:#e67e22;">⚠️ Sin sensor de contaminación '
                 f'en este distrito. Se usan datos interpolados de estaciones '
                 f'cercanas.</span>'
