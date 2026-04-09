@@ -32,6 +32,7 @@ from config import (
     VALENCIA_CENTER_LAT, VALENCIA_CENTER_LON,
     VARIABLE_COLORS, ESTACION_BARRIO_MAP,
     UMBRALES_OMS, UMBRALES_UE,
+    DISTRITOS_VALENCIA, ESTACION_DISTRITO_MAP,
 )
 from data_loader import leer_html_visualizacion
 
@@ -54,14 +55,29 @@ MAPAS_PREGENERADOS = {
     "PM2.5": MAPA_PM25_HTML,
 }
 
-# Coordenadas aproximadas de estaciones (red GVA en Valencia)
+# Coordenadas verificadas de estaciones activas (red GVA + AQICN en Valencia)
+# Claves: código GVA (46250xxx) para datos históricos, o identificador propio.
+# Coords verificadas contra la API AQICN (2026-04-09).
 ESTACION_COORDS: Dict[str, Dict] = {
-    "46250001": {"lat": 39.4561, "lon": -0.3522, "nombre": "Valencia - Pista de Silla"},
+    "46250001": {"lat": 39.4575, "lon": -0.3428, "nombre": "Avd. Francia, València"},
     "46250004": {"lat": 39.4600, "lon": -0.3850, "nombre": "Valencia - Viveros"},
-    "46250030": {"lat": 39.4580, "lon": -0.3900, "nombre": "Valencia - Moli del Sol"},
-    "46250047": {"lat": 39.4830, "lon": -0.3590, "nombre": "Valencia - Benimaclet"},
-    "46250050": {"lat": 39.4620, "lon": -0.3920, "nombre": "Valencia - Patraix"},
-    "46250054": {"lat": 39.4750, "lon": -0.3760, "nombre": "Valencia - Ciutat Vella"},
+    "46250030": {"lat": 39.4561, "lon": -0.3758, "nombre": "Pista de Silla, València"},
+    "46250047": {"lat": 39.4803, "lon": -0.3364, "nombre": "Politècnic, València"},
+    "46250050": {"lat": 39.4811, "lon": -0.4083, "nombre": "Molí del Sol, València"},
+    "46250060": {"lat": 39.4811, "lon": -0.4472, "nombre": "Quart de Poblet (metropolitana)"},
+    "torre_navis": {"lat": 39.4731, "lon": -0.4081, "nombre": "Torre Navis (sensor ciudadano)"},
+}
+
+# Puente AQICN UID (clave en ESTACION_DISTRITO_MAP) -> clave en ESTACION_COORDS.
+# Necesario porque ESTACION_DISTRITO_MAP usa UIDs AQICN y ESTACION_COORDS usa
+# códigos GVA (46250xxx) para mantener compatibilidad con datos históricos.
+_UID_A_COORDS_KEY: Dict[str, str] = {
+    "6639":        "46250001",
+    "6637":        "46250030",
+    "6640":        "46250047",
+    "6638":        "46250050",
+    "6644":        "46250060",
+    "torre_navis": "torre_navis",
 }
 
 # Recorrido aproximado del Jardin del Turia (~9 km, de Cabecera a Ciudad de las Artes)
@@ -261,15 +277,23 @@ def _generar_mapa_dinamico(
             tooltip=tooltip_txt,
         ).add_to(m)
 
-    # --- Jardin del Turia (PolyLine) ---
-    _anadir_turia(m)
+    # --- Capa de distritos (19 distritos de Valencia) ---
+    # ESTACION_DISTRITO_MAP usa UIDs AQICN; _UID_A_COORDS_KEY los traduce a claves GVA.
+    distritos_sensores = {
+        distrito: ESTACION_COORDS[coords_key]["nombre"]
+        for uid, distrito in ESTACION_DISTRITO_MAP.items()
+        if (coords_key := _UID_A_COORDS_KEY.get(uid)) and coords_key in ESTACION_COORDS
+    }
+    _anadir_marcadores_distritos(m, DISTRITOS_VALENCIA, distritos_sensores)
 
     # --- Capa de trafico en tiempo real ---
     n_trafico = _anadir_capa_trafico(m, trafico_rt)
 
-    # --- LayerControl para toggle de capas ---
-    if n_trafico > 0:
-        folium.LayerControl(collapsed=False).add_to(m)
+    # --- Jardin del Turia (PolyLine) ---
+    _anadir_turia(m)
+
+    # --- LayerControl (siempre, porque la capa de distritos esta siempre presente) ---
+    folium.LayerControl(collapsed=False).add_to(m)
 
     # --- Leyenda ---
     leyenda_html = _crear_leyenda_html(variable, umbral_sel, n_trafico > 0)
@@ -493,6 +517,82 @@ def _filas_tabla_variables(
         )
 
     return "".join(filas)
+
+
+# ==============================================================================
+# CAPA DE DISTRITOS DE VALENCIA
+# ==============================================================================
+
+def _anadir_marcadores_distritos(
+    m,
+    distritos: Dict[str, Dict],
+    distritos_con_sensor: Dict[str, str],
+) -> None:
+    """
+    Añade una FeatureGroup toggleable con los 19 distritos de Valencia al mapa.
+
+    Para cada distrito muestra un marcador con icono 'building':
+      - Azul si el distrito tiene una estación de contaminación activa.
+      - Gris si el distrito no tiene sensor (datos interpolados de estaciones cercanas).
+
+    Args:
+        m: Objeto folium.Map al que se añade la capa.
+        distritos: Diccionario DISTRITOS_VALENCIA con datos de cada distrito
+            (lat, lon, habitantes, descripcion).
+        distritos_con_sensor: Dict {nombre_distrito: nombre_estacion} con los
+            distritos que disponen de sensor activo.
+    """
+    try:
+        import folium
+    except ImportError:
+        return
+
+    fg = folium.FeatureGroup(name="🏘️ Distritos")
+
+    for nombre_distrito, datos in distritos.items():
+        lat = datos["lat"]
+        lon = datos["lon"]
+        habitantes = datos.get("habitantes", 0)
+        descripcion = datos.get("descripcion", "")
+        nombre_estacion = distritos_con_sensor.get(nombre_distrito)
+        tiene_sensor = nombre_estacion is not None
+
+        if tiene_sensor:
+            color_icono = "blue"
+            popup_content = (
+                f'<div style="font-family:Arial,sans-serif;font-size:12px;'
+                f'min-width:190px;max-width:240px;">'
+                f'<b>{nombre_distrito}</b><br>'
+                f'<span style="color:#888;font-size:11px;">{descripcion}</span>'
+                f'<hr style="margin:4px 0;border-color:#ddd;">'
+                f'<b>Habitantes:</b> {habitantes:,}<br>'
+                f'<b style="color:#3498db;">Sensor:</b> {nombre_estacion}'
+                f'</div>'
+            )
+        else:
+            color_icono = "gray"
+            popup_content = (
+                f'<div style="font-family:Arial,sans-serif;font-size:12px;'
+                f'min-width:190px;max-width:240px;">'
+                f'<b>{nombre_distrito}</b><br>'
+                f'<span style="color:#888;font-size:11px;">{descripcion}</span>'
+                f'<hr style="margin:4px 0;border-color:#ddd;">'
+                f'<b>Habitantes:</b> {habitantes:,}<br>'
+                f'<span style="color:#e67e22;">⚠️ Sin sensor de contaminación '
+                f'en este distrito. Se usan datos interpolados de estaciones '
+                f'cercanas.</span>'
+                f'</div>'
+            )
+
+        folium.Marker(
+            location=[lat, lon],
+            icon=folium.Icon(color=color_icono, icon="building", prefix="fa"),
+            popup=folium.Popup(popup_content, max_width=250),
+            tooltip=f"{nombre_distrito} | {habitantes:,} hab.",
+        ).add_to(fg)
+
+    fg.add_to(m)
+    logger.debug("[Mapa] Capa distritos: %d marcadores añadidos.", len(distritos))
 
 
 # ==============================================================================

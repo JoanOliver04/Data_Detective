@@ -18,12 +18,15 @@ Fuente de datos:
     Formato:  JSON
     Token:    Requiere registro gratuito en https://aqicn.org/data-platform/token/
 
-Estaciones de Valencia configuradas (con UID de AQICN):
-    - 46250001: València - Centro (Avd. Francia) -> UID 6639
-    - 46250030: València - Pista de Silla -> UID 6637
-    - 46250047: València - Politècnic -> UID 6640
-    - 46250050: València - Molí del Sol -> UID 6638
-    - 46250054: València - Conselleria Meteo (Centre) -> UID 373816
+Estaciones de Valencia configuradas (con UID de AQICN, verificadas 2026-04-09):
+    - 46250001: Avd. Francia, València      -> UID 6639  (Quatre Carreres)
+    - 46250030: Pista de Silla, València    -> UID 6637  (Jesús)
+    - 46250047: Politècnic, València        -> UID 6640  (Algirós)
+    - 46250050: Molí del Sol, València      -> UID 6638  (L'Olivereta)
+    - 46250060: Quart de Poblet (metro.)    -> UID 6644  (Pobles de l'Ouest)
+    - torre_navis: Torre Navis (ciudadano)  -> UID -899581 (Campanar/Mislata)
+
+    Nota: UID 373816 (Conselleria Meteo) eliminado — responde "Unknown ID".
 
 Uso:
     1. Añade AQI_TOKEN en .env
@@ -62,13 +65,15 @@ LOG_DIR = PROJECT_ROOT / "logs"
 AQI_BASE_URL = "https://api.waqi.info/feed/@{uid}/"
 AQI_TOKEN = os.getenv("AQI_TOKEN")
 
-# Estaciones con UID de AQICN
+# Estaciones con UID de AQICN (verificadas 2026-04-09)
+# UIDs negativos (sensor ciudadano) son válidos: la URL usa @-899581
 ESTACIONES_VALENCIA = {
-    "46250001": {"name": "València - Centro (Avd. Francia)", "uid": 6639},
-    "46250030": {"name": "València - Pista de Silla", "uid": 6637},
-    "46250047": {"name": "València - Politècnic", "uid": 6640},
-    "46250050": {"name": "València - Molí del Sol", "uid": 6638},
-    "46250054": {"name": "València - Conselleria Meteo (Centre)", "uid": 373816},
+    "46250001":    {"name": "Avd. Francia, València",            "uid": 6639},
+    "46250030":    {"name": "Pista de Silla, València",          "uid": 6637},
+    "46250047":    {"name": "Politècnic, València",              "uid": 6640},
+    "46250050":    {"name": "Molí del Sol, València",            "uid": 6638},
+    "46250060":    {"name": "Quart de Poblet (metropolitana)",   "uid": 6644},
+    "torre_navis": {"name": "Torre Navis (sensor ciudadano)",    "uid": -899581},
 }
 
 REQUEST_TIMEOUT = 30

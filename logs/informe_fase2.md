@@ -1,7 +1,7 @@
 # 📊 Informe de Verificación - Fase 2: Datos Estáticos
 
 **Proyecto**: Data Detective Valencia  
-**Fecha de verificación**: 2026-02-06 15:00:13  
+**Fecha de verificación**: 2026-04-09 22:24:40  
 **Directorio analizado**: `1.DATOS_EN_CRUDO/estaticos/`
 
 ---
@@ -12,8 +12,8 @@
 |---------|-------|
 | **Fuentes verificadas** | 4 |
 | **Total archivos** | 41 |
-| **Total registros** | 2,507,189 |
-| **Tamaño total** | 32.6 MB |
+| **Total registros** | 2,527,583 |
+| **Tamaño total** | 33.3 MB |
 
 ### Estado por Fuente
 
@@ -21,7 +21,7 @@
 |--------|:-----:|:-------------:|----------:|---------|
 | GVA - Calidad del Aire | ✅ | ➖ | 6,419 | 2024-01-01 → 2025-12-31 |
 | EEA - European Environment Agency | ✅ | ➖ | 2,489,205 | 2014-01-01 → 2025-01-01 |
-| AEMET - Meteorología | ✅ | ➖ | 11,565 | 2025-02-05 → 2026-02-02 |
+| AEMET - Meteorología | ✅ | ➖ | 31,959 | 2021-04-09 → 2026-04-05 |
 | DGT - Tráfico | ❌ | ✅ | 0 | N/A |
 
 ---
@@ -106,15 +106,15 @@
 
 **Estadísticas**:
 - Archivos: 1
-- Registros totales: 11,565
-- Tamaño: 421.8 KB
-- Periodo: 2025-02-05 → 2026-02-02
+- Registros totales: 31,959
+- Tamaño: 1.1 MB
+- Periodo: 2021-04-09 → 2026-04-05
 
 **Archivos**:
 
 | Archivo | Tipo | Registros | Tamaño |
 |---------|------|----------:|-------:|
-| `aemet_valencia_historico.csv` | CSV | 11,565 | 421.8 KB |
+| `aemet_valencia_historico.csv` | CSV | 31,959 | 1.1 MB |
 
 ### DGT - Tráfico
 
@@ -162,8 +162,8 @@
 
 - 3/4 fuentes con datos recopilados
 - 1/4 fuentes con documentación
-- Total de 2,507,189 registros disponibles para análisis
-- Tamaño total del dataset: 32.6 MB
+- Total de 2,527,583 registros disponibles para análisis
+- Tamaño total del dataset: 33.3 MB
 
 ### Próximos pasos (Fase 3)
 1. Implementar scripts de captura de datos dinámicos
@@ -173,4 +173,4 @@
 ---
 
 *Informe generado automáticamente por Data Detective*  
-*Verificación de Fase 2 - 2026-02-06 15:00:13*
+*Verificación de Fase 2 - 2026-04-09 22:24:40*

@@ -95,12 +95,67 @@ PAGE_CONFIG = {
 # MAPEO ESTACION -> BARRIO / DISTRITO
 # ==============================================================================
 ESTACION_BARRIO_MAP = {
-    "46250001": "Quatre Carreres",
-    "46250004": "Jesus",
-    "46250030": "Jesus",
-    "46250047": "Benimaclet",
-    "46250050": "Patraix",
-    "46250054": "Ciutat Vella",
+    "46250001":    "Quatre Carreres",   # Avd. Francia (UID 6639)
+    "46250004":    "Jesús",             # Viveros (GVA histórico)
+    "46250030":    "Jesús",             # Pista de Silla (UID 6637)
+    "46250047":    "Algirós",           # Politècnic (UID 6640)
+    "46250050":    "L'Olivereta",       # Molí del Sol (UID 6638)
+    "46250060":    "Pobles de l'Ouest", # Quart de Poblet (UID 6644, metropolitana)
+    "torre_navis": "Campanar",          # Torre Navis (UID -899581, sensor ciudadano)
+}
+
+# ==============================================================================
+# DISTRITOS DE VALENCIA (19 distritos oficiales)
+# ==============================================================================
+DISTRITOS_VALENCIA = {
+    "Ciutat Vella":      {"lat": 39.4737, "lon": -0.3757, "habitantes": 27000,
+                          "descripcion": "Centro histórico de Valencia"},
+    "L'Eixample":        {"lat": 39.4680, "lon": -0.3710, "habitantes": 42000,
+                          "descripcion": "Ensanche moderno, zona comercial"},
+    "Extramurs":         {"lat": 39.4680, "lon": -0.3820, "habitantes": 49000,
+                          "descripcion": "Barrios al oeste del casco histórico"},
+    "Campanar":          {"lat": 39.4800, "lon": -0.3950, "habitantes": 38000,
+                          "descripcion": "Zona norte-oeste, jardines del Turia"},
+    "La Saïdia":         {"lat": 39.4830, "lon": -0.3750, "habitantes": 47000,
+                          "descripcion": "Barrio norte, junto al río Turia"},
+    "El Pla del Real":   {"lat": 39.4790, "lon": -0.3650, "habitantes": 30000,
+                          "descripcion": "Zona universitaria y deportiva"},
+    "L'Olivereta":       {"lat": 39.4750, "lon": -0.4030, "habitantes": 48000,
+                          "descripcion": "Barrio oeste, zona industrial y residencial"},
+    "Patraix":           {"lat": 39.4620, "lon": -0.3920, "habitantes": 57000,
+                          "descripcion": "Barrio sur-oeste, alta densidad residencial"},
+    "Jesús":             {"lat": 39.4550, "lon": -0.3850, "habitantes": 52000,
+                          "descripcion": "Barrio sur, zona popular"},
+    "Quatre Carreres":   {"lat": 39.4500, "lon": -0.3550, "habitantes": 73000,
+                          "descripcion": "Barrio sur, Ciudad de las Artes y las Ciencias"},
+    "Poblats Marítims":  {"lat": 39.4620, "lon": -0.3350, "habitantes": 58000,
+                          "descripcion": "Zona marítima, playas y puerto"},
+    "Camins al Grau":    {"lat": 39.4650, "lon": -0.3500, "habitantes": 65000,
+                          "descripcion": "Barrio este, próximo al mar"},
+    "Algirós":           {"lat": 39.4780, "lon": -0.3480, "habitantes": 37000,
+                          "descripcion": "Zona norte-este, campus universitario"},
+    "Benimaclet":        {"lat": 39.4870, "lon": -0.3570, "habitantes": 30000,
+                          "descripcion": "Barrio norte, ambiente universitario"},
+    "Rascanya":          {"lat": 39.4900, "lon": -0.3730, "habitantes": 53000,
+                          "descripcion": "Zona norte, barrios populares"},
+    "Benicalap":         {"lat": 39.4930, "lon": -0.3900, "habitantes": 46000,
+                          "descripcion": "Barrio norte-oeste"},
+    "Pobles del Nord":   {"lat": 39.5100, "lon": -0.3700, "habitantes": 7000,
+                          "descripcion": "Poblaciones rurales al norte"},
+    "Pobles de l'Ouest": {"lat": 39.4800, "lon": -0.4300, "habitantes": 3500,
+                          "descripcion": "Poblaciones rurales al oeste"},
+    "Pobles del Sud":    {"lat": 39.4100, "lon": -0.3500, "habitantes": 20000,
+                          "descripcion": "Poblaciones al sur, zona agrícola y huerta"},
+}
+
+# Mapeo estacion (clave AQICN) -> distrito oficial de Valencia
+ESTACION_DISTRITO_MAP = {
+    "6639":        "Quatre Carreres",   # Avd. Francia
+    "6637":        "Jesús",             # Pista de Silla
+    "6640":        "Algirós",           # Politècnic
+    "6638":        "L'Olivereta",       # Molí del Sol
+    "6644":        "Pobles de l'Ouest", # Quart de Poblet (metropolitana)
+    "torre_navis": "Campanar",          # Torre Navis (sensor ciudadano)
 }
 
 # ==============================================================================

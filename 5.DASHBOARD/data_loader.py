@@ -308,6 +308,16 @@ def _cargar_ultimo_json(directorio: Path, patron: str, nombre: str) -> Optional[
         return None
 
 
+def _to_num(val, tipo=float):
+    """Convierte val a tipo numérico; devuelve None si no es convertible."""
+    if val is None:
+        return None
+    try:
+        return tipo(val)
+    except (ValueError, TypeError):
+        return None
+
+
 @st.cache_data(ttl=300, show_spinner=False)
 def cargar_contaminacion_realtime() -> Optional[dict]:
     """
@@ -337,16 +347,16 @@ def cargar_contaminacion_realtime() -> Optional[dict]:
             "estacion_id": est_id,
             "nombre": est_data.get("nombre", est_id),
             "barrio": ESTACION_BARRIO_MAP.get(est_id, "Desconocido"),
-            "aqi": datos.get("aqi"),
+            "aqi": _to_num(datos.get("aqi"), int),
             "dominante": datos.get("dominentpol", ""),
-            "no2": iaqi.get("no2", {}).get("v"),
-            "o3": iaqi.get("o3", {}).get("v"),
-            "pm10": iaqi.get("pm10", {}).get("v"),
-            "pm25": iaqi.get("pm25", {}).get("v"),
-            "so2": iaqi.get("so2", {}).get("v"),
-            "co": iaqi.get("co", {}).get("v"),
-            "temp": iaqi.get("t", {}).get("v"),
-            "humedad": iaqi.get("h", {}).get("v"),
+            "no2":     _to_num(iaqi.get("no2",  {}).get("v")),
+            "o3":      _to_num(iaqi.get("o3",   {}).get("v")),
+            "pm10":    _to_num(iaqi.get("pm10", {}).get("v")),
+            "pm25":    _to_num(iaqi.get("pm25", {}).get("v")),
+            "so2":     _to_num(iaqi.get("so2",  {}).get("v")),
+            "co":      _to_num(iaqi.get("co",   {}).get("v")),
+            "temp":    _to_num(iaqi.get("t",    {}).get("v")),
+            "humedad": _to_num(iaqi.get("h",    {}).get("v")),
         })
 
     result = {
