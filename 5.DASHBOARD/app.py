@@ -54,13 +54,92 @@ st.set_page_config(**PAGE_CONFIG)
 
 def _aplicar_estilos():
     st.markdown("""<style>
-    [data-testid="stMetric"]{background-color:#1e1e2e;border:1px solid #333;border-radius:8px;padding:12px 16px}
-    [data-testid="stMetricLabel"]{font-size:.85rem}
-    [data-testid="stMetricValue"]{font-size:1.6rem}
-    .stTabs [data-baseweb="tab-list"]{gap:8px}
-    .stTabs [data-baseweb="tab"]{padding:8px 20px;font-size:.95rem}
-    .section-header{border-left:4px solid #1f77b4;padding-left:12px;margin:1.5rem 0 1rem 0}
-    .footer-text{text-align:center;color:#555;font-size:.75rem;padding:2rem 0 1rem 0}
+    /* --- Metricas con hover sutil --- */
+    [data-testid="stMetric"]{
+        background: linear-gradient(135deg, #1e1e2e 0%, #252540 100%);
+        border: 1px solid #333;
+        border-radius: 10px;
+        padding: 14px 18px;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    [data-testid="stMetric"]:hover{
+        transform: translateY(-2px);
+        border-color: #1f77b4;
+    }
+    [data-testid="stMetricLabel"]{font-size:.85rem;letter-spacing:0.3px}
+    [data-testid="stMetricValue"]{font-size:1.6rem;font-weight:700}
+
+    /* --- Tabs mejorados --- */
+    .stTabs [data-baseweb="tab-list"]{
+        gap: 4px;
+        background-color: #0e0e1a;
+        border-radius: 10px;
+        padding: 4px;
+    }
+    .stTabs [data-baseweb="tab"]{
+        padding: 10px 22px;
+        font-size: .92rem;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    .stTabs [aria-selected="true"]{
+        background-color: #1e1e2e !important;
+    }
+
+    /* --- Cabeceras de seccion --- */
+    .section-header{
+        border-left: 4px solid #1f77b4;
+        padding-left: 12px;
+        margin: 1.5rem 0 1rem 0;
+    }
+    .section-header h3, .section-header h4{
+        margin-bottom: 2px;
+    }
+    .section-header p{
+        color: #888;
+        font-size: 0.85rem;
+        margin-top: 0;
+    }
+
+    /* --- Expanders --- */
+    .streamlit-expanderHeader{
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    /* --- Dividers mas sutiles --- */
+    hr{
+        border-color: #2a2a3a !important;
+        opacity: 0.5;
+    }
+
+    /* --- Footer --- */
+    .footer-text{
+        text-align: center;
+        color: #555;
+        font-size: .75rem;
+        padding: 2rem 0 1rem 0;
+        border-top: 1px solid #2a2a3a;
+        margin-top: 2rem;
+    }
+
+    /* --- Sidebar branding --- */
+    [data-testid="stSidebar"] [data-testid="stMarkdown"] h1{
+        background: linear-gradient(135deg, #1f77b4, #17becf);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* --- Download buttons uniformes --- */
+    .stDownloadButton > button{
+        border-radius: 6px;
+        font-weight: 600;
+        transition: transform 0.15s ease;
+    }
+    .stDownloadButton > button:hover{
+        transform: scale(1.03);
+    }
     </style>""", unsafe_allow_html=True)
 
 
@@ -351,9 +430,15 @@ def main():
         _tab_pronostico(datos_f)
 
     st.markdown(
-        '<p class="footer-text">'
-        '🔍 Data Detective Valencia | Proyecto Big Data | Universitat de València | 2026 | Joan'
-        '</p>',
+        '<div class="footer-text">'
+        '🔍 <b>Data Detective Valencia</b><br>'
+        '<span style="color:#666;">'
+        'Proyecto Big Data · Universitat de València · 2026 · Joan Oliver'
+        '</span><br>'
+        '<span style="color:#444;font-size:0.65rem;">'
+        'Streamlit · Plotly · Folium · Pandas · OpenWeatherMap · AQICN · DGT'
+        '</span>'
+        '</div>',
         unsafe_allow_html=True,
     )
 

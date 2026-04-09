@@ -335,7 +335,7 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
         x=df_semana["media_semanal"],
         orientation="h",
         marker_color=[
-            COLOR_TRAFICO if dia in ("Viernes", "Sabado", "Domingo")
+            COLOR_TRAFICO if dia in ("Viernes", "Sábado", "Domingo")
             else COLOR_TRAFICO_LIGHT
             for dia in df_semana["dia"]
         ],
@@ -472,8 +472,10 @@ def render_tab_trafico(datos: dict) -> None:
     filtros = datos.get("_filtros", {})
     anio_min = filtros.get("anio_min", "?")
     anio_max = filtros.get("anio_max", "?")
+    n_registros = len(df) if df is not None else 0
 
     st.markdown("---")
     st.caption(
-        f"Filtros activos \u2014 Periodo: {anio_min}-{anio_max}"
+        f"Filtros activos — Periodo: {anio_min}-{anio_max} · "
+        f"{n_registros:,} registros"
     )

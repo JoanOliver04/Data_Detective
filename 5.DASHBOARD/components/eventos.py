@@ -545,12 +545,40 @@ def render_tab_eventos(datos: dict) -> None:
     # 3. Timeline
     render_timeline_eventos(df)
 
-    # 4. Resumen de filtros
+    # 4. Tabla resumen rapida
+    st.divider()
+    with st.expander("📋 Tabla de eventos analizados"):
+        df_resumen = df.drop_duplicates(subset=["evento_id"])[
+            ["nombre_evento", "tipo_evento", "impacto_esperado", "impacto_trafico_pct"]
+        ].copy() if all(
+            c in df.columns for c in ["nombre_evento", "tipo_evento", "impacto_esperado"]
+        ) else None
+        if df_resumen is not None and not df_resumen.empty:
+            df_resumen = df_resumen.rename(columns={
+                "nombre_evento": "Evento",
+                "tipo_evento": "Tipo",
+                "impacto_esperado": "Impacto esperado",
+                "impacto_trafico_pct": "Impacto tráfico (%)",
+            })
+            st.dataframe(
+                df_resumen,
+                hide_index=True,
+                use_container_width=True,
+                column_config={
+                    "Impacto tráfico (%)": st.column_config.NumberColumn(
+                        format="%.1f%%",
+                    ),
+                },
+            )
+        else:
+            st.info("Sin datos de resumen disponibles.")
+
+    # 5. Resumen de filtros
     filtros = datos.get("_filtros", {})
     tipos_ev = filtros.get("tipos_evento", [])
 
     st.markdown("---")
     st.caption(
-        f"Filtros activos \u2014 "
+        f"Filtros activos — "
         f"Tipos de evento: {', '.join(tipos_ev) if tipos_ev else 'Todos'}"
     )

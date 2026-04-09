@@ -109,18 +109,33 @@ def _filtro_tipos_evento(df_eventos):
 
 def _render_info_datos(df_contam, df_eventos):
     st.caption("Estado de los datos")
-    for nombre, ok in [("Contaminación", df_contam is not None), ("Eventos", df_eventos is not None)]:
-        icono = "[OK]" if ok else "[--]"
-        st.markdown(f"<small>{icono} {nombre}</small>", unsafe_allow_html=True)
-    if df_contam is not None and "anio" in df_contam.columns:
+    datasets = [
+        ("Contaminación", df_contam is not None),
+        ("Eventos", df_eventos is not None),
+    ]
+    for nombre, ok in datasets:
+        color = "#2ca02c" if ok else "#d62728"
+        icono = "●" if ok else "○"
+        estado = "Cargado" if ok else "No disponible"
         st.markdown(
-            f"<small>{len(df_contam):,} registros ({df_contam['anio'].min()}-{df_contam['anio'].max()})</small>",
+            f'<small><span style="color:{color};">{icono}</span> '
+            f'{nombre}: {estado}</small>',
+            unsafe_allow_html=True,
+        )
+    if df_contam is not None and "anio" in df_contam.columns:
+        n = len(df_contam)
+        rango = f"{df_contam['anio'].min()}-{df_contam['anio'].max()}"
+        st.markdown(
+            f'<small style="color:#888;">📊 {n:,} registros · {rango}</small>',
             unsafe_allow_html=True,
         )
     st.divider()
     st.markdown(
         '<div style="text-align:center;padding:0.3rem 0;">'
-        '<small style="color:#666;">Data Detective Valencia<br>Proyecto Big Data - 2026 - Joan</small>'
-        '</div>',
+        '<small style="color:#555;">'
+        '🔍 Data Detective Valencia<br>'
+        'Proyecto Big Data · Universitat de València<br>'
+        '2026 · Joan Oliver'
+        '</small></div>',
         unsafe_allow_html=True,
     )

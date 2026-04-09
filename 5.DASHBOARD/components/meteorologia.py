@@ -371,6 +371,7 @@ def render_climatologia_mensual(df: pd.DataFrame) -> None:
     ))
 
     # Barras de error (desviacion estandar)
+    # Construir customdata con n_anios y desviacion para hover
     fig.add_trace(go.Scatter(
         x=clima["mes_nombre"],
         y=clima["media"],
@@ -383,13 +384,13 @@ def render_climatologia_mensual(df: pd.DataFrame) -> None:
         ),
         mode="markers",
         marker=dict(color=COLOR_PRECIP, size=6),
-        name="Desviacion std.",
+        name="Desviación std.",
+        customdata=list(zip(clima["desviacion"], clima["n_anios"])),
         hovertemplate=(
             "<b>%{x}</b><br>"
             "Media: %{y:.1f} mm<br>"
-            "Std: %{error_y.array:.1f} mm<br>"
-            "Anios con datos: " +
-            clima["n_anios"].astype(str).tolist().__repr__() +
+            "Std: %{customdata[0]:.1f} mm<br>"
+            "Años con datos: %{customdata[1]}"
             "<extra></extra>"
         ),
         showlegend=True,
@@ -481,12 +482,14 @@ def render_tab_meteorologia(datos: dict) -> None:
     # 3. Climatologia mensual
     render_climatologia_mensual(df)
 
-    # 4. Resumen de filtros
+    # 4. Resumen de filtros + estadisticas rapidas
     filtros = datos.get("_filtros", {})
     anio_min = filtros.get("anio_min", "?")
     anio_max = filtros.get("anio_max", "?")
 
     st.markdown("---")
+    n_registros = len(df) if df is not None else 0
     st.caption(
-        f"Filtros activos \u2014 Periodo: {anio_min}-{anio_max}"
+        f"Filtros activos — Periodo: {anio_min}-{anio_max} · "
+        f"{n_registros:,} registros"
     )

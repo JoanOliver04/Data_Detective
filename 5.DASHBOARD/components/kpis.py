@@ -18,7 +18,7 @@ import pandas as pd
 import streamlit as st
 
 from config import UMBRALES_OMS, UMBRALES_UE, VARIABLE_COLORS
-from utils.quality_index import calcular_indice_calidad
+from utils.quality_index import calcular_indice_calidad, nivel_desde_score
 
 logger = logging.getLogger("KPIs")
 
@@ -279,5 +279,4 @@ def _nivel_variable(score: float):
     Returns:
         Tupla (nivel, color_hex, emoji).
     """
-    from utils.quality_index import nivel_desde_score
     return nivel_desde_score(score)

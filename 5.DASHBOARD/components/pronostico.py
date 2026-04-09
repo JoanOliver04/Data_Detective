@@ -24,6 +24,8 @@ Autor: Joan | Fecha: 2026
 import logging
 
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -43,9 +45,9 @@ POP_THRESHOLD_MOD = 60.0         # % prob. max. -> riesgo moderado
 
 # Colores de riesgo
 RIESGO_CONFIG = {
-    "BAJO": {"color": "#2ca02c", "emoji": "\U0001f7e2", "desc": "Washout atmosférico probable"},
-    "MODERADO": {"color": "#ff7f0e", "emoji": "\U0001f7e1", "desc": "Posible limpieza parcial"},
-    "ALTO": {"color": "#d62728", "emoji": "\U0001f534", "desc": "Acumulación de contaminantes probable"},
+    "BAJO": {"color": "#2ca02c", "emoji": "🟢", "desc": "Washout atmosférico probable"},
+    "MODERADO": {"color": "#ff7f0e", "emoji": "🟡", "desc": "Posible limpieza parcial"},
+    "ALTO": {"color": "#d62728", "emoji": "🔴", "desc": "Acumulación de contaminantes probable"},
 }
 
 # Altura del grafico embebido (px)
@@ -202,7 +204,12 @@ def render_grafico_pronostico(df: pd.DataFrame) -> None:
             components.html(html_content, height=CHART_HEIGHT, scrolling=False)
             return
 
-    # Estrategia 2: Mensaje informativo
+    # Estrategia 2: Grafico dinamico desde el DataFrame
+    if df is not None and not df.empty and "datetime" in df.columns:
+        _generar_grafico_pronostico_dinamico(df)
+        return
+
+    # Estrategia 3: Mensaje informativo
     st.info(
         "Gráfico de pronóstico no disponible. "
         "Genera la visualización ejecutando:\n\n"
@@ -211,6 +218,95 @@ def render_grafico_pronostico(df: pd.DataFrame) -> None:
         "`1.DATOS_EN_CRUDO/dinamicos/meteorologia/`."
     )
     logger.warning("[Grafico] pronostico_72h.html no encontrado")
+
+
+# ==============================================================================
+# 2b. GRAFICO DINAMICO (fallback si no hay HTML pre-generado)
+# ==============================================================================
+
+def _generar_grafico_pronostico_dinamico(df: pd.DataFrame) -> None:
+    """
+    Genera un grafico Plotly con temperatura, precipitacion y probabilidad
+    de lluvia a partir del DataFrame de pronostico.
+
+    Se usa como fallback cuando el HTML pre-generado no esta disponible.
+
+    Args:
+        df: DataFrame con columnas datetime, temp_c, rain_mm,
+            precip_probability_pct, humidity_pct.
+    """
+    fig = make_subplots(
+        rows=2, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.08,
+        row_heights=[0.6, 0.4],
+        subplot_titles=("Temperatura (°C)", "Precipitación (mm) y probabilidad (%)"),
+    )
+
+    # --- Temperatura ---
+    fig.add_trace(go.Scatter(
+        x=df["datetime"],
+        y=df["temp_c"],
+        name="Temperatura",
+        mode="lines+markers",
+        line=dict(color="#ff7f0e", width=2.5),
+        marker=dict(size=4),
+        hovertemplate="<b>%{x|%d/%m %H:%M}</b><br>Temp: %{y:.1f}°C<extra></extra>",
+    ), row=1, col=1)
+
+    # --- Humedad (eje secundario, mas sutil) ---
+    if "humidity_pct" in df.columns:
+        fig.add_trace(go.Scatter(
+            x=df["datetime"],
+            y=df["humidity_pct"],
+            name="Humedad",
+            mode="lines",
+            line=dict(color="#17becf", width=1.5, dash="dot"),
+            opacity=0.6,
+            hovertemplate="Humedad: %{y:.0f}%<extra></extra>",
+        ), row=1, col=1)
+
+    # --- Precipitacion (barras) ---
+    if "rain_mm" in df.columns:
+        fig.add_trace(go.Bar(
+            x=df["datetime"],
+            y=df["rain_mm"],
+            name="Lluvia (mm)",
+            marker_color="rgba(23,190,207,0.7)",
+            hovertemplate="Lluvia: %{y:.1f} mm<extra></extra>",
+        ), row=2, col=1)
+
+    # --- Probabilidad de precipitacion (linea) ---
+    if "precip_probability_pct" in df.columns:
+        fig.add_trace(go.Scatter(
+            x=df["datetime"],
+            y=df["precip_probability_pct"],
+            name="Prob. lluvia (%)",
+            mode="lines",
+            line=dict(color="#3498db", width=2),
+            hovertemplate="Prob: %{y:.0f}%<extra></extra>",
+        ), row=2, col=1)
+
+    fig.update_layout(
+        template="plotly_dark",
+        height=550,
+        margin=dict(l=60, r=30, t=40, b=40),
+        hovermode="x unified",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom", y=1.02,
+            xanchor="right", x=1,
+        ),
+        showlegend=True,
+    )
+
+    fig.update_yaxes(title_text="°C / %", row=1, col=1)
+    fig.update_yaxes(title_text="mm / %", row=2, col=1)
+    fig.update_xaxes(title_text="Fecha y hora", row=2, col=1)
+
+    st.plotly_chart(fig, use_container_width=True)
+    st.caption("Gráfico generado dinámicamente desde los datos de pronóstico.")
+    logger.info("[Grafico] Pronostico dinamico: %d puntos", len(df))
 
 
 # ==============================================================================

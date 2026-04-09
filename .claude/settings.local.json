@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"render_panel_exportacion\" components/*.py app.py)",
+      "Bash(./env_data_detective/Scripts/python.exe -c ':*)"
+    ]
+  }
+}
