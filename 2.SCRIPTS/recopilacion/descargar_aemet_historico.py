@@ -102,7 +102,7 @@ DIAS_POR_PETICION = 30  # AEMET limita a ~31 días por petición
 # Segundos entre peticiones (aumentado para evitar rate limit)
 DELAY_ENTRE_PETICIONES = 3.0
 MAX_REINTENTOS = 3
-AÑOS_HISTORICO = 1  # Modo LITE: solo 1 año de datos
+AÑOS_HISTORICO = 5
 
 
 # ==============================================================================
