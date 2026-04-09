@@ -74,7 +74,12 @@ VIS_PRONOSTICO_72H_HTML = PRONOSTICO_VIS_DIR / "pronostico_72h.html"
 # RUTAS DE DATOS DINAMICOS
 # ==============================================================================
 METEO_DINAMICA_DIR = DATOS_CRUDOS_DIR / "dinamicos" / "meteorologia"
+CONTAM_DINAMICA_DIR = DATOS_CRUDOS_DIR / "dinamicos" / "contaminacion"
+TRAFICO_DINAMICO_DIR = DATOS_CRUDOS_DIR / "dinamicos" / "trafico"
+
 FORECAST_GLOB_PATTERN = "openweather_*.json"
+AQICN_GLOB_PATTERN = "aqicn_*.json"
+DGT_GLOB_PATTERN = "dgt_*.json"
 
 # ==============================================================================
 # CONFIGURACION DE PAGINA STREAMLIT

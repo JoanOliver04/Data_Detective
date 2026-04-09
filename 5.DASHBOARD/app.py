@@ -26,10 +26,13 @@ from components.eventos import render_tab_eventos
 from components.pronostico import render_tab_pronostico
 from components.sidebar import render_sidebar
 from components.exportar import render_panel_exportacion
+from components.realtime import render_datos_realtime
 from data_loader import (
     cargar_contaminacion, cargar_meteorologia, cargar_trafico,
     cargar_impacto_eventos, cargar_contam_anual_barrio,
     cargar_precip_mensual, cargar_tendencias, cargar_pronostico_72h,
+    cargar_contaminacion_realtime, cargar_meteo_realtime,
+    cargar_trafico_realtime,
     diagnostico_datos,
 )
 from config import PAGE_CONFIG, TAB_NAMES, DESCRIPCION_TABS
@@ -76,6 +79,9 @@ def _cargar_todos_los_datos():
         "precip_mensual": cargar_precip_mensual(),
         "tendencias": cargar_tendencias(),
         "pronostico": cargar_pronostico_72h(),
+        "contam_rt": cargar_contaminacion_realtime(),
+        "meteo_rt": cargar_meteo_realtime(),
+        "trafico_rt": cargar_trafico_realtime(),
     }
 
 
@@ -190,7 +196,10 @@ def _tab_contaminacion(datos):
     col_mapa, col_tendencia = st.columns([3, 2])
 
     with col_mapa:
-        render_mapa_contaminacion(df, var, df_contam_anual)
+        render_mapa_contaminacion(
+            df, var, df_contam_anual,
+            trafico_rt=datos.get("trafico_rt"),
+        )
 
     with col_tendencia:
         render_tendencia_anual(df, var)
@@ -318,6 +327,9 @@ def main():
         df_eventos=datos.get("eventos"),
     )
     datos_f = _aplicar_filtros_globales(datos, filtros)
+
+    # Banner de datos en tiempo real (antes de las tabs)
+    render_datos_realtime(datos)
 
     tabs = st.tabs([
         TAB_NAMES["contaminacion"], TAB_NAMES["precipitaciones"],

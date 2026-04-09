@@ -87,6 +87,7 @@ def render_mapa_contaminacion(
     df: pd.DataFrame,
     variable: str,
     df_contam_anual: Optional[pd.DataFrame] = None,
+    trafico_rt: Optional[dict] = None,
 ) -> None:
     """
     Renderiza el mapa de contaminacion embebido en Streamlit.
@@ -98,6 +99,8 @@ def render_mapa_contaminacion(
         df: DataFrame filtrado de contaminacion.
         variable: Variable seleccionada en el sidebar (determina color de marcadores).
         df_contam_anual: No utilizado en el mapa dinamico (backward compat).
+        trafico_rt: Diccionario de cargar_trafico_realtime() con incidencias en
+                    tiempo real. Si presente, se anaden marcadores de trafico al mapa.
     """
     st.markdown(
         '<div class="section-header">'
@@ -125,14 +128,18 @@ def render_mapa_contaminacion(
     logger.info(
         "[Mapa] Sin pre-generado para %s; generando mapa dinamico.", variable
     )
-    _generar_mapa_dinamico(df, variable)
+    _generar_mapa_dinamico(df, variable, trafico_rt=trafico_rt)
 
 
 # ==============================================================================
 # MAPA DINAMICO MEJORADO
 # ==============================================================================
 
-def _generar_mapa_dinamico(df: pd.DataFrame, variable: str) -> None:
+def _generar_mapa_dinamico(
+    df: pd.DataFrame,
+    variable: str,
+    trafico_rt: Optional[dict] = None,
+) -> None:
     """
     Genera un mapa Folium dinamico con:
       - CircleMarkers coloreados segun la variable seleccionada
@@ -141,10 +148,12 @@ def _generar_mapa_dinamico(df: pd.DataFrame, variable: str) -> None:
       - Tooltip: barrio + score + variable seleccionada
       - PolyLine del Jardin del Turia
       - Marcador especial Avinguda del Turia
+      - (Opcional) Capa de incidencias de trafico en tiempo real
 
     Args:
         df: DataFrame filtrado de contaminacion.
         variable: Variable que determina el color de los CircleMarkers.
+        trafico_rt: Diccionario de trafico RT con 'incidencias_valencia'.
     """
     try:
         import folium
@@ -255,21 +264,34 @@ def _generar_mapa_dinamico(df: pd.DataFrame, variable: str) -> None:
     # --- Jardin del Turia (PolyLine) ---
     _anadir_turia(m)
 
+    # --- Capa de trafico en tiempo real ---
+    n_trafico = _anadir_capa_trafico(m, trafico_rt)
+
+    # --- LayerControl para toggle de capas ---
+    if n_trafico > 0:
+        folium.LayerControl(collapsed=False).add_to(m)
+
     # --- Leyenda ---
-    leyenda_html = _crear_leyenda_html(variable, umbral_sel)
+    leyenda_html = _crear_leyenda_html(variable, umbral_sel, n_trafico > 0)
     m.get_root().html.add_child(folium.Element(leyenda_html))
 
     # --- Renderizar ---
     n_estaciones = len([
         e for e in estaciones_con_datos if str(e) in ESTACION_COORDS
     ])
-    st.caption(
-        f"Mapa dinamico | {n_estaciones} estaciones | "
-        f"Variable activa: {variable} | "
-        f"Score por estacion: {'activo' if _QUALITY_INDEX_DISPONIBLE else 'no disponible'}"
-    )
+    caption_parts = [
+        f"Mapa dinámico | {n_estaciones} estaciones",
+        f"Variable activa: {variable}",
+        f"Score por estación: {'activo' if _QUALITY_INDEX_DISPONIBLE else 'no disponible'}",
+    ]
+    if n_trafico > 0:
+        caption_parts.append(f"Tráfico RT: {n_trafico} incidencias")
+    st.caption(" | ".join(caption_parts))
     components.html(m._repr_html_(), height=MAP_HEIGHT, scrolling=False)
-    logger.info("[Mapa dinamico] %s: %d estaciones renderizadas.", variable, n_estaciones)
+    logger.info(
+        "[Mapa dinamico] %s: %d estaciones, %d inc. trafico.",
+        variable, n_estaciones, n_trafico,
+    )
 
 
 # ==============================================================================
@@ -474,6 +496,139 @@ def _filas_tabla_variables(
 
 
 # ==============================================================================
+# CAPA DE TRAFICO EN TIEMPO REAL
+# ==============================================================================
+
+# Mapeo de causa DGT a icono y color de Folium
+_TRAFICO_ICONO_MAP = {
+    "roadMaintenance":       ("wrench",              "orange"),
+    "roadworks":             ("wrench",              "orange"),
+    "accident":              ("exclamation-triangle", "red"),
+    "abnormalTraffic":       ("car",                 "darkred"),
+    "congestion":            ("car",                 "darkred"),
+    "infrastructureDamage":  ("exclamation-triangle", "orange"),
+    "obstruction":           ("ban",                 "red"),
+    "poorEnvironment":       ("cloud",               "blue"),
+    "weatherRelated":        ("cloud",               "blue"),
+}
+
+_SEVERIDAD_ES = {
+    "low": "Baja", "medium": "Media",
+    "high": "Alta", "highest": "Muy alta",
+}
+
+
+def _anadir_capa_trafico(m, trafico_rt: Optional[dict]) -> int:
+    """
+    Anade una FeatureGroup con marcadores de incidencias de trafico al mapa.
+
+    Cada incidencia se representa con un folium.Marker cuyo icono depende
+    del tipo de causa (obras, accidente, congestion, etc.).
+
+    Args:
+        m: Objeto folium.Map.
+        trafico_rt: Diccionario de cargar_trafico_realtime(). Puede ser None.
+
+    Returns:
+        Numero de marcadores anadidos.
+    """
+    if trafico_rt is None:
+        return 0
+
+    incidencias = trafico_rt.get("incidencias_valencia", [])
+    if not incidencias:
+        return 0
+
+    try:
+        import folium
+    except ImportError:
+        return 0
+
+    fg = folium.FeatureGroup(name="🚗 Tráfico RT")
+    n_added = 0
+
+    timestamp = trafico_rt.get("timestamp", "")
+
+    for inc in incidencias:
+        lat = inc.get("lat")
+        lon = inc.get("lon")
+        if lat is None or lon is None:
+            continue
+
+        causa = inc.get("causa", "")
+        tipo_raw = inc.get("tipo", "")
+        severidad = inc.get("severidad", "unknown")
+        carretera = inc.get("carretera", "")
+        municipio = inc.get("municipio", "")
+
+        # Seleccionar icono segun causa
+        icon_name, icon_color = _TRAFICO_ICONO_MAP.get(
+            causa, ("info-sign", "blue")
+        )
+
+        # Tipo legible
+        tipo_legible = (
+            tipo_raw
+            .replace("RoadOrCarriagewayOrLaneManagement", "Gestión de carril")
+            .replace("AbnormalTraffic", "Tráfico anómalo")
+            .replace("Accident", "Accidente")
+            .replace("Conditions", "Condiciones")
+        )
+
+        causa_legible = (
+            causa
+            .replace("roadMaintenance", "Obras/mantenimiento")
+            .replace("roadworks", "Obras")
+            .replace("accident", "Accidente")
+            .replace("abnormalTraffic", "Tráfico anómalo")
+            .replace("congestion", "Congestión")
+            .replace("infrastructureDamage", "Daño infraestructura")
+            .replace("obstruction", "Obstrucción")
+            .replace("poorEnvironment", "Condiciones ambientales")
+            .replace("weatherRelated", "Meteorología adversa")
+        )
+
+        sev_es = _SEVERIDAD_ES.get(severidad, severidad)
+
+        # Popup HTML
+        popup_html = (
+            f'<div style="font-family:Arial,sans-serif;min-width:200px;'
+            f'max-width:260px;font-size:12px;">'
+            f'<b style="color:#ff7f0e;">🚗 Incidencia de tráfico</b><br>'
+            f'<hr style="margin:4px 0;border-color:#ddd;">'
+            f'<b>Tipo:</b> {tipo_legible}<br>'
+            f'<b>Causa:</b> {causa_legible}<br>'
+            f'<b>Severidad:</b> {sev_es}<br>'
+            f'<b>Carretera:</b> {carretera}<br>'
+        )
+        if municipio:
+            popup_html += f'<b>Municipio:</b> {municipio}<br>'
+        if timestamp:
+            popup_html += (
+                f'<hr style="margin:4px 0;border-color:#ddd;">'
+                f'<small style="color:#888;">Captura: {timestamp[:16]}</small>'
+            )
+        popup_html += '</div>'
+
+        # Tooltip
+        tooltip_txt = f"{causa_legible} — {carretera}" if carretera else causa_legible
+
+        folium.Marker(
+            location=[lat, lon],
+            icon=folium.Icon(color=icon_color, icon=icon_name, prefix="fa"),
+            popup=folium.Popup(popup_html, max_width=280),
+            tooltip=tooltip_txt,
+        ).add_to(fg)
+        n_added += 1
+
+    if n_added > 0:
+        fg.add_to(m)
+        logger.info("[Mapa] Capa trafico RT: %d marcadores.", n_added)
+
+    return n_added
+
+
+# ==============================================================================
 # JARDIN DEL TURIA
 # ==============================================================================
 
@@ -529,17 +684,37 @@ def _anadir_turia(m) -> None:
 # LEYENDA HTML PARA FOLIUM
 # ==============================================================================
 
-def _crear_leyenda_html(variable: str, umbral_oms: float) -> str:
+def _crear_leyenda_html(
+    variable: str,
+    umbral_oms: float,
+    con_trafico: bool = False,
+) -> str:
     """
     Genera HTML para una leyenda flotante en el mapa.
 
     Args:
         variable: Nombre de la variable activa.
         umbral_oms: Valor del umbral OMS.
+        con_trafico: Si True, incluye seccion de trafico en la leyenda.
 
     Returns:
         String HTML con la leyenda.
     """
+    trafico_html = ""
+    if con_trafico:
+        trafico_html = (
+            '<hr style="border-color:#333;margin:5px 0;">'
+            '<b style="font-size:11px;">🚗 Tráfico RT</b><br>'
+            '<span style="color:#ff7f0e;">&#9873;</span>'
+            ' <small>Obras/mantenimiento</small><br>'
+            '<span style="color:#d62728;">&#9873;</span>'
+            ' <small>Accidente/obstrucción</small><br>'
+            '<span style="color:#85144b;">&#9873;</span>'
+            ' <small>Congestión</small><br>'
+            '<span style="color:#1f77b4;">&#9873;</span>'
+            ' <small>Otros</small>'
+        )
+
     return f"""
     <div style="
         position: fixed;
@@ -565,5 +740,6 @@ def _crear_leyenda_html(variable: str, umbral_oms: float) -> str:
         <small>OMS: {umbral_oms} µg/m³</small><br>
         <span style="color:#2ca02c;">&#9135;&#9135;</span>
         <small style="color:#2ca02c;"> Jardí del Túria</small>
+        {trafico_html}
     </div>
     """

@@ -23,6 +23,8 @@ from config import (
     IMPACTO_EVENTOS_CSV, CONTAM_ANUAL_BARRIO_CSV,
     PRECIP_MENSUAL_CSV, TENDENCIAS_CSV,
     METEO_DINAMICA_DIR, FORECAST_GLOB_PATTERN,
+    CONTAM_DINAMICA_DIR, AQICN_GLOB_PATTERN,
+    TRAFICO_DINAMICO_DIR, DGT_GLOB_PATTERN,
     ESTACION_BARRIO_MAP,
     ESQUEMA_CONTAMINACION, ESQUEMA_METEOROLOGIA,
     ESQUEMA_TRAFICO, ESQUEMA_IMPACTO_EVENTOS,
@@ -280,6 +282,181 @@ def cargar_pronostico_72h():
     )
     logger.info(f"[{nombre}] {len(df)} puntos desde {latest_file.name}")
     return df
+
+
+# ==============================================================================
+# CARGA DE DATOS EN TIEMPO REAL (JSONs de streaming)
+# ==============================================================================
+
+def _cargar_ultimo_json(directorio: Path, patron: str, nombre: str) -> Optional[dict]:
+    """Lee el JSON mas reciente que coincida con el patron glob."""
+    if not directorio.exists():
+        logger.warning(f"[{nombre}] Dir no encontrado: {directorio}")
+        return None
+    archivos = sorted(directorio.glob(patron))
+    if not archivos:
+        logger.warning(f"[{nombre}] Sin archivos {patron}")
+        return None
+    latest = archivos[-1]
+    try:
+        with open(latest, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        data["_archivo_fuente"] = latest.name
+        return data
+    except (json.JSONDecodeError, OSError) as e:
+        logger.error(f"[{nombre}] Error leyendo {latest.name}: {e}")
+        return None
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def cargar_contaminacion_realtime() -> Optional[dict]:
+    """
+    Carga el ultimo JSON de AQICN con datos de calidad del aire en tiempo real.
+
+    Returns:
+        Diccionario con claves: timestamp, archivo, estaciones (lista de dicts
+        con estacion_id, nombre, barrio, aqi, contaminantes).
+        None si no hay datos disponibles.
+    """
+    nombre = "Contaminación RT"
+    data = _cargar_ultimo_json(CONTAM_DINAMICA_DIR, AQICN_GLOB_PATTERN, nombre)
+    if data is None:
+        return None
+
+    metadata = data.get("_metadata", {})
+    estaciones_raw = data.get("estaciones", {})
+    if not estaciones_raw:
+        logger.warning(f"[{nombre}] Sin estaciones en JSON")
+        return None
+
+    estaciones = []
+    for est_id, est_data in estaciones_raw.items():
+        datos = est_data.get("datos", {})
+        iaqi = datos.get("iaqi", {})
+        estaciones.append({
+            "estacion_id": est_id,
+            "nombre": est_data.get("nombre", est_id),
+            "barrio": ESTACION_BARRIO_MAP.get(est_id, "Desconocido"),
+            "aqi": datos.get("aqi"),
+            "dominante": datos.get("dominentpol", ""),
+            "no2": iaqi.get("no2", {}).get("v"),
+            "o3": iaqi.get("o3", {}).get("v"),
+            "pm10": iaqi.get("pm10", {}).get("v"),
+            "pm25": iaqi.get("pm25", {}).get("v"),
+            "so2": iaqi.get("so2", {}).get("v"),
+            "co": iaqi.get("co", {}).get("v"),
+            "temp": iaqi.get("t", {}).get("v"),
+            "humedad": iaqi.get("h", {}).get("v"),
+        })
+
+    result = {
+        "timestamp": metadata.get("timestamp_captura", ""),
+        "archivo": data.get("_archivo_fuente", ""),
+        "estaciones": estaciones,
+    }
+    logger.info(f"[{nombre}] {len(estaciones)} estaciones desde {result['archivo']}")
+    return result
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def cargar_meteo_realtime() -> Optional[dict]:
+    """
+    Carga el ultimo JSON de OpenWeatherMap con datos meteorologicos actuales.
+
+    Returns:
+        Diccionario con: timestamp, archivo, temp, sensacion, humedad,
+        presion, viento_ms, descripcion, icono.
+        None si no hay datos disponibles.
+    """
+    nombre = "Meteorología RT"
+    data = _cargar_ultimo_json(METEO_DINAMICA_DIR, FORECAST_GLOB_PATTERN, nombre)
+    if data is None:
+        return None
+
+    metadata = data.get("_metadata", {})
+    # El JSON puede tener "actual" o "weather" como clave para datos actuales
+    actual = data.get("actual") or data.get("weather")
+    if actual is None:
+        logger.warning(f"[{nombre}] Sin datos actuales en JSON")
+        return None
+
+    main = actual.get("main", {})
+    wind = actual.get("wind", {})
+    weather_list = actual.get("weather", [])
+    weather_info = weather_list[0] if weather_list else {}
+
+    result = {
+        "timestamp": metadata.get("timestamp_captura", ""),
+        "archivo": data.get("_archivo_fuente", ""),
+        "temp": main.get("temp"),
+        "sensacion": main.get("feels_like"),
+        "temp_min": main.get("temp_min"),
+        "temp_max": main.get("temp_max"),
+        "humedad": main.get("humidity"),
+        "presion": main.get("pressure"),
+        "viento_ms": wind.get("speed"),
+        "viento_racha": wind.get("gust"),
+        "descripcion": weather_info.get("description", ""),
+        "icono": weather_info.get("icon", ""),
+    }
+    logger.info(f"[{nombre}] {result['temp']}°C desde {result['archivo']}")
+    return result
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def cargar_trafico_realtime() -> Optional[dict]:
+    """
+    Carga el ultimo JSON de DGT con incidencias de trafico en tiempo real.
+    Filtra solo las incidencias de la Comunitat Valenciana / provincia Valencia.
+
+    Returns:
+        Diccionario con: timestamp, archivo, total_espana, incidencias_valencia
+        (lista de dicts con id, tipo, severidad, carretera, municipio, causa).
+        None si no hay datos disponibles.
+    """
+    nombre = "Tráfico RT"
+    data = _cargar_ultimo_json(TRAFICO_DINAMICO_DIR, DGT_GLOB_PATTERN, nombre)
+    if data is None:
+        return None
+
+    metadata = data.get("_metadata", {})
+    incidencias_raw = data.get("incidencias", [])
+
+    # Filtrar por Comunitat Valenciana o provincia Valencia
+    valencia_incs = []
+    for inc in incidencias_raw:
+        loc = inc.get("localizacion", {})
+        punto_from = loc.get("punto_from", {})
+        punto_to = loc.get("punto_to", {})
+        es_valencia = any(
+            p.get("comunidad_autonoma") == "Comunitat Valenciana"
+            or p.get("provincia") == "Valencia"
+            for p in [punto_from, punto_to]
+        )
+        if es_valencia:
+            valencia_incs.append({
+                "id": inc.get("id"),
+                "tipo": inc.get("tipo_datex", "").replace("sit:", ""),
+                "severidad": inc.get("severidad", "unknown"),
+                "causa": inc.get("causa_tipo", ""),
+                "carretera": loc.get("carretera", ""),
+                "municipio": punto_from.get("municipio", ""),
+                "provincia": punto_from.get("provincia", ""),
+                "lat": punto_from.get("latitud"),
+                "lon": punto_from.get("longitud"),
+            })
+
+    result = {
+        "timestamp": metadata.get("timestamp_captura", ""),
+        "archivo": data.get("_archivo_fuente", ""),
+        "total_espana": len(incidencias_raw),
+        "incidencias_valencia": valencia_incs,
+    }
+    logger.info(
+        f"[{nombre}] {len(valencia_incs)} incidencias Valencia "
+        f"(de {len(incidencias_raw)} totales) desde {result['archivo']}"
+    )
+    return result
 
 
 # ==============================================================================
