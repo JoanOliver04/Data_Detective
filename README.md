@@ -41,7 +41,7 @@ The result is a production-grade, self-contained analytics environment: from raw
 - 🔮 **72-Hour Air Quality Forecast** — Risk indicator derived from OpenWeatherMap precipitation data; applies an atmospheric washout heuristic to classify pollution risk as LOW / MODERATE / HIGH for the next 72 hours
 - 🎆 **Mass Event Impact Analysis** — Gantt-style timeline and grouped bar charts quantifying NO₂, PM10, PM2.5, and traffic deviation (%) during Fallas, Valencia CF matches, concerts, and other classified events
 - 🔄 **Auto-Refresh Every 5 Minutes** — Dashboard polls for new data automatically via `streamlit-autorefresh` (configurable interval); sidebar shows the exact timestamp of the last update
-- 📥 **Multi-Format Data Export** — Every tab includes a collapsible export panel offering CSV (`;` separator, UTF-8 BOM for Excel), JSON (with metadata envelope), and XML (auto-sanitized element names) — for any filtered slice of data
+- 📥 **Multi-Format Data Export** — Every tab includes a collapsible export panel offering CSV (`;` separator, UTF-8 BOM for Excel), JSON (with metadata envelope), XML (auto-sanitized element names), and PDF (formatted table with header and metadata) — for any filtered slice of data
 
 ---
 
@@ -101,7 +101,7 @@ DATA_DETECTIVE/
 │   │   ├── eventos.py             Event impact tab (Gantt timeline + grouped bars)
 │   │   ├── comparador.py          Historical comparator (Event vs Baseline / Period vs Period)
 │   │   ├── pronostico.py          72h forecast tab (risk heuristic)
-│   │   └── exportar.py            Per-tab export panel (CSV / JSON / XML)
+│   │   └── exportar.py            Per-tab export panel (CSV / JSON / XML / PDF)
 │   └── utils/
 │       ├── quality_index.py       Composite 0–10 air quality score engine
 │       ├── exportador.py          Format converters (BOM, XML sanitization)
@@ -158,7 +158,7 @@ DATA_DETECTIVE/
          │  Tab 5 — Historical Comparator      │
          │  Tab 6 — 72h Forecast               │
          │                                     │
-         │  Each tab → Export CSV/JSON/XML     │
+         │  Each tab → Export CSV/JSON/XML/PDF     │
          └─────────────────────────────────────┘
 ```
 

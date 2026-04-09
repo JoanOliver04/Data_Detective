@@ -7,7 +7,7 @@ Componente: Panel de Exportacion de Datos
 
 Componente reutilizable que renderiza un panel expandible de exportacion
 dentro de cualquier tab del dashboard. Permite al usuario descargar los
-datos filtrados en CSV, JSON o XML.
+datos filtrados en CSV, JSON, XML o PDF.
 
 Uso en cualquier tab:
     from components.exportar import render_panel_exportacion
@@ -18,7 +18,7 @@ Caracteristicas:
   - Muestra preview de los primeros registros antes de descargar
   - Indica el numero de filas/columnas que se van a exportar
   - Diferencia visualmente datos ESTATICOS vs DINAMICOS con un badge
-  - Tres botones de descarga: CSV (principal), JSON, XML
+  - Cuatro botones de descarga: CSV (principal), JSON, XML, PDF
 
 Ruta: 5.DASHBOARD/components/exportar.py
 Autor: Joan | Fecha: 2026
@@ -34,6 +34,7 @@ from utils.exportador import (
     dataframe_a_csv,
     dataframe_a_json,
     dataframe_a_xml,
+    dataframe_a_pdf,
     generar_nombre_archivo,
 )
 
@@ -146,7 +147,7 @@ def _badge_formato(formato: str) -> str:
     Badge visual para el formato de exportacion.
 
     Args:
-        formato: 'CSV', 'JSON' o 'XML'.
+        formato: 'CSV', 'JSON', 'XML' o 'PDF'.
 
     Returns:
         String HTML con el badge del formato.
@@ -155,6 +156,7 @@ def _badge_formato(formato: str) -> str:
         "CSV":  "#2e7d32",
         "JSON": "#1565c0",
         "XML":  "#6a1b9a",
+        "PDF":  "#c62828",
     }
     color = colores.get(formato.upper(), "#555")
     return (
@@ -179,7 +181,7 @@ def render_panel_exportacion(
     El panel incluye:
       1. Informacion del dataset (origen, fuentes, badge estatico/dinamico)
       2. Preview de los primeros registros
-      3. Tres botones de descarga: CSV, JSON, XML
+      3. Cuatro botones de descarga: CSV, JSON, XML, PDF
 
     Se integra al final de cualquier tab del dashboard:
 
@@ -255,7 +257,7 @@ def render_panel_exportacion(
         if metadata_extra:
             metadata_json.update(metadata_extra)
 
-        col_csv, col_json, col_xml = st.columns(3)
+        col_csv, col_json, col_xml, col_pdf = st.columns(4)
 
         with col_csv:
             csv_bytes = dataframe_a_csv(df)
@@ -268,7 +270,7 @@ def render_panel_exportacion(
                 use_container_width=True,
                 help=(
                     "Descarga en CSV con separador ';' (compatible con "
-                    "Excel europeo). Codificacion UTF-8 con BOM."
+                    "Excel europeo). Codificación UTF-8 con BOM."
                 ),
             )
 
@@ -299,6 +301,22 @@ def render_panel_exportacion(
                 help=(
                     "Descarga en XML estructurado. Cada fila es un "
                     "elemento <registro> dentro de <dataset>."
+                ),
+            )
+
+        with col_pdf:
+            label_dataset = info.get("label", nombre_dataset)
+            pdf_bytes = dataframe_a_pdf(df, subtitulo=label_dataset)
+            st.download_button(
+                label="PDF",
+                data=pdf_bytes,
+                file_name=generar_nombre_archivo(nombre_dataset, "pdf"),
+                mime="application/pdf",
+                icon=":material/picture_as_pdf:",
+                use_container_width=True,
+                help=(
+                    "Descarga en PDF con tabla formateada. "
+                    "Máximo 5.000 filas por documento."
                 ),
             )
 

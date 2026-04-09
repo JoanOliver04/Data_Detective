@@ -6,7 +6,7 @@ Utilidad: Exportacion de datos en multiples formatos (CSV, JSON, XML)
 ==============================================================================
 
 Modulo reutilizable que convierte DataFrames de pandas a bytes listos
-para descarga via st.download_button(). Soporta CSV, JSON y XML.
+para descarga via st.download_button(). Soporta CSV, JSON, XML y PDF.
 
 Caracteristicas:
   - CSV:  Separador ';' (estandar europeo), encoding UTF-8 con BOM
@@ -224,6 +224,154 @@ def _sanitizar_nombre_xml(nombre: str) -> str:
     # Eliminar caracteres raros restantes (solo alfanumericos y _)
     resultado = "".join(c if c.isalnum() or c == "_" else "_" for c in resultado)
     return resultado or "campo"
+
+
+# ==============================================================================
+# PDF
+# ==============================================================================
+
+def dataframe_a_pdf(
+    df: pd.DataFrame,
+    titulo: str = "Data Detective Valencia",
+    subtitulo: str = "",
+    max_filas: int = 5000,
+) -> bytes:
+    """
+    Convierte un DataFrame a bytes PDF con tabla formateada.
+
+    Genera un documento en formato apaisado con:
+      - Cabecera con titulo del proyecto y timestamp
+      - Tabla con columnas auto-dimensionadas
+      - Pie de pagina con numero de registros
+
+    Si el DataFrame tiene mas de max_filas, se trunca para evitar
+    PDFs excesivamente largos, y se indica en el pie de pagina.
+
+    Args:
+        df: DataFrame a exportar.
+        titulo: Titulo principal del PDF.
+        subtitulo: Subtitulo opcional (p.ej. nombre del dataset).
+        max_filas: Maximo de filas a incluir (default 5000).
+
+    Returns:
+        bytes listos para st.download_button(data=...).
+    """
+    from fpdf import FPDF
+
+    truncado = len(df) > max_filas
+    df_export = df.head(max_filas).copy()
+
+    # Convertir todo a string para renderizar
+    for col in df_export.columns:
+        if pd.api.types.is_datetime64_any_dtype(df_export[col]):
+            df_export[col] = df_export[col].dt.strftime("%Y-%m-%d %H:%M")
+        df_export[col] = df_export[col].astype(str).replace("nan", "")
+
+    # Sanitizar texto: las fuentes estandar de fpdf2 (Helvetica, etc.)
+    # no soportan caracteres Unicode extendidos. Reemplazamos los mas
+    # comunes del castellano y simbolos tipograficos por equivalentes ASCII.
+    def _sanitizar_texto_pdf(texto: str) -> str:
+        reemplazos = {
+            "\u2014": "-",   # em dash
+            "\u2013": "-",   # en dash
+            "\u2018": "'",   # left single quote
+            "\u2019": "'",   # right single quote
+            "\u201c": '"',   # left double quote
+            "\u201d": '"',   # right double quote
+            "\u2026": "...", # ellipsis
+            "\u00b5": "u",   # µ (micro sign)
+            "\u00b3": "3",   # ³ (superscript 3)
+            "\u2192": "->",  # right arrow
+            "\u2264": "<=",  # less-than or equal
+            "\u2265": ">=",  # greater-than or equal
+        }
+        for orig, repl in reemplazos.items():
+            texto = texto.replace(orig, repl)
+        # Eliminar cualquier caracter restante fuera de latin-1
+        return texto.encode("latin-1", errors="replace").decode("latin-1")
+
+    # Sanitizar columnas y datos
+    columnas = [_sanitizar_texto_pdf(str(c)) for c in df_export.columns]
+    for col in df_export.columns:
+        df_export[col] = df_export[col].apply(
+            lambda v: _sanitizar_texto_pdf(str(v))
+        )
+
+    n_cols = len(columnas)
+
+    # --- Configurar PDF en apaisado ---
+    pdf = FPDF(orientation="L", unit="mm", format="A4")
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    # Cabecera
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 8, _sanitizar_texto_pdf(titulo), new_x="LMARGIN", new_y="NEXT", align="C")
+
+    if subtitulo:
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(0, 6, _sanitizar_texto_pdf(subtitulo), new_x="LMARGIN", new_y="NEXT", align="C")
+
+    pdf.set_font("Helvetica", "", 8)
+    ts = datetime.now().strftime("%d/%m/%Y %H:%M")
+    pdf.cell(
+        0, 5,
+        f"Exportado: {ts}  |  Registros: {len(df):,}",
+        new_x="LMARGIN", new_y="NEXT", align="C",
+    )
+    pdf.ln(4)
+
+    # --- Calcular anchos de columna proporcionales ---
+    ancho_pagina = pdf.w - pdf.l_margin - pdf.r_margin
+
+    # Estimar ancho por contenido (header + primeras filas)
+    anchos = []
+    for i, col in enumerate(columnas):
+        max_len = len(col)
+        for val in df_export.iloc[:50, i]:
+            max_len = max(max_len, len(str(val)))
+        anchos.append(min(max_len, 40))
+
+    total_chars = sum(anchos) or 1
+    col_widths = [(a / total_chars) * ancho_pagina for a in anchos]
+
+    # --- Cabecera de tabla ---
+    pdf.set_font("Helvetica", "B", 7)
+    pdf.set_fill_color(30, 30, 46)
+    pdf.set_text_color(220, 220, 220)
+
+    for i, col in enumerate(columnas):
+        pdf.cell(col_widths[i], 6, col[:30], border=1, fill=True, align="C")
+    pdf.ln()
+
+    # --- Filas de datos ---
+    pdf.set_font("Helvetica", "", 6)
+    pdf.set_text_color(50, 50, 50)
+
+    for row_idx in range(len(df_export)):
+        if row_idx % 2 == 0:
+            pdf.set_fill_color(245, 245, 250)
+        else:
+            pdf.set_fill_color(255, 255, 255)
+
+        for i in range(n_cols):
+            valor = str(df_export.iat[row_idx, i])[:40]
+            pdf.cell(col_widths[i], 5, valor, border=1, fill=True)
+        pdf.ln()
+
+    # --- Pie de pagina ---
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "I", 7)
+    pdf.set_text_color(130, 130, 130)
+
+    pie = f"Data Detective Valencia - {len(df_export):,} registros exportados"
+    if truncado:
+        pie += f" (de {len(df):,} totales, truncado a {max_filas:,})"
+    pdf.cell(0, 5, pie, new_x="LMARGIN", new_y="NEXT", align="C")
+
+    pdf_bytes = pdf.output()
+    logger.debug(f"PDF generado: {len(df_export)} filas, {n_cols} columnas")
+    return bytes(pdf_bytes)
 
 
 # ==============================================================================
