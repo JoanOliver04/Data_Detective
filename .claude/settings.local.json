@@ -3,7 +3,9 @@
     "allow": [
       "Bash(grep -n \"render_panel_exportacion\" components/*.py app.py)",
       "Bash(./env_data_detective/Scripts/python.exe -c ':*)",
-      "Bash(python \"5.DASHBOARD/utils/urban_quality_index.py\")"
+      "Bash(python \"5.DASHBOARD/utils/urban_quality_index.py\")",
+      "Bash(python -c \"import numpy; import pandas; import plotly; print\\('OK: numpy', numpy.__version__, 'pandas', pandas.__version__\\)\")",
+      "Bash(python -c ':*)"
     ]
   }
 }
