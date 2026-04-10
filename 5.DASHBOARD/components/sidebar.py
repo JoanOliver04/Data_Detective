@@ -9,21 +9,38 @@ Autor: Joan | Fecha: 2026
 """
 
 from datetime import datetime
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 import pandas as pd
 import streamlit as st
 from config import VARIABLES_PRINCIPALES, ESTACION_BARRIO_MAP
+from components.realtime import _calcular_frescura
 
 FiltrosGlobales = Dict[str, Any]
+
+# Umbrales de frescura para semáforo RT (en minutos)
+_RT_VERDE_MINUTOS = 30
+_RT_AMARILLO_MINUTOS = 120
 
 
 def render_sidebar(
     df_contam: Optional[pd.DataFrame],
     df_eventos: Optional[pd.DataFrame],
+    df_meteo: Optional[pd.DataFrame] = None,
+    df_trafico: Optional[pd.DataFrame] = None,
+    datos_rt: Optional[dict] = None,
 ) -> FiltrosGlobales:
     """
     Renderiza el sidebar y retorna filtros seleccionados.
-    Retorna dict con: anio_min, anio_max, variable, barrios, tipos_evento.
+
+    Args:
+        df_contam: DataFrame de contaminacion historica.
+        df_eventos: DataFrame de impacto de eventos.
+        df_meteo: DataFrame de meteorologia historica.
+        df_trafico: DataFrame de trafico historico.
+        datos_rt: Dict con 'contam_rt', 'meteo_rt', 'trafico_rt'.
+
+    Returns:
+        Dict con: anio_min, anio_max, variable, barrios, tipos_evento.
     """
     with st.sidebar:
         st.markdown(
@@ -37,20 +54,23 @@ def render_sidebar(
         st.subheader("Filtros Globales")
 
         filtros = {}
-        filtros["anio_min"], filtros["anio_max"] = _filtro_rango_anios(
-            df_contam)
+        filtros["anio_min"], filtros["anio_max"] = _filtro_rango_anios(df_contam)
         filtros["variable"] = _filtro_variable(df_contam)
         filtros["barrios"] = _filtro_barrios(df_contam)
         filtros["tipos_evento"] = _filtro_tipos_evento(df_eventos)
 
         st.divider()
-        _render_info_datos(df_contam, df_eventos)
+        _render_info_datos(df_contam, df_meteo, df_trafico, df_eventos, datos_rt)
 
         hora_actual = datetime.now().strftime("%H:%M:%S")
         st.caption(f"🔄 Última actualización: {hora_actual}")
 
         return filtros
 
+
+# ==============================================================================
+# FILTROS
+# ==============================================================================
 
 def _filtro_rango_anios(df_contam):
     if df_contam is not None and "anio" in df_contam.columns:
@@ -107,28 +127,143 @@ def _filtro_tipos_evento(df_eventos):
     )
 
 
-def _render_info_datos(df_contam, df_eventos):
-    st.caption("Estado de los datos")
-    datasets = [
-        ("Contaminación", df_contam is not None),
-        ("Eventos", df_eventos is not None),
-    ]
-    for nombre, ok in datasets:
-        color = "#2ca02c" if ok else "#d62728"
-        icono = "●" if ok else "○"
-        estado = "Cargado" if ok else "No disponible"
+# ==============================================================================
+# ESTADO DE DATOS
+# ==============================================================================
+
+def _semaforo_rt(timestamp_str: Optional[str]):
+    """
+    Calcula el semaforo de frescura para una fuente RT.
+
+    Args:
+        timestamp_str: Timestamp ISO de ultima captura. None si sin datos.
+
+    Returns:
+        Tupla (emoji, color_hex, texto_frescura).
+        emoji: '🟢', '🟡' o '🔴'.
+    """
+    if not timestamp_str:
+        return "🔴", "#d62728", "Sin datos"
+    try:
+        ts = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+        delta_min = int((datetime.now() - ts.replace(tzinfo=None)).total_seconds() / 60)
+    except (ValueError, TypeError):
+        return "🔴", "#d62728", "Sin datos"
+
+    frescura = _calcular_frescura(timestamp_str)
+    if delta_min < _RT_VERDE_MINUTOS:
+        return "🟢", "#2ca02c", frescura
+    if delta_min < _RT_AMARILLO_MINUTOS:
+        return "🟡", "#ffbb33", frescura
+    return "🔴", "#d62728", frescura
+
+
+def _linea_historico(nombre: str, df: Optional[pd.DataFrame], extra: str = "") -> None:
+    """
+    Renderiza una fila de estado para un dataset historico.
+
+    Args:
+        nombre: Nombre del dataset.
+        df: DataFrame del dataset (None si no disponible).
+        extra: Texto adicional (ej. rango de años).
+    """
+    if df is not None and not df.empty:
+        n = len(df)
+        texto = f"{nombre}: Cargado ({n:,} registros{extra})"
         st.markdown(
-            f'<small><span style="color:{color};">{icono}</span> '
-            f'{nombre}: {estado}</small>',
+            f'<small><span style="color:#2ca02c;">●</span> {texto}</small>',
             unsafe_allow_html=True,
         )
+    else:
+        st.markdown(
+            f'<small><span style="color:#d62728;">○</span> '
+            f'{nombre}: No disponible</small>',
+            unsafe_allow_html=True,
+        )
+
+
+def _linea_rt(nombre: str, timestamp_str: Optional[str]) -> None:
+    """
+    Renderiza una fila de estado para una fuente RT.
+
+    Args:
+        nombre: Nombre de la fuente.
+        timestamp_str: Timestamp ISO de ultima captura.
+    """
+    emoji, color, frescura = _semaforo_rt(timestamp_str)
+    nivel = "Activo" if color == "#2ca02c" else (
+        "Antiguo" if color == "#ffbb33" else "Sin datos"
+    )
+    st.markdown(
+        f'<small>📡 {nombre}: '
+        f'<span style="color:{color};">{emoji} {nivel}</span> '
+        f'<span style="color:#555;">({frescura})</span></small>',
+        unsafe_allow_html=True,
+    )
+
+
+def _render_info_datos(
+    df_contam: Optional[pd.DataFrame],
+    df_meteo: Optional[pd.DataFrame],
+    df_trafico: Optional[pd.DataFrame],
+    df_eventos: Optional[pd.DataFrame],
+    datos_rt: Optional[dict],
+) -> None:
+    """
+    Muestra el estado de todos los datasets (historicos y RT).
+
+    Args:
+        df_contam: DataFrame de contaminacion historica.
+        df_meteo: DataFrame de meteorologia historica.
+        df_trafico: DataFrame de trafico historico.
+        df_eventos: DataFrame de eventos.
+        datos_rt: Dict con 'contam_rt', 'meteo_rt', 'trafico_rt'.
+    """
+    st.markdown(
+        '<small style="color:#aaa;font-weight:600;">Estado de los datos</small>',
+        unsafe_allow_html=True,
+    )
+
+    # --- Datos históricos ---
+    st.markdown(
+        '<small style="color:#666;">— Históricos —</small>',
+        unsafe_allow_html=True,
+    )
+
+    extra_contam = ""
     if df_contam is not None and "anio" in df_contam.columns:
-        n = len(df_contam)
-        rango = f"{df_contam['anio'].min()}-{df_contam['anio'].max()}"
+        extra_contam = f" · {int(df_contam['anio'].min())}-{int(df_contam['anio'].max())}"
+    _linea_historico("Contaminación", df_contam, extra_contam)
+    _linea_historico("Meteorología", df_meteo)
+    _linea_historico("Tráfico", df_trafico)
+    _linea_historico("Eventos", df_eventos)
+
+    # --- Datos en tiempo real ---
+    rt = datos_rt or {}
+    contam_rt = rt.get("contam_rt")
+    meteo_rt = rt.get("meteo_rt")
+    trafico_rt = rt.get("trafico_rt")
+
+    hay_alguno_rt = any(x is not None for x in (contam_rt, meteo_rt, trafico_rt))
+
+    st.markdown(
+        '<small style="color:#666;">— Tiempo real —</small>',
+        unsafe_allow_html=True,
+    )
+    if not hay_alguno_rt:
         st.markdown(
-            f'<small style="color:#888;">📊 {n:,} registros · {rango}</small>',
+            '<small><span style="color:#d62728;">🔴</span> '
+            'Sin datos RT. Ejecuta streaming_master.py.</small>',
             unsafe_allow_html=True,
         )
+    else:
+        ts_contam = contam_rt.get("timestamp") if contam_rt else None
+        ts_meteo = meteo_rt.get("timestamp") if meteo_rt else None
+        ts_trafico = trafico_rt.get("timestamp") if trafico_rt else None
+        _linea_rt("Contaminación RT", ts_contam)
+        _linea_rt("Meteorología RT", ts_meteo)
+        _linea_rt("Tráfico RT", ts_trafico)
+
     st.divider()
     st.markdown(
         '<div style="text-align:center;padding:0.3rem 0;">'

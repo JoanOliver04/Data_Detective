@@ -422,6 +422,13 @@ def main():
     filtros = render_sidebar(
         df_contam=datos.get("contaminacion"),
         df_eventos=datos.get("eventos"),
+        df_meteo=datos.get("meteorologia"),
+        df_trafico=datos.get("trafico"),
+        datos_rt={
+            "contam_rt": datos.get("contam_rt"),
+            "meteo_rt": datos.get("meteo_rt"),
+            "trafico_rt": datos.get("trafico_rt"),
+        },
     )
     datos_f = _aplicar_filtros_globales(datos, filtros)
 
