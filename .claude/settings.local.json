@@ -6,7 +6,8 @@
       "Bash(python \"5.DASHBOARD/utils/urban_quality_index.py\")",
       "Bash(python -c \"import numpy; import pandas; import plotly; print\\('OK: numpy', numpy.__version__, 'pandas', pandas.__version__\\)\")",
       "Bash(python -c ':*)",
-      "Bash(python \"5.DASHBOARD/utils/pronostico_estadistico.py\")"
+      "Bash(python \"5.DASHBOARD/utils/pronostico_estadistico.py\")",
+      "Bash(python -c \"import folium; from streamlit_folium import st_folium; print\\('OK: folium', folium.__version__\\)\")"
     ]
   }
 }

@@ -205,6 +205,7 @@ TAB_NAMES = {
     "eventos":        "Eventos Masivos",
     "comparador":     "📊 Comparador",
     "pronostico":     "Pronóstico 72h",
+    "rutas_limpias":  "🌿 Rutas Limpias",
 }
 DESCRIPCION_TABS = {
     "contaminacion": (
@@ -230,6 +231,10 @@ DESCRIPCION_TABS = {
     "pronostico": (
         "Pronóstico meteorológico de 72 horas con indicadores "
         "heurísticos de riesgo de calidad del aire."
+    ),
+    "rutas_limpias": (
+        "Rutas predefinidas por zonas verdes y de baja contaminación. "
+        "Con datos RT se colorea la ruta según calidad del aire."
     ),
 }
 

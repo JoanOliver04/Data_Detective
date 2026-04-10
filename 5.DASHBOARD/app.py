@@ -24,6 +24,7 @@ from components.meteorologia import render_tab_meteorologia
 from components.trafico import render_tab_trafico
 from components.eventos import render_tab_eventos
 from components.pronostico import render_tab_pronostico
+from components.rutas_limpias import render_mapa_rutas_limpias
 from components.sidebar import render_sidebar
 from components.exportar import render_panel_exportacion
 from components.realtime import render_datos_realtime
@@ -392,6 +393,11 @@ def _tab_pronostico(datos):
     )
 
 
+def _tab_rutas_limpias(datos):
+    """Tab de rutas pulmon limpio (zonas verdes, baja contaminacion)."""
+    render_mapa_rutas_limpias(contam_rt=datos.get("contam_rt"))
+
+
 # ==============================================================================
 # MAIN
 # ==============================================================================
@@ -426,6 +432,7 @@ def main():
         TAB_NAMES["contaminacion"], TAB_NAMES["precipitaciones"],
         TAB_NAMES["trafico"], TAB_NAMES["eventos"],
         TAB_NAMES["comparador"], TAB_NAMES["pronostico"],
+        TAB_NAMES["rutas_limpias"],
     ])
 
     with tabs[0]:
@@ -440,6 +447,8 @@ def main():
         _tab_comparador(datos_f)
     with tabs[5]:
         _tab_pronostico(datos_f)
+    with tabs[6]:
+        _tab_rutas_limpias(datos)
 
     st.markdown(
         '<div class="footer-text">'
