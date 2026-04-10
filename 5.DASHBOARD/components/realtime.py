@@ -27,6 +27,7 @@ import streamlit as st
 
 from config import UMBRALES_OMS, ESTACION_BARRIO_MAP
 from streaming_background import estado_streaming
+from utils.urban_quality_index import calcular_indice_urbano
 
 logger = logging.getLogger("Realtime")
 
@@ -364,12 +365,101 @@ def _render_estado_streaming() -> None:
 # COMPONENTE PRINCIPAL
 # ==============================================================================
 
+def _render_indice_urbano(
+    contam_rt: Optional[dict],
+    meteo_rt: Optional[dict],
+    trafico_rt: Optional[dict],
+) -> None:
+    """
+    Renderiza el Indice de Calidad Urbana como KPI destacado.
+
+    Muestra score global con gauge visual (barra de progreso HTML),
+    nivel descriptivo y desglose por eje.
+
+    Args:
+        contam_rt: Datos RT de contaminacion.
+        meteo_rt: Datos RT de meteorologia.
+        trafico_rt: Datos RT de trafico.
+    """
+    indice = calcular_indice_urbano(contam_rt, meteo_rt, trafico_rt)
+    if indice is None:
+        return
+
+    score = indice["score"]
+    nivel = indice["nivel"]
+    color = indice["color"]
+    emoji = indice["emoji"]
+    ejes = indice["ejes"]
+    n_ejes = indice["ejes_disponibles"]
+
+    # Etiquetas y emojis por eje
+    eje_info = {
+        "contaminacion": ("Aire", "🌫️"),
+        "meteorologia": ("Meteo", "🌤️"),
+        "trafico": ("Tráfico", "🚗"),
+    }
+
+    # Desglose compacto de ejes
+    partes_ejes = []
+    for eje_key, (label, ico) in eje_info.items():
+        if eje_key in ejes:
+            s = ejes[eje_key]["score"]
+            partes_ejes.append(f"{ico} {label}: <b>{s:.1f}</b>")
+        else:
+            partes_ejes.append(
+                f"{ico} {label}: <span style='color:#666;'>—</span>"
+            )
+    desglose_html = " &nbsp;·&nbsp; ".join(partes_ejes)
+
+    # Porcentaje para la barra (0-100)
+    pct = min(100, max(0, int(score * 10)))
+
+    # Color de fondo de la barra con gradiente
+    st.markdown(
+        f"""
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+                    border-radius:12px;padding:16px 20px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                <div style="flex-shrink:0;">
+                    <span style="font-size:1.6rem;">{emoji}</span>
+                    <span style="font-size:1.8rem;font-weight:800;color:{color};
+                                 margin-left:4px;">{score:.1f}</span>
+                    <span style="color:#888;font-size:0.9rem;">/10</span>
+                </div>
+                <div style="flex-grow:1;min-width:200px;">
+                    <div style="display:flex;justify-content:space-between;
+                                margin-bottom:4px;">
+                        <span style="font-weight:600;font-size:0.95rem;">
+                            Índice de Calidad Urbana</span>
+                        <span style="color:{color};font-weight:600;
+                                     font-size:0.9rem;">{nivel}</span>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.08);border-radius:6px;
+                                height:10px;overflow:hidden;">
+                        <div style="width:{pct}%;height:100%;background:{color};
+                                    border-radius:6px;transition:width 0.5s;">
+                        </div>
+                    </div>
+                    <div style="margin-top:6px;font-size:0.78rem;color:#999;">
+                        {desglose_html}
+                        &nbsp;·&nbsp;
+                        <span style="color:#666;">{n_ejes}/3 ejes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_datos_realtime(datos: dict) -> None:
     """
     Renderiza el banner de datos en tiempo real.
 
-    Muestra 3 columnas: calidad del aire, meteorologia y trafico,
-    con los datos mas recientes capturados por streaming.
+    Muestra el Indice de Calidad Urbana como KPI destacado encima de
+    3 columnas: calidad del aire, meteorologia y trafico, con los datos
+    mas recientes capturados por streaming.
 
     Args:
         datos: Diccionario con claves 'contam_rt', 'meteo_rt', 'trafico_rt'.
@@ -383,6 +473,9 @@ def render_datos_realtime(datos: dict) -> None:
         return
 
     with st.expander("📡 Datos en tiempo real — Valencia", expanded=True):
+        # KPI destacado: Indice de Calidad Urbana
+        _render_indice_urbano(contam_rt, meteo_rt, trafico_rt)
+
         col_aire, col_meteo, col_trafico = st.columns(3)
 
         with col_aire:

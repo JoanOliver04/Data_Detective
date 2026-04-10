@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(grep -n \"render_panel_exportacion\" components/*.py app.py)",
-      "Bash(./env_data_detective/Scripts/python.exe -c ':*)"
+      "Bash(./env_data_detective/Scripts/python.exe -c ':*)",
+      "Bash(python \"5.DASHBOARD/utils/urban_quality_index.py\")"
     ]
   }
 }
