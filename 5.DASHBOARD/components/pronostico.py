@@ -22,7 +22,10 @@ Autor: Joan | Fecha: 2026
 """
 
 import logging
+from datetime import datetime, timedelta
+from typing import Optional
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -31,8 +34,13 @@ import streamlit.components.v1 as components
 
 from config import (
     TAB_NAMES, DESCRIPCION_TABS, VIS_PRONOSTICO_72H_HTML,
+    UMBRALES_OMS, VARIABLE_COLORS,
 )
 from data_loader import leer_html_visualizacion
+from utils.pronostico_estadistico import (
+    pronosticar_contaminacion_manana,
+    obtener_distribucion_mensual,
+)
 
 logger = logging.getLogger("Pronostico")
 
@@ -313,19 +321,244 @@ def _generar_grafico_pronostico_dinamico(df: pd.DataFrame) -> None:
 # 3. FUNCION ORQUESTADORA
 # ==============================================================================
 
+# ==============================================================================
+# 4. PRONOSTICO DE CONTAMINACION (MANANA)
+# ==============================================================================
+
+# Mapping para nombres bonitos con subindices
+_VAR_DISPLAY = {
+    "NO2": "NO₂", "O3": "O₃", "PM10": "PM₁₀", "PM2.5": "PM₂.₅",
+}
+
+# Emojis de confianza
+_CONFIANZA_EMOJI = {
+    "Alta": "🟢", "Media": "🟡", "Baja": "🟠",
+}
+
+
+def render_pronostico_contaminacion(
+    df_contaminacion: Optional[pd.DataFrame],
+    contam_rt: Optional[dict],
+) -> None:
+    """
+    Renderiza la seccion de pronostico de contaminacion para manana.
+
+    Muestra:
+      - 4 KPIs (NO2, O3, PM10, PM2.5) con prediccion y confianza
+      - Boxplot de contexto historico con punto de prediccion
+
+    Args:
+        df_contaminacion: DataFrame de contaminacion historica.
+        contam_rt: Datos RT de AQICN (o None).
+    """
+    manana = datetime.now() + timedelta(days=1)
+    dias_es = {
+        0: "lunes", 1: "martes", 2: "miércoles", 3: "jueves",
+        4: "viernes", 5: "sábado", 6: "domingo",
+    }
+    meses_es = {
+        1: "enero", 2: "febrero", 3: "marzo", 4: "abril",
+        5: "mayo", 6: "junio", 7: "julio", 8: "agosto",
+        9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre",
+    }
+    dia_str = dias_es.get(manana.weekday(), "")
+    mes_str = meses_es.get(manana.month, "")
+
+    st.markdown(
+        f'<div style="border-left:4px solid {COLOR_PRONOSTICO};padding-left:12px;'
+        f'margin-bottom:1rem;">'
+        f'<h4 style="margin:0;">📊 Pronóstico de Contaminación (mañana)</h4>'
+        f'<small style="color:#888;">'
+        f'{dia_str.capitalize()} {manana.day} de {mes_str} — '
+        f'Basado en tendencias estadísticas históricas'
+        f'</small></div>',
+        unsafe_allow_html=True,
+    )
+
+    pronostico = pronosticar_contaminacion_manana(
+        df_contaminacion, contam_rt, manana,
+    )
+
+    if pronostico is None:
+        st.info(
+            "Sin datos históricos suficientes para generar el pronóstico de "
+            "contaminación. Se necesitan datos en contaminacion_normalizada.parquet."
+        )
+        return
+
+    # --- 4 KPIs ---
+    variables_kpi = ["NO2", "O3", "PM10", "PM2.5"]
+    vars_con_datos = [v for v in variables_kpi if v in pronostico]
+
+    if not vars_con_datos:
+        st.info("Sin variables con datos suficientes para el pronóstico.")
+        return
+
+    cols = st.columns(len(vars_con_datos))
+    for col, variable in zip(cols, vars_con_datos):
+        datos = pronostico[variable]
+        pred = datos["prediccion"]
+        rango_min = datos["rango_min"]
+        rango_max = datos["rango_max"]
+        confianza = datos["confianza"]
+        tendencia = datos["tendencia"]
+        n_reg = datos["n_registros"]
+        emoji_conf = _CONFIANZA_EMOJI.get(confianza, "⚪")
+        var_display = _VAR_DISPLAY.get(variable, variable)
+        color_var = VARIABLE_COLORS.get(variable, "#888")
+        umbral_oms = UMBRALES_OMS.get(variable)
+
+        # Delta: comparar con umbral OMS
+        if umbral_oms and pred > umbral_oms:
+            delta_str = f"Supera OMS ({umbral_oms})"
+            delta_color = "inverse"
+        elif umbral_oms:
+            delta_str = f"Bajo OMS ({umbral_oms})"
+            delta_color = "normal"
+        else:
+            delta_str = None
+            delta_color = "off"
+
+        with col:
+            st.metric(
+                label=f"{var_display} previsto",
+                value=f"{pred:.1f} µg/m³",
+                delta=delta_str,
+                delta_color=delta_color,
+                help=(
+                    f"Rango esperado: {rango_min:.1f} – {rango_max:.1f} µg/m³\n\n"
+                    f"Confianza: {emoji_conf} {confianza} ({n_reg} registros históricos)\n\n"
+                    f"Tendencia: {tendencia}\n\n"
+                    f"Método: {datos['metodo']}"
+                ),
+            )
+            st.caption(
+                f"{emoji_conf} {confianza} · {tendencia}"
+            )
+
+    # --- Boxplot de contexto historico ---
+    _render_boxplot_contexto(df_contaminacion, pronostico, manana.month, vars_con_datos)
+
+    # --- Explicacion del metodo ---
+    with st.expander("¿Cómo se calcula este pronóstico?", expanded=False):
+        st.markdown(
+            "El pronóstico de contaminación es **heurístico-estadístico** "
+            "(no usa modelos de Machine Learning):\n\n"
+            "1. **Base histórica**: media de mediciones para el mismo mes y día "
+            "de la semana (ej: todos los miércoles de abril históricos).\n"
+            "2. **Corrección por tendencia**: si los últimos 3 años muestran "
+            "tendencia al alza o baja, se ajusta proporcionalmente.\n"
+            "3. **Datos en tiempo real**: si hay datos RT recientes de AQICN, "
+            "se ponderan 60% histórico + 40% RT.\n\n"
+            "**Escala de confianza:**\n"
+            "- 🟢 **Alta**: ≥50 registros históricos para ese mes+día\n"
+            "- 🟡 **Media**: ≥10 registros\n"
+            "- 🟠 **Baja**: <10 registros (usa media mensual general)\n\n"
+            "*Este pronóstico es orientativo. No sustituye a modelos "
+            "atmosféricos profesionales.*"
+        )
+
+
+def _render_boxplot_contexto(
+    df_contaminacion: Optional[pd.DataFrame],
+    pronostico: dict,
+    mes: int,
+    variables: list,
+) -> None:
+    """
+    Renderiza boxplots de distribucion historica mensual con la prediccion marcada.
+
+    Args:
+        df_contaminacion: DataFrame de contaminacion.
+        pronostico: Resultados del pronostico por variable.
+        mes: Mes objetivo (1-12).
+        variables: Variables a mostrar.
+    """
+    meses_es = {
+        1: "enero", 2: "febrero", 3: "marzo", 4: "abril",
+        5: "mayo", 6: "junio", 7: "julio", 8: "agosto",
+        9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre",
+    }
+
+    fig = go.Figure()
+    has_data = False
+
+    for variable in variables:
+        serie = obtener_distribucion_mensual(df_contaminacion, variable, mes)
+        if serie is None or serie.empty:
+            continue
+
+        has_data = True
+        color = VARIABLE_COLORS.get(variable, "#888")
+        var_display = _VAR_DISPLAY.get(variable, variable)
+
+        # Boxplot
+        fig.add_trace(go.Box(
+            y=serie.values,
+            name=var_display,
+            marker_color=color,
+            boxmean=True,
+            opacity=0.7,
+        ))
+
+        # Punto de prediccion
+        if variable in pronostico:
+            pred = pronostico[variable]["prediccion"]
+            fig.add_trace(go.Scatter(
+                x=[var_display],
+                y=[pred],
+                mode="markers",
+                name=f"Predicción {var_display}",
+                marker=dict(
+                    color="#ff0040",
+                    size=14,
+                    symbol="diamond",
+                    line=dict(width=2, color="white"),
+                ),
+                showlegend=False,
+                hovertemplate=(
+                    f"<b>Predicción {var_display}</b><br>"
+                    f"{pred:.1f} µg/m³<extra></extra>"
+                ),
+            ))
+
+    if not has_data:
+        return
+
+    mes_nombre = meses_es.get(mes, str(mes))
+    fig.update_layout(
+        title=f"Contexto histórico — Distribución en {mes_nombre} vs predicción (◆)",
+        yaxis_title="µg/m³",
+        template="plotly_dark",
+        height=420,
+        margin=dict(t=60, b=40),
+        showlegend=False,
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    st.caption(
+        "Cajas: distribución histórica del mes (mediana, Q1-Q3, bigotes). "
+        "Diamante rojo (◆): predicción para mañana."
+    )
+
+
+# ==============================================================================
+# 5. FUNCION ORQUESTADORA
+# ==============================================================================
+
 def render_tab_pronostico(datos: dict) -> None:
     """
     Orquesta la tab completa de Pronostico 72h.
 
     Estructura:
       1. Header con descripcion
-      2. KPIs (4 metricas incluyendo riesgo)
+      2. KPIs meteo (4 metricas incluyendo riesgo)
       3. Grafico interactivo pre-generado
       4. Explicacion de la heuristica de riesgo
+      5. Pronostico de contaminacion para manana
 
     Args:
         datos: Diccionario con datos filtrados.
-              Claves usadas: 'pronostico'.
+              Claves usadas: 'pronostico', 'contaminacion', 'contam_rt'.
     """
     # Header
     st.markdown(
@@ -343,33 +576,39 @@ def render_tab_pronostico(datos: dict) -> None:
             "Ejecuta streaming_openweather.py para capturar datos "
             "y generar_pronostico.py para generar la visualización."
         )
-        return
+    else:
+        # 1. KPIs meteo
+        render_kpis_pronostico(df)
 
-    # 1. KPIs
-    render_kpis_pronostico(df)
+        st.divider()
+
+        # 2. Grafico meteo
+        render_grafico_pronostico(df)
+
+        st.divider()
+
+        # 3. Explicacion de la heuristica
+        with st.expander("¿Cómo se calcula el indicador de riesgo?", expanded=False):
+            st.markdown(
+                "El indicador de riesgo de calidad del aire se basa en el "
+                "**efecto washout** (lavado atmosférico): la lluvia arrastra "
+                "partículas contaminantes, limpiando el aire.\n\n"
+                f"- **Lluvia total > {RAIN_THRESHOLD_LOW} mm** → "
+                f"Riesgo **BAJO** {RIESGO_CONFIG['BAJO']['emoji']} "
+                f"(washout efectivo)\n"
+                f"- **Prob. max. > {POP_THRESHOLD_MOD:.0f}%** → "
+                f"Riesgo **MODERADO** {RIESGO_CONFIG['MODERADO']['emoji']} "
+                f"(posible limpieza parcial)\n"
+                f"- **Sin lluvia significativa** → "
+                f"Riesgo **ALTO** {RIESGO_CONFIG['ALTO']['emoji']} "
+                f"(acumulación de contaminantes)\n\n"
+                "*Fuente: heurística implementada en generar_pronostico.py, "
+                "basada en literatura sobre deposición húmeda de contaminantes.*"
+            )
 
     st.divider()
 
-    # 2. Grafico
-    render_grafico_pronostico(df)
-
-    st.divider()
-
-    # 3. Explicacion de la heuristica
-    with st.expander("\u00bfCómo se calcula el indicador de riesgo?", expanded=False):
-        st.markdown(
-            "El indicador de riesgo de calidad del aire se basa en el "
-            "**efecto washout** (lavado atmosférico): la lluvia arrastra "
-            "partículas contaminantes, limpiando el aire.\n\n"
-            f"- **Lluvia total > {RAIN_THRESHOLD_LOW} mm** \u2192 "
-            f"Riesgo **BAJO** {RIESGO_CONFIG['BAJO']['emoji']} "
-            f"(washout efectivo)\n"
-            f"- **Prob. max. > {POP_THRESHOLD_MOD:.0f}%** \u2192 "
-            f"Riesgo **MODERADO** {RIESGO_CONFIG['MODERADO']['emoji']} "
-            f"(posible limpieza parcial)\n"
-            f"- **Sin lluvia significativa** \u2192 "
-            f"Riesgo **ALTO** {RIESGO_CONFIG['ALTO']['emoji']} "
-            f"(acumulación de contaminantes)\n\n"
-            "*Fuente: heurística implementada en generar_pronostico.py, "
-            "basada en literatura sobre deposición húmeda de contaminantes.*"
-        )
+    # 4. Pronostico de contaminacion para manana
+    df_contaminacion = datos.get("contaminacion")
+    contam_rt = datos.get("contam_rt")
+    render_pronostico_contaminacion(df_contaminacion, contam_rt)
