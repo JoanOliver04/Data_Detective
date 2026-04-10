@@ -305,8 +305,13 @@ def _tab_contaminacion(datos):
 
     # 4. Ranking de barrios
     st.divider()
-    with st.expander("🏆 Ranking de barrios por calidad del aire"):
-        render_ranking_barrios(df)
+    with st.expander("🏆 Ranking de barrios por calidad del aire / calidad urbana"):
+        render_ranking_barrios(
+            df,
+            contam_rt=datos.get("contam_rt"),
+            meteo_rt=datos.get("meteo_rt"),
+            trafico_rt=datos.get("trafico_rt"),
+        )
 
     # --- EXPORTACION ---
     st.divider()
