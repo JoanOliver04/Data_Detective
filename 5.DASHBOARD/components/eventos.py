@@ -34,6 +34,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from theme import get_theme
 from config import TAB_NAMES, DESCRIPCION_TABS, COLORS
 
 logger = logging.getLogger("Eventos")
@@ -276,7 +277,7 @@ def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
         ),
         xaxis_title="Tipo de evento",
         yaxis_title="Impacto medio (%)",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=420,
         margin=dict(l=60, r=30, t=60, b=50),
         barmode="group",
@@ -369,7 +370,7 @@ def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
         ),
         xaxis_title="Tipo de evento",
         yaxis_title="Impacto medio (%)",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=400,
         margin=dict(l=60, r=30, t=60, b=50),
         showlegend=False,
@@ -473,7 +474,7 @@ def render_timeline_eventos(df: pd.DataFrame) -> None:
         ),
         xaxis_title="Fecha",
         yaxis_title="",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=max(300, len(df_ev) * 40 + 100),
         margin=dict(l=200, r=30, t=60, b=50),
         hovermode="closest",

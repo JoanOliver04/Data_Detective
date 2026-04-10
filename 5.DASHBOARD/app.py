@@ -38,6 +38,7 @@ from data_loader import (
 )
 from config import PAGE_CONFIG, TAB_NAMES, DESCRIPCION_TABS
 from streaming_background import iniciar_streaming_background, estado_streaming
+from theme import get_theme
 import streamlit as st
 import pandas as pd
 
@@ -58,93 +59,121 @@ iniciar_streaming_background()
 # ==============================================================================
 
 def _aplicar_estilos():
-    st.markdown("""<style>
+    t = get_theme()
+    st.markdown(f"""<style>
+    /* --- Override global de Streamlit para respetar nuestro tema --- */
+    .stApp {{
+        background-color: {t["app_bg"]};
+        color: {t["app_text"]};
+    }}
+    [data-testid="stSidebar"] {{
+        background-color: {t["sidebar_bg"]};
+    }}
+    [data-testid="stSidebar"] [data-testid="stMarkdown"] {{
+        color: {t["app_text"]};
+    }}
+
+    /* --- CSS custom properties para HTML inline --- */
+    :root {{
+        --dd-text: {t["text"]};
+        --dd-text-secondary: {t["text_secondary"]};
+        --dd-text-muted: {t["text_muted"]};
+        --dd-text-faint: {t["text_faint"]};
+        --dd-text-label: {t["text_label"]};
+        --dd-text-dim: {t["text_dim"]};
+        --dd-border: {t["border"]};
+        --dd-border-subtle: {t["border_subtle"]};
+        --dd-bg-card: {t["bg_card"]};
+        --dd-bg-tabs: {t["bg_tabs"]};
+        --dd-bg-tab-selected: {t["bg_tab_selected"]};
+    }}
+
     /* --- Metricas con hover sutil --- */
-    [data-testid="stMetric"]{
-        background: linear-gradient(135deg, #1e1e2e 0%, #252540 100%);
-        border: 1px solid #333;
+    [data-testid="stMetric"]{{
+        background: {t["bg_card"]};
+        border: 1px solid {t["border"]};
         border-radius: 10px;
         padding: 14px 18px;
         transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-    [data-testid="stMetric"]:hover{
+    }}
+    [data-testid="stMetric"]:hover{{
         transform: translateY(-2px);
-        border-color: #1f77b4;
-    }
-    [data-testid="stMetricLabel"]{font-size:.85rem;letter-spacing:0.3px}
-    [data-testid="stMetricValue"]{font-size:1.6rem;font-weight:700}
+        border-color: {t["border_hover"]};
+    }}
+    [data-testid="stMetricLabel"]{{font-size:.85rem;letter-spacing:0.3px}}
+    [data-testid="stMetricValue"]{{font-size:1.6rem;font-weight:700}}
 
     /* --- Tabs mejorados --- */
-    .stTabs [data-baseweb="tab-list"]{
+    .stTabs [data-baseweb="tab-list"]{{
         gap: 4px;
-        background-color: #0e0e1a;
+        background-color: {t["bg_tabs"]};
         border-radius: 10px;
         padding: 4px;
-    }
-    .stTabs [data-baseweb="tab"]{
+    }}
+    .stTabs [data-baseweb="tab"]{{
         padding: 10px 22px;
         font-size: .92rem;
         border-radius: 8px;
         font-weight: 500;
-    }
-    .stTabs [aria-selected="true"]{
-        background-color: #1e1e2e !important;
-    }
+    }}
+    .stTabs [aria-selected="true"]{{
+        background-color: {t["bg_tab_selected"]} !important;
+    }}
 
     /* --- Cabeceras de seccion --- */
-    .section-header{
+    .section-header{{
         border-left: 4px solid #1f77b4;
         padding-left: 12px;
         margin: 1.5rem 0 1rem 0;
-    }
-    .section-header h3, .section-header h4{
+    }}
+    .section-header h3, .section-header h4{{
         margin-bottom: 2px;
-    }
-    .section-header p{
-        color: #888;
+    }}
+    .section-header p{{
+        color: {t["text_muted"]};
         font-size: 0.85rem;
         margin-top: 0;
-    }
+    }}
 
     /* --- Expanders --- */
-    .streamlit-expanderHeader{
+    .streamlit-expanderHeader{{
         font-weight: 600;
         font-size: 0.95rem;
-    }
+    }}
 
     /* --- Dividers mas sutiles --- */
-    hr{
-        border-color: #2a2a3a !important;
+    hr{{
+        border-color: {t["border_subtle"]} !important;
         opacity: 0.5;
-    }
+    }}
 
     /* --- Footer --- */
-    .footer-text{
+    .footer-text{{
         text-align: center;
-        color: #555;
+        color: {t["text_faint"]};
         font-size: .75rem;
         padding: 2rem 0 1rem 0;
-        border-top: 1px solid #2a2a3a;
+        border-top: 1px solid {t["border_subtle"]};
         margin-top: 2rem;
-    }
+    }}
 
     /* --- Sidebar branding --- */
-    [data-testid="stSidebar"] [data-testid="stMarkdown"] h1{
+    [data-testid="stSidebar"] [data-testid="stMarkdown"] h1{{
         background: linear-gradient(135deg, #1f77b4, #17becf);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-    }
+    }}
 
     /* --- Download buttons uniformes --- */
-    .stDownloadButton > button{
+    .stDownloadButton > button{{
         border-radius: 6px;
         font-weight: 600;
         transition: transform 0.15s ease;
-    }
-    .stDownloadButton > button:hover{
+    }}
+    .stDownloadButton > button:hover{{
         transform: scale(1.03);
-    }
+    }}
     </style>""", unsafe_allow_html=True)
 
 

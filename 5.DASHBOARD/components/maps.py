@@ -36,6 +36,7 @@ from config import (
     DISTRITOS_VALENCIA, ESTACION_DISTRITO_MAP,
 )
 from data_loader import leer_html_visualizacion
+from theme import get_theme
 
 logger = logging.getLogger("Maps")
 
@@ -249,11 +250,14 @@ def _generar_mapa_dinamico(
             entry["_timestamp"] = rt_ts
             rt_por_estacion[str(e["estacion_id"])] = entry
 
+    # --- Tema activo (para tiles, popups, leyenda) ---
+    t = get_theme()
+
     # --- Mapa base ---
     m = folium.Map(
         location=[VALENCIA_CENTER_LAT, VALENCIA_CENTER_LON],
         zoom_start=13,
-        tiles="CartoDB dark_matter",
+        tiles=t["folium_tiles"],
     )
 
     # --- Umbral y color para la variable seleccionada ---
@@ -296,6 +300,7 @@ def _generar_mapa_dinamico(
             variable_seleccionada=variable,
             rt_data=rt_por_estacion.get(est_id),
             meteo_rt=meteo_rt,
+            theme=t,
         )
 
         # --- Tooltip (con badge LIVE si tiene datos RT) ---
@@ -340,11 +345,11 @@ def _generar_mapa_dinamico(
     }
     _anadir_marcadores_distritos(
         m, DISTRITOS_VALENCIA, distritos_sensores,
-        distritos_rt=distritos_rt, meteo_rt=meteo_rt,
+        distritos_rt=distritos_rt, meteo_rt=meteo_rt, theme=t,
     )
 
     # --- Capa de sensores RT ---
-    n_sensores_rt = _anadir_capa_sensores_rt(m, contam_rt, meteo_rt)
+    n_sensores_rt = _anadir_capa_sensores_rt(m, contam_rt, meteo_rt, theme=t)
 
     # --- Mapa de calor RT (solo en modo calor) ---
     tiene_heatmap = False
@@ -352,7 +357,7 @@ def _generar_mapa_dinamico(
         tiene_heatmap = _anadir_heatmap_rt(m, contam_rt)
 
     # --- Capa de trafico en tiempo real ---
-    n_trafico = _anadir_capa_trafico(m, trafico_rt)
+    n_trafico = _anadir_capa_trafico(m, trafico_rt, theme=t)
 
     # --- Jardin del Turia (PolyLine) ---
     _anadir_turia(m)
@@ -369,6 +374,7 @@ def _generar_mapa_dinamico(
         con_trafico=n_trafico > 0,
         con_rt=n_sensores_rt > 0,
         rt_timestamp=rt_timestamp,
+        theme=t,
     )
     m.get_root().html.add_child(folium.Element(leyenda_html))
 
@@ -410,11 +416,11 @@ def _score_estacion(df_est: pd.DataFrame):
         Tupla (score_str, nivel, color). Si quality_index no disponible, '-'.
     """
     if not _QUALITY_INDEX_DISPONIBLE:
-        return "-", "N/D", "#888"
+        return "-", "N/D", get_theme()["text_muted"]
 
     indice = calcular_indice_calidad(df_est, UMBRALES_OMS)
     if indice is None:
-        return "-", "N/D", "#888"
+        return "-", "N/D", get_theme()["text_muted"]
 
     score = indice["score"]
     nivel, color, _ = nivel_desde_score(score)
@@ -462,6 +468,7 @@ def _construir_popup(
     variable_seleccionada: str,
     rt_data: Optional[dict] = None,
     meteo_rt: Optional[dict] = None,
+    theme: Optional[dict] = None,
 ) -> str:
     """
     Genera el HTML completo del popup para una estacion.
@@ -485,10 +492,12 @@ def _construir_popup(
                  Incluye clave '_timestamp'. None si no hay datos RT.
         meteo_rt: Dict con temperatura y humedad actuales (ciudad-wide).
                   None si no hay datos de meteorologia RT.
+        theme: Diccionario de tokens de tema. Si None, usa get_theme().
 
     Returns:
         String HTML listo para folium.Popup.
     """
+    t = theme or get_theme()
     # Calcular stats por variable para la tabla
     stats = (
         df_est
@@ -498,12 +507,12 @@ def _construir_popup(
     )
 
     # Filas de la tabla
-    filas_tabla = _filas_tabla_variables(stats, variable_seleccionada)
+    filas_tabla = _filas_tabla_variables(stats, variable_seleccionada, theme=t)
 
     tabla_html = (
         '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:4px;">'
         '<thead>'
-        '<tr style="background:#2a2a3a;color:#ccc;">'
+        f'<tr style="background:{t["bg_table_header"]};color:{t["text_secondary"]};">'
         '<th style="padding:3px 5px;text-align:left;">Variable</th>'
         '<th style="padding:3px 5px;text-align:right;">Media</th>'
         '<th style="padding:3px 5px;text-align:right;">OMS</th>'
@@ -517,35 +526,35 @@ def _construir_popup(
     )
 
     score_html = (
-        f'<div style="margin:6px 0;padding:4px 8px;background:#1e1e2e;'
+        f'<div style="margin:6px 0;padding:4px 8px;background:{t["bg_score"]};'
         f'border-radius:4px;border-left:3px solid {color_nivel};">'
-        f'<span style="color:#aaa;font-size:10px;">Score calidad: </span>'
+        f'<span style="color:{t["text_label"]};font-size:10px;">Score calidad: </span>'
         f'<span style="color:{color_nivel};font-weight:700;font-size:13px;">'
         f'{score}/10</span>'
-        f'<span style="color:#aaa;font-size:10px;"> {nivel_score}</span>'
+        f'<span style="color:{t["text_label"]};font-size:10px;"> {nivel_score}</span>'
         f'</div>'
     )
 
     historico_header = (
-        '<div style="font-size:10px;color:#666;font-weight:600;letter-spacing:0.5px;'
-        'margin-top:4px;">── DATOS HISTÓRICOS ──</div>'
+        f'<div style="font-size:10px;color:{t["text_dim"]};font-weight:600;'
+        f'letter-spacing:0.5px;margin-top:4px;">── DATOS HISTÓRICOS ──</div>'
     )
 
     footer_html = (
-        f'<div style="margin-top:6px;color:#555;font-size:10px;">'
+        f'<div style="margin-top:6px;color:{t["text_faint"]};font-size:10px;">'
         f'Total registros (todas las variables): {n_total:,}'
         f'</div>'
     )
 
-    rt_html = _seccion_rt_popup(rt_data, meteo_rt)
+    rt_html = _seccion_rt_popup(rt_data, meteo_rt, theme=t)
 
     return (
         f'<div style="font-family:Arial,sans-serif;min-width:260px;max-width:320px;'
-        f'background:#1a1a2e;color:#ddd;padding:4px;">'
+        f'background:{t["bg_popup"]};color:{t["text"]};padding:4px;">'
         f'<b style="font-size:13px;">{nombre_est}</b><br>'
-        f'<span style="color:#aaa;font-size:11px;">Barrio: {barrio} | '
+        f'<span style="color:{t["text_label"]};font-size:11px;">Barrio: {barrio} | '
         f'ID: {est_id}</span>'
-        f'<hr style="margin:5px 0;border-color:#333;">'
+        f'<hr style="margin:5px 0;border-color:{t["popup_hr"]};">'
         + score_html
         + historico_header
         + tabla_html
@@ -558,6 +567,7 @@ def _construir_popup(
 def _filas_tabla_variables(
     stats: pd.DataFrame,
     variable_seleccionada: str,
+    theme: Optional[dict] = None,
 ) -> str:
     """
     Genera las filas <tr> de la tabla de variables del popup.
@@ -565,10 +575,12 @@ def _filas_tabla_variables(
     Args:
         stats: DataFrame con index=variable, columnas [media, n].
         variable_seleccionada: Variable que se resalta con fondo diferente.
+        theme: Diccionario de tokens de tema.
 
     Returns:
         String HTML con las filas <tr>.
     """
+    t = theme or get_theme()
     # Orden preferido de visualizacion
     orden = ["NO2", "PM2.5", "PM10", "O3", "SO2", "CO"]
     variables_ordenadas = [v for v in orden if v in stats.index]
@@ -603,14 +615,15 @@ def _filas_tabla_variables(
             umbral_str = "-"
 
         # Fondo resaltado si es la variable seleccionada
-        bg = "background:#1e2a1e;" if var == variable_seleccionada else ""
+        bg = f"background:{t['bg_highlight']};" if var == variable_seleccionada else ""
         peso = "font-weight:700;" if var == variable_seleccionada else ""
 
         filas.append(
-            f'<tr style="{bg}border-bottom:1px solid #2a2a3a;">'
+            f'<tr style="{bg}border-bottom:1px solid {t["border_subtle"]};">'
             f'<td style="padding:3px 5px;{peso}color:{color_var};">{var}</td>'
             f'<td style="padding:3px 5px;text-align:right;{peso}">{media:.1f} µg/m³</td>'
-            f'<td style="padding:3px 5px;text-align:right;color:#888;">{umbral_str}</td>'
+            f'<td style="padding:3px 5px;text-align:right;color:{t["text_muted"]};">'
+            f'{umbral_str}</td>'
             f'<td style="padding:3px 5px;text-align:center;">{estado}</td>'
             f'</tr>'
         )
@@ -662,6 +675,7 @@ def _frescura_rt(timestamp_str: str) -> str:
 def _seccion_rt_popup(
     rt_data: Optional[dict],
     meteo_rt: Optional[dict],
+    theme: Optional[dict] = None,
 ) -> str:
     """
     Genera el bloque HTML de la seccion 'DATOS EN TIEMPO REAL' del popup.
@@ -672,10 +686,12 @@ def _seccion_rt_popup(
     Args:
         rt_data: Dict con AQI, contaminantes y '_timestamp' de esta estacion.
         meteo_rt: Dict con temp y humedad actuales (ciudad-wide).
+        theme: Diccionario de tokens de tema.
 
     Returns:
         String HTML con la seccion RT, o '' si rt_data y meteo_rt son None.
     """
+    t = theme or get_theme()
     tiene_contam = rt_data is not None
     tiene_meteo = meteo_rt is not None and (
         meteo_rt.get("temp") is not None or meteo_rt.get("humedad") is not None
@@ -684,7 +700,7 @@ def _seccion_rt_popup(
         return ""
 
     partes = [
-        '<hr style="margin:6px 0;border-color:#2a3a4a;">',
+        f'<hr style="margin:6px 0;border-color:{t["popup_hr_rt"]};">',
         '<div style="font-size:10px;color:#17becf;font-weight:600;'
         'letter-spacing:0.5px;margin-bottom:4px;">── DATOS EN TIEMPO REAL ──</div>',
     ]
@@ -704,7 +720,7 @@ def _seccion_rt_popup(
             partes.append(
                 f'<div style="margin-bottom:3px;">'
                 f'<b style="color:{color_aqi};">AQI: {aqi}</b> {icono_aqi} '
-                f'<span style="color:#aaa;font-size:10px;">{nivel_aqi}</span>'
+                f'<span style="color:{t["text_label"]};font-size:10px;">{nivel_aqi}</span>'
                 f'</div>'
             )
 
@@ -734,7 +750,7 @@ def _seccion_rt_popup(
             meteo_partes.append(f"💧 {int(humedad)}%")
         if meteo_partes:
             partes.append(
-                f'<div style="margin-top:3px;font-size:11px;color:#ccc;">'
+                f'<div style="margin-top:3px;font-size:11px;color:{t["text_secondary"]};">'
                 + " &nbsp; ".join(meteo_partes)
                 + "</div>"
             )
@@ -746,7 +762,7 @@ def _seccion_rt_popup(
     frescura = _frescura_rt(ts_str)
     if frescura:
         partes.append(
-            f'<div style="margin-top:4px;color:#555;font-size:10px;">'
+            f'<div style="margin-top:4px;color:{t["text_faint"]};font-size:10px;">'
             f'Última captura: {frescura}'
             f'</div>'
         )
@@ -764,6 +780,7 @@ def _anadir_marcadores_distritos(
     distritos_con_sensor: Dict[str, str],
     distritos_rt: Optional[Dict[str, dict]] = None,
     meteo_rt: Optional[dict] = None,
+    theme: Optional[dict] = None,
 ) -> None:
     """
     Añade una FeatureGroup toggleable con los 19 distritos de Valencia al mapa.
@@ -787,6 +804,7 @@ def _anadir_marcadores_distritos(
     except ImportError:
         return
 
+    t = theme or get_theme()
     fg = folium.FeatureGroup(name="🏘️ Distritos")
     _dr = distritos_rt or {}
 
@@ -802,14 +820,17 @@ def _anadir_marcadores_distritos(
             rt_distrito = _dr.get(nombre_distrito)
             aqi_distrito = rt_distrito.get("aqi") if rt_distrito else None
             color_icono = _color_aqi_folium(aqi_distrito) if aqi_distrito else "blue"
-            rt_bloque = _seccion_rt_popup(rt_distrito, meteo_rt)
+            rt_bloque = _seccion_rt_popup(rt_distrito, meteo_rt, theme=t)
             popup_content = (
                 f'<div style="font-family:Arial,sans-serif;font-size:12px;'
-                f'min-width:200px;max-width:260px;background:#1a1a2e;color:#ddd;padding:4px;">'
+                f'min-width:200px;max-width:260px;background:{t["bg_popup"]};'
+                f'color:{t["text"]};padding:4px;">'
                 f'<b>{nombre_distrito}</b><br>'
-                f'<span style="color:#888;font-size:11px;">{descripcion}</span>'
-                f'<hr style="margin:4px 0;border-color:#333;">'
-                f'<span style="color:#ccc;"><b>Habitantes:</b> {habitantes:,}</span><br>'
+                f'<span style="color:{t["text_muted"]};font-size:11px;">'
+                f'{descripcion}</span>'
+                f'<hr style="margin:4px 0;border-color:{t["popup_hr"]};">'
+                f'<span style="color:{t["text_secondary"]};">'
+                f'<b>Habitantes:</b> {habitantes:,}</span><br>'
                 f'<b style="color:#3498db;">Sensor:</b> {nombre_estacion}'
                 + rt_bloque
                 + '</div>'
@@ -818,11 +839,14 @@ def _anadir_marcadores_distritos(
             color_icono = "gray"
             popup_content = (
                 f'<div style="font-family:Arial,sans-serif;font-size:12px;'
-                f'min-width:200px;max-width:260px;background:#1a1a2e;color:#ddd;padding:4px;">'
+                f'min-width:200px;max-width:260px;background:{t["bg_popup"]};'
+                f'color:{t["text"]};padding:4px;">'
                 f'<b>{nombre_distrito}</b><br>'
-                f'<span style="color:#888;font-size:11px;">{descripcion}</span>'
-                f'<hr style="margin:4px 0;border-color:#333;">'
-                f'<span style="color:#ccc;"><b>Habitantes:</b> {habitantes:,}</span><br>'
+                f'<span style="color:{t["text_muted"]};font-size:11px;">'
+                f'{descripcion}</span>'
+                f'<hr style="margin:4px 0;border-color:{t["popup_hr"]};">'
+                f'<span style="color:{t["text_secondary"]};">'
+                f'<b>Habitantes:</b> {habitantes:,}</span><br>'
                 f'<span style="color:#e67e22;">⚠️ Sin sensor de contaminación '
                 f'en este distrito. Se usan datos interpolados de estaciones '
                 f'cercanas.</span>'
@@ -863,7 +887,7 @@ _SEVERIDAD_ES = {
 }
 
 
-def _anadir_capa_trafico(m, trafico_rt: Optional[dict]) -> int:
+def _anadir_capa_trafico(m, trafico_rt: Optional[dict], theme: Optional[dict] = None) -> int:
     """
     Anade una FeatureGroup con marcadores de incidencias de trafico al mapa.
 
@@ -889,6 +913,7 @@ def _anadir_capa_trafico(m, trafico_rt: Optional[dict]) -> int:
     except ImportError:
         return 0
 
+    t = theme or get_theme()
     fg = folium.FeatureGroup(name="🚗 Tráfico RT")
     n_added = 0
 
@@ -938,9 +963,10 @@ def _anadir_capa_trafico(m, trafico_rt: Optional[dict]) -> int:
         # Popup HTML
         popup_html = (
             f'<div style="font-family:Arial,sans-serif;min-width:200px;'
-            f'max-width:260px;font-size:12px;">'
+            f'max-width:260px;font-size:12px;background:{t["bg_popup"]};'
+            f'color:{t["text"]};padding:4px;">'
             f'<b style="color:#ff7f0e;">🚗 Incidencia de tráfico</b><br>'
-            f'<hr style="margin:4px 0;border-color:#ddd;">'
+            f'<hr style="margin:4px 0;border-color:{t["popup_hr"]};">'
             f'<b>Tipo:</b> {tipo_legible}<br>'
             f'<b>Causa:</b> {causa_legible}<br>'
             f'<b>Severidad:</b> {sev_es}<br>'
@@ -950,8 +976,9 @@ def _anadir_capa_trafico(m, trafico_rt: Optional[dict]) -> int:
             popup_html += f'<b>Municipio:</b> {municipio}<br>'
         if timestamp:
             popup_html += (
-                f'<hr style="margin:4px 0;border-color:#ddd;">'
-                f'<small style="color:#888;">Captura: {timestamp[:16]}</small>'
+                f'<hr style="margin:4px 0;border-color:{t["popup_hr"]};">'
+                f'<small style="color:{t["text_muted"]};">'
+                f'Captura: {timestamp[:16]}</small>'
             )
         popup_html += '</div>'
 
@@ -1079,6 +1106,7 @@ def _anadir_capa_sensores_rt(
     m,
     contam_rt: Optional[dict],
     meteo_rt: Optional[dict],
+    theme: Optional[dict] = None,
 ) -> int:
     """
     Anade una FeatureGroup '📡 Sensores RT' con marcadores por estacion.
@@ -1107,6 +1135,7 @@ def _anadir_capa_sensores_rt(
     except ImportError:
         return 0
 
+    t = theme or get_theme()
     fg = folium.FeatureGroup(name="📡 Sensores RT")
     n_added = 0
     rt_timestamp = contam_rt.get("timestamp", "")
@@ -1130,11 +1159,13 @@ def _anadir_capa_sensores_rt(
 
         # Popup completo con todos los datos RT
         popup_parts = [
-            '<div style="font-family:Arial,sans-serif;min-width:240px;'
-            'max-width:300px;background:#1a1a2e;color:#ddd;padding:6px;">',
+            f'<div style="font-family:Arial,sans-serif;min-width:240px;'
+            f'max-width:300px;background:{t["bg_popup"]};color:{t["text"]};'
+            f'padding:6px;">',
             f'<b style="font-size:13px;">📡 {nombre}</b><br>',
-            f'<span style="color:#aaa;font-size:11px;">Barrio: {barrio}</span>',
-            '<hr style="margin:5px 0;border-color:#333;">',
+            f'<span style="color:{t["text_label"]};font-size:11px;">'
+            f'Barrio: {barrio}</span>',
+            f'<hr style="margin:5px 0;border-color:{t["popup_hr"]};">',
         ]
 
         # AQI
@@ -1148,13 +1179,14 @@ def _anadir_capa_sensores_rt(
             popup_parts.append(
                 f'<div style="margin-bottom:4px;">'
                 f'<b style="color:{color_hex};font-size:14px;">AQI: {aqi}</b> '
-                f'<span style="color:#aaa;font-size:10px;">{nivel_txt}</span>'
+                f'<span style="color:{t["text_label"]};font-size:10px;">'
+                f'{nivel_txt}</span>'
                 f'</div>'
             )
             dominante = est.get("dominante", "")
             if dominante:
                 popup_parts.append(
-                    f'<div style="font-size:10px;color:#888;">'
+                    f'<div style="font-size:10px;color:{t["text_muted"]};">'
                     f'Contaminante dominante: {dominante}</div>'
                 )
 
@@ -1191,7 +1223,8 @@ def _anadir_capa_sensores_rt(
             meteo_partes.append(f"💧 {int(meteo_rt['humedad'])}%")
         if meteo_partes:
             popup_parts.append(
-                '<div style="margin-top:3px;font-size:11px;color:#ccc;">'
+                f'<div style="margin-top:3px;font-size:11px;'
+                f'color:{t["text_secondary"]};">'
                 + " &nbsp; ".join(meteo_partes) + '</div>'
             )
 
@@ -1199,8 +1232,8 @@ def _anadir_capa_sensores_rt(
         frescura = _frescura_rt(rt_timestamp)
         if frescura:
             popup_parts.append(
-                f'<div style="margin-top:4px;color:#555;font-size:10px;">'
-                f'Última captura: {frescura}</div>'
+                f'<div style="margin-top:4px;color:{t["text_faint"]};'
+                f'font-size:10px;">Última captura: {frescura}</div>'
             )
 
         popup_parts.append('</div>')
@@ -1299,6 +1332,7 @@ def _crear_leyenda_html(
     con_trafico: bool = False,
     con_rt: bool = False,
     rt_timestamp: str = "",
+    theme: Optional[dict] = None,
 ) -> str:
     """
     Genera HTML para una leyenda flotante en el mapa.
@@ -1309,14 +1343,16 @@ def _crear_leyenda_html(
         con_trafico: Si True, incluye seccion de trafico en la leyenda.
         con_rt: Si True, incluye seccion de datos en tiempo real.
         rt_timestamp: Timestamp ISO de ultima captura RT.
+        theme: Diccionario de tokens de tema.
 
     Returns:
         String HTML con la leyenda.
     """
+    t = theme or get_theme()
     trafico_html = ""
     if con_trafico:
         trafico_html = (
-            '<hr style="border-color:#333;margin:5px 0;">'
+            f'<hr style="border-color:{t["popup_hr"]};margin:5px 0;">'
             '<b style="font-size:11px;">🚗 Tráfico RT</b><br>'
             '<span style="color:#ff7f0e;">&#9873;</span>'
             ' <small>Obras/mantenimiento</small><br>'
@@ -1333,7 +1369,7 @@ def _crear_leyenda_html(
         frescura = _frescura_rt(rt_timestamp) if rt_timestamp else ""
         ts_display = f" ({frescura})" if frescura else ""
         rt_html = (
-            '<hr style="border-color:#333;margin:5px 0;">'
+            f'<hr style="border-color:{t["popup_hr"]};margin:5px 0;">'
             '<b style="font-size:11px;color:#17becf;">📡 Datos en tiempo real</b><br>'
             '<span style="color:#2ca02c;">&#9873;</span>'
             ' <small>AQI ≤ 50 (Buena)</small><br>'
@@ -1343,7 +1379,7 @@ def _crear_leyenda_html(
             ' <small>AQI 101-150 (Sensibles)</small><br>'
             '<span style="color:#d62728;">&#9873;</span>'
             ' <small>AQI &gt; 150 (Dañina)</small><br>'
-            f'<small style="color:#555;">Última captura{ts_display}</small>'
+            f'<small style="color:{t["text_faint"]};">Última captura{ts_display}</small>'
         )
 
     return f"""
@@ -1351,25 +1387,25 @@ def _crear_leyenda_html(
         position: fixed;
         bottom: 30px; left: 30px;
         z-index: 1000;
-        background: rgba(20,20,36,0.93);
+        background: {t["bg_legend"]};
         padding: 10px 14px;
         border-radius: 8px;
         font-family: Arial, sans-serif;
         font-size: 12px;
-        color: #ccc;
-        border: 1px solid #444;
-        box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+        color: {t["text_secondary"]};
+        border: 1px solid {t["border"]};
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
         max-height: 400px;
         overflow-y: auto;
     ">
         <b style="font-size:13px;">{variable}</b>
-        <span style="color:#888;font-size:10px;"> vs umbral OMS</span><br>
+        <span style="color:{t["text_muted"]};font-size:10px;"> vs umbral OMS</span><br>
         <span style="color:#2ca02c;">&#9679;</span> Bueno (&lt;75% OMS)<br>
         <span style="color:#ffbb33;">&#9679;</span> Moderado (75-100% OMS)<br>
         <span style="color:#ff7f0e;">&#9679;</span> Alto (&gt;100% OMS)<br>
         <span style="color:#d62728;">&#9679;</span> Crítico (&gt;150% OMS)<br>
         <span style="color:#7f7f7f;">&#9679;</span> Sin datos<br>
-        <hr style="border-color:#333;margin:5px 0;">
+        <hr style="border-color:{t["popup_hr"]};margin:5px 0;">
         <small>OMS: {umbral_oms} µg/m³</small><br>
         <span style="color:#2ca02c;">&#9135;&#9135;</span>
         <small style="color:#2ca02c;"> Jardí del Túria</small>

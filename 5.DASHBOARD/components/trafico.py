@@ -25,6 +25,7 @@ import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
 
+from theme import get_theme
 from config import (
     TAB_NAMES, DESCRIPCION_TABS, MAPA_TRAFICO_HTML,
 )
@@ -213,7 +214,7 @@ def _grafico_trafico_anual(
         ),
         xaxis_title="Año",
         yaxis_title="Incidencias",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=450,
         margin=dict(l=60, r=30, t=60, b=50),
         hovermode="x unified",
@@ -268,7 +269,7 @@ def _grafico_trafico_mensual(
         ),
         xaxis_title="Fecha",
         yaxis_title="Incidencias",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=450,
         margin=dict(l=60, r=30, t=60, b=50),
         hovermode="x unified",
@@ -354,7 +355,7 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
         ),
         xaxis_title="Media de incidencias por semana",
         yaxis_title="",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=350,
         margin=dict(l=100, r=30, t=50, b=40),
         showlegend=False,

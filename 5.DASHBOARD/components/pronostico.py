@@ -32,6 +32,7 @@ from plotly.subplots import make_subplots
 import streamlit as st
 import streamlit.components.v1 as components
 
+from theme import get_theme
 from config import (
     TAB_NAMES, DESCRIPCION_TABS, VIS_PRONOSTICO_72H_HTML,
     UMBRALES_OMS, VARIABLE_COLORS,
@@ -296,7 +297,7 @@ def _generar_grafico_pronostico_dinamico(df: pd.DataFrame) -> None:
         ), row=2, col=1)
 
     fig.update_layout(
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=550,
         margin=dict(l=60, r=30, t=40, b=40),
         hovermode="x unified",
@@ -529,7 +530,7 @@ def _render_boxplot_contexto(
     fig.update_layout(
         title=f"Contexto histórico — Distribución en {mes_nombre} vs predicción (◆)",
         yaxis_title="µg/m³",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=420,
         margin=dict(t=60, b=40),
         showlegend=False,

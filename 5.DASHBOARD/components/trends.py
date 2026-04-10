@@ -20,6 +20,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from theme import get_theme
 from config import (
     UMBRALES_OMS, UMBRALES_UE,
     VARIABLE_COLORS, COLORS,
@@ -157,7 +158,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
         ),
         xaxis_title=x_label,
         yaxis_title=f"{variable} (µg/m³)",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=450,
         margin=dict(l=60, r=30, t=60, b=50),
         hovermode="x unified",

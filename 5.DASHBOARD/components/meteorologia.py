@@ -24,6 +24,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from theme import get_theme
 from config import TAB_NAMES, DESCRIPCION_TABS, COLORS
 
 logger = logging.getLogger("Meteorologia")
@@ -232,7 +233,7 @@ def _grafico_anual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
             overlaying="y",
             showgrid=False,
         ),
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=450,
         margin=dict(l=60, r=60, t=60, b=50),
         hovermode="x unified",
@@ -290,7 +291,7 @@ def _grafico_mensual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
         ),
         xaxis_title="Fecha",
         yaxis_title="Precipitación (mm)",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=450,
         margin=dict(l=60, r=30, t=60, b=50),
         hovermode="x unified",
@@ -403,7 +404,7 @@ def render_climatologia_mensual(df: pd.DataFrame) -> None:
         ),
         xaxis_title="Mes",
         yaxis_title="Precipitación media (mm)",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=400,
         margin=dict(l=60, r=30, t=60, b=50),
         hovermode="x unified",

@@ -28,6 +28,7 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from config import VALENCIA_CENTER_LAT, VALENCIA_CENTER_LON
+from theme import get_theme
 
 logger = logging.getLogger(__name__)
 
@@ -355,7 +356,7 @@ def _crear_mapa_ruta(
     m = folium.Map(
         location=[lat_media, lon_media],
         zoom_start=14,
-        tiles="CartoDB dark_matter",
+        tiles=get_theme()["folium_tiles"],
         control_scale=True,
     )
 

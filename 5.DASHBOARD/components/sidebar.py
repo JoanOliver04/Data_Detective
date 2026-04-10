@@ -14,6 +14,7 @@ import pandas as pd
 import streamlit as st
 from config import VARIABLES_PRINCIPALES, ESTACION_BARRIO_MAP
 from components.realtime import _calcular_frescura
+from theme import THEME_TOGGLE_KEY
 
 FiltrosGlobales = Dict[str, Any]
 
@@ -46,10 +47,12 @@ def render_sidebar(
         st.markdown(
             '<div style="text-align:center;padding:0.5rem 0 1rem 0;">'
             '<h1 style="font-size:1.6rem;margin-bottom:0.2rem;">Data Detective</h1>'
-            '<p style="font-size:0.85rem;color:#aaa;margin:0;">Valencia - Análisis Urbano</p>'
+            '<p style="font-size:0.85rem;color:var(--dd-text-label);margin:0;">'
+            'Valencia - Análisis Urbano</p>'
             '</div>',
             unsafe_allow_html=True,
         )
+        st.toggle("🌙 Tema oscuro", value=True, key=THEME_TOGGLE_KEY)
         st.divider()
         st.subheader("Filtros Globales")
 

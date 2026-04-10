@@ -23,6 +23,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from theme import get_theme
 from config import UMBRALES_OMS, VARIABLE_COLORS, VARIABLES_CONTAMINACION
 from components.exportar import render_panel_exportacion
 
@@ -329,7 +330,7 @@ def _grafico_comparativo_barras(
         xaxis_title="Variable",
         yaxis_title="Media (µg/m³)",
         barmode="group",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(t=80, b=40),
         height=420,
@@ -589,7 +590,7 @@ def _grafico_radar_periodos(
             ),
             angularaxis=dict(tickfont=dict(size=11)),
         ),
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         showlegend=True,
         legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5),
         height=480,
@@ -879,7 +880,7 @@ def _grafico_comparativo_detective(
     fig.update_layout(
         title="Comparación de medias por variable",
         xaxis_title="Variable", yaxis_title="Media (µg/m³)",
-        barmode="group", template="plotly_dark",
+        barmode="group", template=get_theme()["plotly_template"],
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(t=80, b=40), height=400,
     )
@@ -1033,7 +1034,7 @@ def _render_correlaciones(
     ))
     fig.update_layout(
         title="Correlación de Pearson entre contaminantes (medias diarias)",
-        template="plotly_dark",
+        template=get_theme()["plotly_template"],
         height=400,
         margin=dict(t=60, b=40),
     )
@@ -1124,7 +1125,7 @@ def _render_patrones_temporales(
             ))
             fig_dia.update_layout(
                 title=f"{var_selector} — Media por día de la semana",
-                yaxis_title="µg/m³", template="plotly_dark",
+                yaxis_title="µg/m³", template=get_theme()["plotly_template"],
                 height=350, margin=dict(t=50, b=30),
             )
             st.plotly_chart(fig_dia, use_container_width=True)
@@ -1150,7 +1151,7 @@ def _render_patrones_temporales(
             fig_hora.update_layout(
                 title=f"{var_selector} — Media por hora del día",
                 xaxis_title="Hora", yaxis_title="µg/m³",
-                template="plotly_dark",
+                template=get_theme()["plotly_template"],
                 height=350, margin=dict(t=50, b=30),
                 xaxis=dict(dtick=2),
             )
@@ -1177,7 +1178,7 @@ def _render_patrones_temporales(
         ))
         fig_trim.update_layout(
             title=f"{var_selector} — Media por trimestre (estacionalidad)",
-            yaxis_title="µg/m³", template="plotly_dark",
+            yaxis_title="µg/m³", template=get_theme()["plotly_template"],
             height=320, margin=dict(t=50, b=30),
         )
         st.plotly_chart(fig_trim, use_container_width=True)
