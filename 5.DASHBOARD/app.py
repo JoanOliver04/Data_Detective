@@ -18,7 +18,7 @@ from components.maps import render_mapa_contaminacion
 from components.trends import render_grafico_contaminacion, render_tendencia_anual
 from components.kpis import render_kpis_contaminacion, render_indice_calidad
 from components.ranking_barrios import render_ranking_barrios
-from components.alertas import render_alertas
+from components.alertas import render_alertas, render_alertas_realtime
 from components.comparador import render_comparador
 from components.meteorologia import render_tab_meteorologia
 from components.trafico import render_tab_trafico
@@ -260,7 +260,8 @@ def _tab_contaminacion(datos):
     # 1. Indice sintetico de calidad del aire (KPI principal)
     render_indice_calidad(df)
 
-    # 2. Alertas de contaminacion (periodo reciente vs umbrales OMS)
+    # 2. Alertas de contaminacion: primero RT, luego historicas
+    render_alertas_realtime(datos.get("contam_rt"), df)
     render_alertas(df)
 
     st.divider()
