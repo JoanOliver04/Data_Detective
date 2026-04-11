@@ -175,7 +175,7 @@ def render_grafico_trafico(df: pd.DataFrame) -> None:
     anio_max = int(df["anio"].max())
     rango = anio_max - anio_min
 
-    if rango > 5:
+    if rango > 2:
         _grafico_trafico_anual(df, anio_min, anio_max)
     else:
         _grafico_trafico_mensual(df, anio_min, anio_max)
@@ -262,6 +262,12 @@ def _grafico_trafico_mensual(
         ),
     ))
 
+    log_scale = st.checkbox(
+        "Escala logarítmica (útil si hay picos extremos en algún mes)",
+        value=False,
+        key="trafico_log_scale",
+    )
+
     fig.update_layout(
         title=dict(
             text=f"Incidencias de tráfico mensuales ({anio_min}\u2013{anio_max})",
@@ -269,13 +275,14 @@ def _grafico_trafico_mensual(
         ),
         xaxis_title="Fecha",
         yaxis_title="Incidencias",
+        yaxis_type="log" if log_scale else "linear",
         template=get_theme()["plotly_template"],
         height=450,
         margin=dict(l=60, r=30, t=60, b=50),
         hovermode="x unified",
     )
 
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
     logger.info(f"[Grafico] Trafico mensual: {len(serie)} puntos")
 
 

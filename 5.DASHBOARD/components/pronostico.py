@@ -60,7 +60,7 @@ RIESGO_CONFIG = {
 }
 
 # Altura del grafico embebido (px)
-CHART_HEIGHT = 600
+CHART_HEIGHT = 900
 
 
 # ==============================================================================
@@ -249,7 +249,8 @@ def _generar_grafico_pronostico_dinamico(df: pd.DataFrame) -> None:
         shared_xaxes=True,
         vertical_spacing=0.08,
         row_heights=[0.6, 0.4],
-        subplot_titles=("Temperatura (°C)", "Precipitación (mm) y probabilidad (%)"),
+        subplot_titles=("Temperatura (°C)",
+                        "Precipitación (mm) y probabilidad (%)"),
     )
 
     # --- Temperatura ---
@@ -438,7 +439,8 @@ def render_pronostico_contaminacion(
             )
 
     # --- Boxplot de contexto historico ---
-    _render_boxplot_contexto(df_contaminacion, pronostico, manana.month, vars_con_datos)
+    _render_boxplot_contexto(df_contaminacion, pronostico,
+                             manana.month, vars_con_datos)
 
     # --- Explicacion del metodo ---
     with st.expander("¿Cómo se calcula este pronóstico?", expanded=False):
