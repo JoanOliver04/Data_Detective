@@ -247,7 +247,7 @@ def _generar_grafico_pronostico_dinamico(df: pd.DataFrame) -> None:
     fig = make_subplots(
         rows=2, cols=1,
         shared_xaxes=True,
-        vertical_spacing=0.08,
+        vertical_spacing=0.12,
         row_heights=[0.6, 0.4],
         subplot_titles=("Temperatura (°C)",
                         "Precipitación (mm) y probabilidad (%)"),
@@ -299,13 +299,18 @@ def _generar_grafico_pronostico_dinamico(df: pd.DataFrame) -> None:
 
     fig.update_layout(
         template=get_theme()["plotly_template"],
-        height=550,
-        margin=dict(l=60, r=30, t=40, b=40),
+        height=580,
+        margin=dict(l=60, r=30, t=40, b=120),
         hovermode="x unified",
         legend=dict(
             orientation="h",
-            yanchor="bottom", y=1.02,
-            xanchor="right", x=1,
+            yanchor="top",
+            y=-0.18,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=11),
+            bgcolor="rgba(0,0,0,0)",
+            tracegroupgap=4,
         ),
         showlegend=True,
     )
