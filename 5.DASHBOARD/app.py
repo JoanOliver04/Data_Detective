@@ -218,6 +218,15 @@ def _cargar_todos_los_datos():
 # ==============================================================================
 
 def _aplicar_filtros_globales(datos, filtros):
+    cache_key = (
+        filtros["anio_min"], filtros["anio_max"],
+        filtros["variable"],
+        tuple(sorted(filtros.get("barrios", []))),
+        tuple(sorted(filtros.get("tipos_evento", []))),
+    )
+    if st.session_state.get("_filtros_cache_key") == cache_key:
+        return st.session_state["_datos_filtrados"]
+
     datos_f = dict(datos)
     a_min, a_max = filtros["anio_min"], filtros["anio_max"]
     barrios = filtros["barrios"]
@@ -244,6 +253,9 @@ def _aplicar_filtros_globales(datos, filtros):
 
     datos_f["_variable"] = filtros["variable"]
     datos_f["_filtros"] = filtros
+
+    st.session_state["_filtros_cache_key"] = cache_key
+    st.session_state["_datos_filtrados"] = datos_f
     return datos_f
 
 
@@ -273,6 +285,7 @@ def _render_diagnostico():
 # TAB CONTAMINACION (Fase 7.2 - COMPLETA)
 # ==============================================================================
 
+@st.fragment
 def _tab_contaminacion(datos):
     """
     Tab de contaminacion completa con componentes modulares:
@@ -376,6 +389,7 @@ def _tab_contaminacion(datos):
 # TABS COMPLETADAS (Fases 7.2-7.6) + EXPORTACION
 # ==============================================================================
 
+@st.fragment
 def _tab_precipitaciones(datos):
     """Tab de precipitaciones/meteorologia (Fase 7.3 - COMPLETA)."""
     render_tab_meteorologia(datos)
@@ -388,6 +402,7 @@ def _tab_precipitaciones(datos):
     )
 
 
+@st.fragment
 def _tab_trafico(datos):
     """Tab de trafico (Fase 7.4 - COMPLETA)."""
     render_tab_trafico(datos)
@@ -400,6 +415,7 @@ def _tab_trafico(datos):
     )
 
 
+@st.fragment
 def _tab_eventos(datos):
     """Tab de eventos masivos (Fase 7.5 - COMPLETA)."""
     render_tab_eventos(datos)
@@ -412,6 +428,7 @@ def _tab_eventos(datos):
     )
 
 
+@st.fragment
 def _tab_comparador(datos):
     """Tab del comparador historico (Evento vs Baseline / Periodo vs Periodo)."""
     st.markdown(
@@ -425,6 +442,7 @@ def _tab_comparador(datos):
     )
 
 
+@st.fragment
 def _tab_pronostico(datos):
     """Tab de pronostico 72h (Fase 7.6 - COMPLETA)."""
     render_tab_pronostico(datos)
@@ -437,6 +455,7 @@ def _tab_pronostico(datos):
     )
 
 
+@st.fragment
 def _tab_rutas_limpias(datos):
     """Tab de rutas pulmon limpio (zonas verdes, baja contaminacion)."""
     render_mapa_rutas_limpias(contam_rt=datos.get("contam_rt"))
@@ -450,7 +469,7 @@ def main():
     _aplicar_estilos()
 
     if st_autorefresh:
-        st_autorefresh(interval=300000, limit=None, key="data_refresh")
+        st_autorefresh(interval=600000, limit=None, key="data_refresh")
     else:
         st.info("Auto-refresh no disponible. Instala streamlit-autorefresh==1.0.1")
 
