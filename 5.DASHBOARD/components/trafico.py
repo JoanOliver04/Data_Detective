@@ -19,6 +19,7 @@ Autor: Joan | Fecha: 2026
 """
 
 import logging
+from typing import Optional
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -47,6 +48,31 @@ DIAS_NOMBRE_ES = {
     "Monday": "Lunes", "Tuesday": "Martes", "Wednesday": "Miércoles",
     "Thursday": "Jueves", "Friday": "Viernes",
     "Saturday": "Sábado", "Sunday": "Domingo",
+}
+
+# Colores, iconos y etiquetas para tipos de incidencia DGT
+_COLOR_TIPO = {
+    "roadMaintenance": "#1f77b4",
+    "vehicleObstruction": "#d62728",
+    "environmentalObstruction": "#2ca02c",
+    "infrastructureDamageObstruction": "#9467bd",
+    "obstruction": "#ff7f0e",
+}
+_COLOR_SEVERIDAD = {
+    "highest": "#d62728", "high": "#ff4444",
+    "medium": "#ff7f0e", "low": "#ffdd57", "desconocida": "#aec7e8",
+}
+_ICONO_TIPO = {
+    "roadMaintenance": "\U0001f6a7", "vehicleObstruction": "\U0001f697",
+    "environmentalObstruction": "\U0001f33f",
+    "infrastructureDamageObstruction": "\u26a0\ufe0f", "obstruction": "\U0001f6ab",
+}
+_LABEL_TIPO = {
+    "roadMaintenance": "Obras/mantenimiento",
+    "vehicleObstruction": "Veh\u00edculo/obst\u00e1culo",
+    "environmentalObstruction": "Obst\u00e1culo ambiental",
+    "infrastructureDamageObstruction": "Da\u00f1o en infraestructura",
+    "obstruction": "Obst\u00e1culo gen\u00e9rico",
 }
 
 # Altura del mapa embebido (px)
@@ -384,37 +410,214 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
 
 
 # ==============================================================================
-# 4. MAPA DE TRAFICO
+# 4. MAPA DE TRAFICO (tiempo real DGT + fallback HTML pre-generado)
 # ==============================================================================
 
-def render_mapa_trafico() -> None:
+def _render_mapa_rt_folium(incs: list, trafico_rt: dict) -> None:
     """
-    Renderiza el mapa de trafico embebido en Streamlit.
-    Prioridad: carga HTML pre-generado de Fase 6.1.
-    Si no existe, muestra mensaje informativo.
+    Construye y renderiza un mapa Folium con las incidencias DGT
+    geolocalizadas.
+
+    Args:
+        incs: Lista de incidencias con lat/lon validos.
+        trafico_rt: Diccionario completo de datos RT (para timestamp y totales).
+    """
+    try:
+        import folium
+        from folium.plugins import MarkerCluster
+    except ImportError:
+        st.warning(
+            "Folium no está instalado. Ejecuta: "
+            "`pip install folium`"
+        )
+        return
+
+    mapa = folium.Map(
+        location=[39.4699, -0.3763],
+        zoom_start=10,
+        tiles=None,
+    )
+
+    folium.TileLayer(
+        "CartoDB dark_matter", name="\U0001f311 Oscuro",
+    ).add_to(mapa)
+    folium.TileLayer(
+        "CartoDB positron", name="\u2600\ufe0f Claro",
+    ).add_to(mapa)
+
+    cluster = MarkerCluster(
+        name="\U0001f4cd Incidencias",
+        options={
+            "maxClusterRadius": 45,
+            "disableClusteringAtZoom": 13,
+            "showCoverageOnHover": False,
+        },
+    ).add_to(mapa)
+
+    for inc in incs:
+        causa = inc.get("causa", "obstruction")
+        severidad = inc.get("severidad", "desconocida")
+        carretera = inc.get("carretera", "—")
+        municipio = inc.get("municipio", "—")
+        lat = inc["lat"]
+        lon = inc["lon"]
+
+        color = _COLOR_TIPO.get(causa, COLOR_TRAFICO)
+        radius = 8 if severidad in ("highest", "high") else 5
+        emoji = _ICONO_TIPO.get(causa, "\U0001f6ab")
+        label = _LABEL_TIPO.get(causa, causa)
+        sev_color = _COLOR_SEVERIDAD.get(severidad, "#aec7e8")
+
+        popup_html = (
+            '<table style="font-size:12px;min-width:180px;">'
+            f'<tr><td><b>Carretera</b></td><td>{carretera}</td></tr>'
+            f'<tr><td><b>Municipio</b></td><td>{municipio}</td></tr>'
+            f'<tr><td><b>Severidad</b></td>'
+            f'<td style="color:{sev_color};font-weight:bold;">'
+            f'{severidad}</td></tr>'
+            f'<tr><td><b>Tipo</b></td><td>{label}</td></tr>'
+            '</table>'
+        )
+
+        tooltip_text = f"{emoji} {carretera} \u2014 {municipio} ({severidad})"
+
+        folium.CircleMarker(
+            location=[lat, lon],
+            radius=radius,
+            color=color,
+            fill=True,
+            fill_opacity=0.80,
+            weight=1.5,
+            popup=folium.Popup(popup_html, max_width=260),
+            tooltip=tooltip_text,
+        ).add_to(cluster)
+
+    # --- Leyenda flotante ---
+    legend_items_tipo = "".join(
+        f'<div style="margin:2px 0;">'
+        f'<span style="display:inline-block;width:12px;height:12px;'
+        f'background:{c};border-radius:2px;margin-right:6px;'
+        f'vertical-align:middle;"></span>'
+        f'<span style="vertical-align:middle;">'
+        f'{_ICONO_TIPO.get(t, "")} {_LABEL_TIPO.get(t, t)}</span></div>'
+        for t, c in _COLOR_TIPO.items()
+    )
+    legend_items_sev = "".join(
+        f'<div style="margin:2px 0;">'
+        f'<span style="display:inline-block;width:12px;height:12px;'
+        f'background:{c};border-radius:2px;margin-right:6px;'
+        f'vertical-align:middle;"></span>'
+        f'<span style="vertical-align:middle;">{s}</span></div>'
+        for s, c in _COLOR_SEVERIDAD.items()
+    )
+    legend_html = (
+        '<div style="position:fixed;bottom:30px;left:30px;z-index:9999;'
+        'background:rgba(30,30,30,0.85);color:#eee;padding:10px 14px;'
+        'border-radius:8px;font-size:11px;max-width:220px;'
+        'box-shadow:0 2px 8px rgba(0,0,0,0.4);">'
+        '<b style="font-size:12px;">Tipo de incidencia</b>'
+        f'{legend_items_tipo}'
+        '<hr style="border-color:#555;margin:6px 0;">'
+        '<b style="font-size:12px;">Severidad</b>'
+        f'{legend_items_sev}'
+        '</div>'
+    )
+    mapa.get_root().html.add_child(folium.Element(legend_html))
+
+    folium.LayerControl(collapsed=False).add_to(mapa)
+
+    components.html(mapa._repr_html_(), height=MAP_HEIGHT + 80, scrolling=False)
+
+    # --- Resumen bajo el mapa ---
+    total_espana = trafico_rt.get("total_incidencias", len(incs))
+    timestamp = trafico_rt.get("timestamp", "—")
+    st.caption(
+        f"\U0001f4cd **{len(incs)}** incidencias en Valencia | "
+        f"**{total_espana}** en toda Espa\u00f1a | "
+        f"\U0001f552 {timestamp}"
+    )
+
+    # Desglose por tipo y severidad
+    col_tipo, col_sev = st.columns(2)
+    from collections import Counter
+    conteo_tipo = Counter(inc.get("causa", "obstruction") for inc in incs)
+    conteo_sev = Counter(inc.get("severidad", "desconocida") for inc in incs)
+
+    with col_tipo:
+        lineas = [
+            f"{_ICONO_TIPO.get(t, '')} {_LABEL_TIPO.get(t, t)}: **{n}**"
+            for t, n in conteo_tipo.most_common()
+        ]
+        st.caption("**Por tipo:** " + " · ".join(lineas))
+
+    with col_sev:
+        lineas_sev = [
+            f"{s}: **{n}**"
+            for s, n in conteo_sev.most_common()
+        ]
+        st.caption("**Por severidad:** " + " · ".join(lineas_sev))
+
+    logger.info(
+        f"[Mapa RT] {len(incs)} incidencias Valencia renderizadas"
+    )
+
+
+def render_mapa_trafico(trafico_rt: Optional[dict] = None) -> None:
+    """
+    Renderiza el mapa de trafico con 3 niveles de prioridad:
+      1. Mapa Folium en tiempo real con datos DGT
+      2. HTML pre-generado (Fase 6.1)
+      3. Mensaje informativo
+
+    Args:
+        trafico_rt: Diccionario de datos RT de DGT (puede ser None).
+                    Espera claves: 'incidencias' (list), 'timestamp' (str),
+                    'total_incidencias' (int).
     """
     st.markdown(
         '<div class="section-header">'
-        '<h4>Mapa de incidencias de tráfico</h4>'
+        '<h4>Mapa de incidencias de tr\u00e1fico</h4>'
         '<p style="color:#888;font-size:0.85rem;">'
-        'Distribución espacial de incidencias por distritos'
+        'Incidencias DGT en tiempo real'
         '</p></div>',
         unsafe_allow_html=True,
     )
 
+    # Prioridad 1: mapa RT con Folium
+    if trafico_rt is not None:
+        incidencias = trafico_rt.get("incidencias", [])
+        if incidencias:
+            incs_geo = [
+                inc for inc in incidencias
+                if inc.get("lat") is not None and inc.get("lon") is not None
+            ]
+            if incs_geo:
+                _render_mapa_rt_folium(incs_geo, trafico_rt)
+                return
+            st.info(
+                f"Se han recibido **{len(incidencias)}** incidencias DGT "
+                "pero ninguna incluye coordenadas geogr\u00e1ficas. "
+                "El feed DATEX II no siempre proporciona lat/lon para "
+                "todas las situaciones."
+            )
+            logger.info(
+                f"[Mapa RT] {len(incidencias)} incidencias sin coordenadas"
+            )
+
+    # Prioridad 2: HTML pre-generado
     if MAPA_TRAFICO_HTML.exists():
         html_content = leer_html_visualizacion(str(MAPA_TRAFICO_HTML))
         if html_content:
             st.caption(
                 f"Mapa pre-generado: `{MAPA_TRAFICO_HTML.name}` "
-                f"(regenerar con generar_mapas.py)"
+                "(regenerar con generar_mapas.py)"
             )
             components.html(html_content, height=MAP_HEIGHT, scrolling=False)
             return
 
-    # Fallback: sin mapa
+    # Prioridad 3: sin mapa
     st.info(
-        "Mapa de tráfico no disponible. "
+        "Mapa de tr\u00e1fico no disponible. "
         "Genera el mapa ejecutando:\n\n"
         "`python 2.SCRIPTS/procesamiento/generar_mapas.py`"
     )
@@ -438,7 +641,7 @@ def render_tab_trafico(datos: dict) -> None:
 
     Args:
         datos: Diccionario con datos filtrados.
-              Claves usadas: 'trafico', '_filtros'.
+              Claves usadas: 'trafico', 'trafico_rt', '_filtros'.
     """
     # Header
     st.markdown(
@@ -474,7 +677,7 @@ def render_tab_trafico(datos: dict) -> None:
         render_distribucion_semana(df)
 
     with col_mapa:
-        render_mapa_trafico()
+        render_mapa_trafico(trafico_rt=datos.get("trafico_rt"))
 
     # 4. Resumen de filtros
     filtros = datos.get("_filtros", {})

@@ -182,7 +182,12 @@ def _aplicar_estilos():
 # ==============================================================================
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def _cargar_todos_los_datos():
+def _cargar_datos_estaticos():
+    """
+    Carga los datasets historicos con cache de 1 hora.
+    Separados de los datos RT para que un refresco de 5 min no invalide
+    la cache de datos pesados que cambian muy poco.
+    """
     return {
         "contaminacion": cargar_contaminacion(),
         "meteorologia": cargar_meteorologia(),
@@ -192,10 +197,20 @@ def _cargar_todos_los_datos():
         "precip_mensual": cargar_precip_mensual(),
         "tendencias": cargar_tendencias(),
         "pronostico": cargar_pronostico_72h(),
-        "contam_rt": cargar_contaminacion_realtime(),
-        "meteo_rt": cargar_meteo_realtime(),
-        "trafico_rt": cargar_trafico_realtime(),
     }
+
+
+def _cargar_todos_los_datos():
+    """
+    Combina datasets estaticos (cache 1h) con datos en tiempo real (cache 5min).
+    Los loaders RT tienen su propio @st.cache_data(ttl=300) en data_loader.py,
+    por lo que no necesitan cache aqui.
+    """
+    datos = _cargar_datos_estaticos()
+    datos["contam_rt"] = cargar_contaminacion_realtime()
+    datos["meteo_rt"] = cargar_meteo_realtime()
+    datos["trafico_rt"] = cargar_trafico_realtime()
+    return datos
 
 
 # ==============================================================================
@@ -439,8 +454,7 @@ def main():
     else:
         st.info("Auto-refresh no disponible. Instala streamlit-autorefresh==1.0.1")
 
-    with st.spinner("Cargando datos del proyecto..."):
-        datos = _cargar_todos_los_datos()
+    datos = _cargar_todos_los_datos()  # cache estatico evita spinner en recargas
 
     tiene_datos = any(v is not None for k, v in datos.items()
                       if not k.startswith("_"))
