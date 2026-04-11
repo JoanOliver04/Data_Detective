@@ -94,14 +94,35 @@ PAGE_CONFIG = {
 # ==============================================================================
 # MAPEO ESTACION -> BARRIO / DISTRITO
 # ==============================================================================
+# Notas:
+#   - Las claves son los IDs de estación GVA tal como aparecen en
+#     contaminacion_normalizada.csv (campo estacion_id como string).
+#   - Los valores deben coincidir con claves de DISTRITOS_VALENCIA para que
+#     los mapas de coropletas funcionen correctamente.
+#   - Las estaciones metropolitanas (Manises, Torrent, Sagunt) contienen datos
+#     de calidad del aire válidos y aparecen en gráficos temporales e históricos,
+#     pero se excluyen del ranking de distritos y del coloreado de coropletas
+#     al no ser distritos urbanos de Valencia ciudad.
 ESTACION_BARRIO_MAP = {
-    "46250001":    "Quatre Carreres",   # Avd. Francia (UID 6639)
+    # --- Estaciones dentro de Valencia ciudad ---
+    "46250001":    "Quatre Carreres",   # Avd. Francia
     "46250004":    "Jesús",             # Viveros (GVA histórico)
-    "46250030":    "Jesús",             # Pista de Silla (UID 6637)
-    "46250047":    "Algirós",           # Politècnic (UID 6640)
-    "46250050":    "L'Olivereta",       # Molí del Sol (UID 6638)
-    "46250060":    "Pobles de l'Ouest", # Quart de Poblet (UID 6644, metropolitana)
-    "torre_navis": "Campanar",          # Torre Navis (UID -899581, sensor ciudadano)
+    "46250030":    "Jesús",             # Pista de Silla
+    "46250043":    "La Saïdia",         # Viveros (estación norte río)
+    "46250046":    "Ciutat Vella",      # Conselleria Medi Ambient
+    "46250047":    "Algirós",           # Politècnic
+    "46250048":    "Camins al Grau",    # Avinguda del Port
+    "46250050":    "L'Olivereta",       # Molí del Sol
+    "46250051":    "Jesús",             # Bulevard Sud
+    "46250054":    "Pobles del Sud",    # Parc Tecnologic (límite sur)
+    "46250060":    "Pobles de l'Ouest", # Quart de Poblet (metropolitana próxima)
+    "torre_navis": "Campanar",          # Torre Navis (sensor ciudadano)
+    # --- Estaciones metropolitanas (fuera de Valencia ciudad) ---
+    # Se incluyen con su municipio para que aparezcan en filtros pero
+    # no distorsionen los rankings de distritos urbanos.
+    "46078004":    "Manises",           # Estación metropolitana oeste
+    "46102002":    "Torrent",           # Estación metropolitana sur
+    "46190005":    "Sagunt",            # Estación metropolitana norte
 }
 
 # ==============================================================================
@@ -150,12 +171,12 @@ DISTRITOS_VALENCIA = {
 
 # Mapeo estacion (clave AQICN) -> distrito oficial de Valencia
 ESTACION_DISTRITO_MAP = {
-    "6639":        "Quatre Carreres",   # Avd. Francia
-    "6637":        "Jesús",             # Pista de Silla
-    "6640":        "Algirós",           # Politècnic
-    "6638":        "L'Olivereta",       # Molí del Sol
-    "6644":        "Pobles de l'Ouest", # Quart de Poblet (metropolitana)
-    "torre_navis": "Campanar",          # Torre Navis (sensor ciudadano)
+    "6639":        "Quatre Carreres",
+    "6637":        "Jesús",
+    "6640":        "Algirós",
+    "6638":        "L'Olivereta",
+    "6644":        "Pobles de l'Ouest",
+    "torre_navis": "Campanar",
 }
 
 # ==============================================================================

@@ -98,9 +98,10 @@ def _filtro_variable(df_contam):
             opciones = disponibles
     else:
         opciones = VARIABLES_PRINCIPALES
+    default_idx = opciones.index("O3") if "O3" in opciones else 0
     return st.selectbox(
-        "Variable contaminante", options=opciones, index=0,
-        help="NO2 y PM2.5 son los más relevantes para salud urbana.",
+        "Variable contaminante", options=opciones, index=default_idx,
+        help="O3 y NO2 son los más relevantes para calidad del aire urbana.",
     )
 
 

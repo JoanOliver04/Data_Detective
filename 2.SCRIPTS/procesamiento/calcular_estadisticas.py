@@ -41,6 +41,7 @@ Fecha: 2026
 Proyecto: Data Detective Valencia
 """
 
+import importlib.util
 import pandas as pd
 import logging
 import sys
@@ -66,26 +67,17 @@ OUT_PRECIP_MENSUAL = STATS_DIR / "precipitacion_media_mensual.csv"
 OUT_TENDENCIAS = STATS_DIR / "tendencias_historicas.csv"
 
 # ==============================================================================
-# MAPEO ESTACIÓN → BARRIO
+# MAPEO ESTACIÓN → BARRIO  (fuente única: 5.DASHBOARD/config.py)
 # ==============================================================================
-# Basado en la ubicación geográfica real de cada estación de medición.
-# Fuentes: GVA (portal calidad del aire), AQICN (streaming_aqicn.py).
-#
-# ¿Por qué un diccionario interno y no un CSV externo?
-#   → Son solo 6 estaciones fijas en Valencia ciudad. Un CSV externo
-#     añadiría complejidad innecesaria. Si en el futuro se añaden más
-#     estaciones, basta con ampliar este diccionario.
+# Se carga dinámicamente con importlib.util para evitar añadir 5.DASHBOARD/
+# al sys.path global (que colisionaría con los módulos de este directorio).
 
-ESTACION_BARRIO_MAP = {
-    # Estaciones GVA / EEA
-    "46250001": "Quatre Carreres",       # Avd. Francia → distrito Quatre Carreres
-    "46250004": "Jesús",                 # Pista de Silla antigua → distrito Jesús
-    "46250030": "Jesús",                 # Pista de Silla actual → distrito Jesús
-    # Politècnic (UPV) → distrito Benimaclet
-    "46250047": "Benimaclet",
-    "46250050": "Patraix",               # Molí del Sol → distrito Patraix
-    "46250054": "Ciutat Vella",          # Conselleria Meteo → distrito Ciutat Vella
-}
+_CONFIG_PY = PROJECT_ROOT / "5.DASHBOARD" / "config.py"
+_spec = importlib.util.spec_from_file_location("dashboard_config", _CONFIG_PY)
+_dashboard_config = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_dashboard_config)
+
+ESTACION_BARRIO_MAP = _dashboard_config.ESTACION_BARRIO_MAP
 
 
 # ==============================================================================
