@@ -413,6 +413,43 @@ def cargar_meteo_realtime() -> Optional[dict]:
     return result
 
 
+def _extraer_primera_coord(obj) -> tuple:
+    """
+    Recorre recursivamente un dict/list anidado buscando las primeras
+    claves 'latitud' y 'longitud' con valor numérico.
+
+    Returns:
+        (latitud, longitud) o (None, None) si no se encuentran.
+    """
+    lat_found = None
+    lon_found = None
+
+    if isinstance(obj, dict):
+        if "latitud" in obj and obj["latitud"] is not None:
+            try:
+                lat_found = float(obj["latitud"])
+            except (ValueError, TypeError):
+                pass
+        if "longitud" in obj and obj["longitud"] is not None:
+            try:
+                lon_found = float(obj["longitud"])
+            except (ValueError, TypeError):
+                pass
+        if lat_found is not None and lon_found is not None:
+            return (lat_found, lon_found)
+        for v in obj.values():
+            result = _extraer_primera_coord(v)
+            if result[0] is not None and result[1] is not None:
+                return result
+    elif isinstance(obj, list):
+        for item in obj:
+            result = _extraer_primera_coord(item)
+            if result[0] is not None and result[1] is not None:
+                return result
+
+    return (lat_found, lon_found)
+
+
 @st.cache_data(ttl=300, show_spinner=False)
 def cargar_trafico_realtime() -> Optional[dict]:
     """
@@ -420,8 +457,9 @@ def cargar_trafico_realtime() -> Optional[dict]:
     Filtra solo las incidencias de la Comunitat Valenciana / provincia Valencia.
 
     Returns:
-        Diccionario con: timestamp, archivo, total_espana, incidencias_valencia
-        (lista de dicts con id, tipo, severidad, carretera, municipio, causa).
+        Diccionario con: timestamp, archivo, total_incidencias, incidencias
+        (lista de dicts con id, tipo, severidad, carretera, municipio, causa,
+        lat, lon).
         None si no hay datos disponibles.
     """
     nombre = "Tráfico RT"
@@ -444,7 +482,10 @@ def cargar_trafico_realtime() -> Optional[dict]:
             for p in [punto_from, punto_to]
         )
         if es_valencia:
-            valencia_incs.append({
+            lat = punto_from.get("latitud") or punto_to.get("latitud")
+            lon = punto_from.get("longitud") or punto_to.get("longitud")
+
+            inc_dict = {
                 "id": inc.get("id"),
                 "tipo": inc.get("tipo_datex", "").replace("sit:", ""),
                 "severidad": inc.get("severidad", "unknown"),
@@ -452,15 +493,24 @@ def cargar_trafico_realtime() -> Optional[dict]:
                 "carretera": loc.get("carretera", ""),
                 "municipio": punto_from.get("municipio", ""),
                 "provincia": punto_from.get("provincia", ""),
-                "lat": punto_from.get("latitud"),
-                "lon": punto_from.get("longitud"),
-            })
+                "lat": lat,
+                "lon": lon,
+            }
+
+            # Fallback: buscar coordenadas en cualquier nivel del bloque
+            if inc_dict["lat"] is None or inc_dict["lon"] is None:
+                fb_lat, fb_lon = _extraer_primera_coord(loc)
+                if fb_lat is not None and fb_lon is not None:
+                    inc_dict["lat"] = fb_lat
+                    inc_dict["lon"] = fb_lon
+
+            valencia_incs.append(inc_dict)
 
     result = {
         "timestamp": metadata.get("timestamp_captura", ""),
         "archivo": data.get("_archivo_fuente", ""),
-        "total_espana": len(incidencias_raw),
-        "incidencias_valencia": valencia_incs,
+        "total_incidencias": len(incidencias_raw),
+        "incidencias": valencia_incs,
     }
     logger.info(
         f"[{nombre}] {len(valencia_incs)} incidencias Valencia "

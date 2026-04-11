@@ -354,6 +354,68 @@ def parse_location(location_el: etree._Element, logger: logging.Logger) -> Dict[
         if point_data:
             loc_data[f"punto_{point_name}"] = point_data
 
+    # --- Fallback de coordenadas si tpegLinearLocation no las tenía ---
+    tiene_coords = any(
+        "latitud" in loc_data.get(k, {})
+        for k in ("punto_from", "punto_to")
+    )
+
+    if not tiene_coords:
+        # Fallback 1: tpegPoint (incidencias puntuales)
+        try:
+            lat_el = location_el.find(
+                ".//loc:tpegPoint/loc:pointCoordinates/loc:latitude", NS
+            )
+            lon_el = location_el.find(
+                ".//loc:tpegPoint/loc:pointCoordinates/loc:longitude", NS
+            )
+            if lat_el is not None and lon_el is not None:
+                lat_val = float(lat_el.text)
+                lon_val = float(lon_el.text)
+                loc_data.setdefault("punto_from", {})
+                loc_data["punto_from"]["latitud"] = lat_val
+                loc_data["punto_from"]["longitud"] = lon_val
+                tiene_coords = True
+        except (ValueError, TypeError):
+            pass
+
+    if not tiene_coords:
+        # Fallback 2: alertCMethod2PairPointLinearReference — primer punto
+        try:
+            lat_el = location_el.find(
+                ".//loc:alertCMethod2PairPointLinearReference"
+                "/loc:alertCLocation[1]"
+                "//loc:pointCoordinates/loc:latitude", NS
+            )
+            lon_el = location_el.find(
+                ".//loc:alertCMethod2PairPointLinearReference"
+                "/loc:alertCLocation[1]"
+                "//loc:pointCoordinates/loc:longitude", NS
+            )
+            if lat_el is not None and lon_el is not None:
+                lat_val = float(lat_el.text)
+                lon_val = float(lon_el.text)
+                loc_data.setdefault("punto_from", {})
+                loc_data["punto_from"]["latitud"] = lat_val
+                loc_data["punto_from"]["longitud"] = lon_val
+                tiene_coords = True
+        except (ValueError, TypeError):
+            pass
+
+    if not tiene_coords:
+        # Fallback 3: cualquier lat/lon en el bloque de ubicación
+        try:
+            lat_els = location_el.findall(".//loc:latitude", NS)
+            lon_els = location_el.findall(".//loc:longitude", NS)
+            if lat_els and lon_els:
+                lat_val = float(lat_els[0].text)
+                lon_val = float(lon_els[0].text)
+                loc_data.setdefault("punto_from", {})
+                loc_data["punto_from"]["latitud"] = lat_val
+                loc_data["punto_from"]["longitud"] = lon_val
+        except (ValueError, TypeError):
+            pass
+
     return loc_data
 
 
