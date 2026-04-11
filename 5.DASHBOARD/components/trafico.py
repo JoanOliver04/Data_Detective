@@ -5,10 +5,10 @@ DATA DETECTIVE - VALENCIA
 Fase 7.4: Tab Trafico
 ==============================================================================
 Componente modular que renderiza la seccion completa de trafico:
-  1. KPIs: total incidencias, media diaria, dia pico, anio mas congestionado
+  1. KPIs: total incidencias, media diaria, dia pico, flujo espiras RT
   2. Grafico temporal adaptativo (barras anual / linea mensual)
   3. Distribucion semanal (barras horizontales lun-dom)
-  4. Mapa de trafico (HTML pre-generado o mensaje informativo)
+  4. Mapa combinado: espiras VLCi (flujo) + incidencias DGT
   5. Funcion orquestadora render_tab_trafico()
 
 Columnas esperadas del DataFrame (data_loader.cargar_trafico):
@@ -19,12 +19,12 @@ Autor: Joan | Fecha: 2026
 """
 
 import logging
+from collections import Counter
 from typing import Optional
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as components
 
 from theme import get_theme
 from config import (
@@ -76,23 +76,62 @@ _LABEL_TIPO = {
 }
 
 # Altura del mapa embebido (px)
-MAP_HEIGHT = 500
+MAP_HEIGHT = 580
+
+# --------------------------------------------------------------------------
+# Espiras: umbrales de congestion (vehiculos/hora por punto sensor)
+# --------------------------------------------------------------------------
+_IH_LIBRE = 200       # < 200 veh/h → libre (verde)
+_IH_FLUIDO = 500      # 200-500     → fluido (lima)
+_IH_DENSO = 900       # 500-900     → denso (naranja)
+_IH_SATURADO = 1400   # 900-1400    → saturado (rojo)
+                       # > 1400      → congestionado (rojo oscuro)
+
+
+def _color_espira(ih: float) -> str:
+    """Returns hex color based on vehicles/hour."""
+    if ih < _IH_LIBRE:
+        return "#2ca02c"    # green
+    if ih < _IH_FLUIDO:
+        return "#98df8a"    # lime
+    if ih < _IH_DENSO:
+        return "#ff7f0e"    # orange
+    if ih < _IH_SATURADO:
+        return "#d62728"    # red
+    return "#8B0000"        # dark red
+
+
+def _label_congestion(ih: float) -> str:
+    """Returns Spanish label for congestion level."""
+    if ih < _IH_LIBRE:
+        return "Libre"
+    if ih < _IH_FLUIDO:
+        return "Fluido"
+    if ih < _IH_DENSO:
+        return "Denso"
+    if ih < _IH_SATURADO:
+        return "Saturado"
+    return "Congestionado"
 
 
 # ==============================================================================
 # 1. KPIs
 # ==============================================================================
 
-def render_kpis_trafico(df: pd.DataFrame) -> None:
+def render_kpis_trafico(
+    df: pd.DataFrame,
+    espiras_rt: Optional[dict] = None,
+) -> None:
     """
     Renderiza 4 KPIs de trafico:
       - Total incidencias
       - Media diaria de incidencias
       - Dia de la semana con mas incidencias
-      - Anio mas congestionado
+      - Flujo ahora (espiras) OR Anio mas congestionado
 
     Args:
         df: DataFrame de trafico filtrado.
+        espiras_rt: Datos RT de espiras VLCi (puede ser None).
     """
     if df is None or df.empty:
         st.warning("No hay datos de tráfico para los filtros seleccionados.")
@@ -120,15 +159,6 @@ def render_kpis_trafico(df: pd.DataFrame) -> None:
     else:
         dia_pico = "-"
         val_dia_pico = None
-
-    # Anio mas congestionado
-    if "anio" in df.columns and not df["anio"].dropna().empty:
-        conteo_anio = df.groupby("anio").size()
-        anio_pico = int(conteo_anio.idxmax())
-        val_anio_pico = int(conteo_anio.max())
-    else:
-        anio_pico = "-"
-        val_anio_pico = None
 
     # --- Renderizado ---
     st.markdown(
@@ -162,17 +192,39 @@ def render_kpis_trafico(df: pd.DataFrame) -> None:
         help="Día de la semana con mayor número de incidencias.",
     )
 
-    c4.metric(
-        label="Año más congestionado",
-        value=str(anio_pico),
-        delta=f"{val_anio_pico:,} incidencias" if val_anio_pico else None,
-        delta_color="off",
-        help="Año con mayor volumen de incidencias registradas.",
-    )
+    # 4th KPI: espiras RT if available, otherwise historical peak year
+    sensores = (espiras_rt or {}).get("sensores_activos", [])
+    if sensores:
+        ihs = [s["ih"] for s in sensores]
+        avg_ih = sum(ihs) / len(ihs)
+        max_ih = max(ihs)
+        c4.metric(
+            label="Flujo ahora",
+            value=f"{avg_ih:.0f} veh/h",
+            delta=f"máx {max_ih:.0f} veh/h",
+            delta_color="off",
+            help=f"Media de {len(sensores)} espiras activas en Valencia.",
+        )
+    else:
+        if "anio" in df.columns and not df["anio"].dropna().empty:
+            conteo_anio = df.groupby("anio").size()
+            anio_pico = int(conteo_anio.idxmax())
+            val_anio_pico = int(conteo_anio.max())
+        else:
+            anio_pico = "-"
+            val_anio_pico = None
+
+        c4.metric(
+            label="Año más congestionado",
+            value=str(anio_pico),
+            delta=f"{val_anio_pico:,} incidencias" if val_anio_pico else None,
+            delta_color="off",
+            help="Año con mayor volumen de incidencias registradas.",
+        )
 
     logger.info(
         f"[KPIs Trafico] Total={total:,}, Media diaria={media_diaria:.1f}, "
-        f"Dia pico={dia_pico}, Anio pico={anio_pico}"
+        f"Dia pico={dia_pico}"
     )
 
 
@@ -364,32 +416,36 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
 
 
 # ==============================================================================
-# 4. MAPA DE TRAFICO (tiempo real DGT + fallback HTML pre-generado)
+# 4. MAPA COMBINADO: Espiras VLCi + Incidencias DGT
 # ==============================================================================
 
-def _render_mapa_rt_folium(incs: list, trafico_rt: dict) -> None:
+def _render_mapa_combinado(
+    trafico_rt: Optional[dict],
+    espiras_rt: Optional[dict],
+) -> None:
     """
-    Construye y renderiza un mapa Folium con las incidencias DGT
-    geolocalizadas.
+    Builds a Folium map with two layers:
+      1. VLCi espiras: CircleMarkers colored by vehicles/hour
+      2. DGT incidents: CircleMarkers with MarkerCluster
 
     Args:
-        incs: Lista de incidencias con lat/lon validos.
-        trafico_rt: Diccionario completo de datos RT (para timestamp y totales).
+        trafico_rt: from cargar_trafico_realtime() (may be None).
+        espiras_rt: from cargar_espiras_realtime() (may be None).
     """
     try:
         import folium
         from folium.plugins import MarkerCluster
     except ImportError:
         st.warning(
-            "Folium no está instalado. Ejecuta: "
-            "`pip install folium`"
+            "Folium no está instalado. Ejecuta: `pip install folium`"
         )
         return
 
     mapa = folium.Map(
         location=[39.4699, -0.3763],
-        zoom_start=10,
+        zoom_start=12,
         tiles=None,
+        prefer_canvas=True,
     )
 
     folium.TileLayer(
@@ -399,164 +455,310 @@ def _render_mapa_rt_folium(incs: list, trafico_rt: dict) -> None:
         "CartoDB positron", name="\u2600\ufe0f Claro",
     ).add_to(mapa)
 
-    cluster = MarkerCluster(
-        name="\U0001f4cd Incidencias",
-        options={
-            "maxClusterRadius": 45,
-            "disableClusteringAtZoom": 13,
-            "showCoverageOnHover": False,
-        },
-    ).add_to(mapa)
+    # ------------------------------------------------------------------
+    # LAYER 1 — Espiras VLCi (flujo vehicular)
+    # ------------------------------------------------------------------
+    sensores = []
+    if espiras_rt is not None:
+        sensores = espiras_rt.get("sensores_activos", [])
 
-    for inc in incs:
-        causa = inc.get("causa", "obstruction")
-        severidad = inc.get("severidad", "desconocida")
-        carretera = inc.get("carretera", "—")
-        municipio = inc.get("municipio", "—")
-        lat = inc["lat"]
-        lon = inc["lon"]
-
-        color = _COLOR_TIPO.get(causa, COLOR_TRAFICO)
-        radius = 8 if severidad in ("highest", "high") else 5
-        emoji = _ICONO_TIPO.get(causa, "\U0001f6ab")
-        label = _LABEL_TIPO.get(causa, causa)
-        sev_color = _COLOR_SEVERIDAD.get(severidad, "#aec7e8")
-
-        popup_html = (
-            '<table style="font-size:12px;min-width:180px;">'
-            f'<tr><td><b>Carretera</b></td><td>{carretera}</td></tr>'
-            f'<tr><td><b>Municipio</b></td><td>{municipio}</td></tr>'
-            f'<tr><td><b>Severidad</b></td>'
-            f'<td style="color:{sev_color};font-weight:bold;">'
-            f'{severidad}</td></tr>'
-            f'<tr><td><b>Tipo</b></td><td>{label}</td></tr>'
-            '</table>'
+    if sensores:
+        fg_espiras = folium.FeatureGroup(
+            name="\U0001f6a6 Flujo vehicular (espiras)", show=True,
         )
 
-        tooltip_text = f"{emoji} {carretera} \u2014 {municipio} ({severidad})"
+        for s in sensores:
+            ih = s.get("ih", 0)
+            color = _color_espira(ih)
+            label = _label_congestion(ih)
+            radius = max(4, min(10, 4 + int(ih / 200)))
 
-        folium.CircleMarker(
-            location=[lat, lon],
-            radius=radius,
-            color=color,
-            fill=True,
-            fill_opacity=0.80,
-            weight=1.5,
-            popup=folium.Popup(popup_html, max_width=260),
-            tooltip=tooltip_text,
-        ).add_to(cluster)
+            popup_html = (
+                '<table style="font-size:12px;min-width:180px;">'
+                f'<tr><td><b>ID Sensor</b></td><td>{s.get("idpm", "—")}</td></tr>'
+                f'<tr><td><b>Intensidad</b></td><td>{ih:.0f} veh/h</td></tr>'
+                f'<tr><td><b>Estado</b></td>'
+                f'<td style="color:{color};font-weight:bold;">{label}</td></tr>'
+                f'<tr><td><b>Dirección</b></td><td>{s.get("angulo", "—")}°</td></tr>'
+                f'<tr><td><b>Actualizado</b></td>'
+                f'<td>{s.get("fecha_actualizacion", "—")} '
+                f'{s.get("hora_actualizacion", "")}</td></tr>'
+                '</table>'
+            )
 
-    # --- Leyenda flotante ---
-    legend_items_tipo = "".join(
+            folium.CircleMarker(
+                location=[s["lat"], s["lon"]],
+                radius=radius,
+                color=color,
+                fill=True,
+                fill_color=color,
+                fill_opacity=0.75,
+                weight=1,
+                popup=folium.Popup(popup_html, max_width=260),
+                tooltip=f"\U0001f6a6 {ih:.0f} veh/h \u2014 {label}",
+            ).add_to(fg_espiras)
+
+        fg_espiras.add_to(mapa)
+
+    # ------------------------------------------------------------------
+    # LAYER 2 — Incidencias DGT
+    # ------------------------------------------------------------------
+    incs_geo = []
+    if trafico_rt is not None:
+        incs_raw = trafico_rt.get("incidencias", [])
+        incs_geo = [
+            inc for inc in incs_raw
+            if inc.get("lat") is not None and inc.get("lon") is not None
+        ]
+
+    if incs_geo:
+        fg_dgt = folium.FeatureGroup(
+            name="\u26a0\ufe0f Incidencias DGT", show=True,
+        )
+
+        cluster = MarkerCluster(
+            options={
+                "maxClusterRadius": 45,
+                "disableClusteringAtZoom": 13,
+                "showCoverageOnHover": False,
+            },
+        ).add_to(fg_dgt)
+
+        for inc in incs_geo:
+            causa = inc.get("causa", "obstruction")
+            severidad = inc.get("severidad", "desconocida")
+            carretera = inc.get("carretera", "\u2014")
+            municipio = inc.get("municipio", "\u2014")
+
+            color = _COLOR_TIPO.get(causa, COLOR_TRAFICO)
+            radius = 8 if severidad in ("highest", "high") else 5
+            emoji = _ICONO_TIPO.get(causa, "\U0001f6ab")
+            label = _LABEL_TIPO.get(causa, causa)
+            sev_color = _COLOR_SEVERIDAD.get(severidad, "#aec7e8")
+
+            popup_html = (
+                '<table style="font-size:12px;min-width:180px;">'
+                f'<tr><td><b>Carretera</b></td><td>{carretera}</td></tr>'
+                f'<tr><td><b>Municipio</b></td><td>{municipio}</td></tr>'
+                f'<tr><td><b>Severidad</b></td>'
+                f'<td style="color:{sev_color};font-weight:bold;">'
+                f'{severidad}</td></tr>'
+                f'<tr><td><b>Tipo</b></td><td>{label}</td></tr>'
+                '</table>'
+            )
+
+            folium.CircleMarker(
+                location=[inc["lat"], inc["lon"]],
+                radius=radius,
+                color=color,
+                fill=True,
+                fill_opacity=0.80,
+                weight=1.5,
+                popup=folium.Popup(popup_html, max_width=260),
+                tooltip=f"{emoji} {carretera} \u2014 {municipio} ({severidad})",
+            ).add_to(cluster)
+
+        fg_dgt.add_to(mapa)
+
+    # ------------------------------------------------------------------
+    # FLOATING LEGEND (two-column)
+    # ------------------------------------------------------------------
+    # Left column: espiras congestion levels
+    espira_items = "".join(
         f'<div style="margin:2px 0;">'
-        f'<span style="display:inline-block;width:12px;height:12px;'
-        f'background:{c};border-radius:2px;margin-right:6px;'
+        f'<span style="display:inline-block;width:10px;height:10px;'
+        f'background:{c};border-radius:50%;margin-right:5px;'
+        f'vertical-align:middle;"></span>'
+        f'<span style="vertical-align:middle;">{lbl}</span></div>'
+        for lbl, c in [
+            (f"Libre (<{_IH_LIBRE})", "#2ca02c"),
+            (f"Fluido ({_IH_LIBRE}-{_IH_FLUIDO})", "#98df8a"),
+            (f"Denso ({_IH_FLUIDO}-{_IH_DENSO})", "#ff7f0e"),
+            (f"Saturado ({_IH_DENSO}-{_IH_SATURADO})", "#d62728"),
+            (f"Congestionado (>{_IH_SATURADO})", "#8B0000"),
+        ]
+    )
+
+    # Right column: DGT incident types
+    dgt_items = "".join(
+        f'<div style="margin:2px 0;">'
+        f'<span style="display:inline-block;width:10px;height:10px;'
+        f'background:{c};border-radius:50%;margin-right:5px;'
         f'vertical-align:middle;"></span>'
         f'<span style="vertical-align:middle;">'
         f'{_ICONO_TIPO.get(t, "")} {_LABEL_TIPO.get(t, t)}</span></div>'
         for t, c in _COLOR_TIPO.items()
     )
-    legend_items_sev = "".join(
-        f'<div style="margin:2px 0;">'
-        f'<span style="display:inline-block;width:12px;height:12px;'
-        f'background:{c};border-radius:2px;margin-right:6px;'
-        f'vertical-align:middle;"></span>'
-        f'<span style="vertical-align:middle;">{s}</span></div>'
-        for s, c in _COLOR_SEVERIDAD.items()
-    )
+
     legend_html = (
         '<div style="position:fixed;bottom:30px;left:30px;z-index:9999;'
-        'background:rgba(30,30,30,0.85);color:#eee;padding:10px 14px;'
-        'border-radius:8px;font-size:11px;max-width:220px;'
+        'background:rgba(30,30,30,0.88);color:#eee;padding:10px 14px;'
+        'border-radius:8px;font-size:11px;max-width:480px;'
         'box-shadow:0 2px 8px rgba(0,0,0,0.4);">'
-        '<b style="font-size:12px;">Tipo de incidencia</b>'
-        f'{legend_items_tipo}'
-        '<hr style="border-color:#555;margin:6px 0;">'
-        '<b style="font-size:12px;">Severidad</b>'
-        f'{legend_items_sev}'
-        '</div>'
+        '<div style="display:flex;gap:20px;">'
+        '<div style="min-width:160px;">'
+        '<b style="font-size:12px;">Flujo vehicular</b>'
+        f'{espira_items}</div>'
+        '<div style="min-width:170px;">'
+        '<b style="font-size:12px;">Incidencias DGT</b>'
+        f'{dgt_items}</div>'
+        '</div></div>'
     )
     mapa.get_root().html.add_child(folium.Element(legend_html))
 
     folium.LayerControl(collapsed=False).add_to(mapa)
 
-    components.html(mapa._repr_html_(), height=MAP_HEIGHT + 80, scrolling=False)
+    # Render — try three approaches in order of reliability
+    map_html = mapa._repr_html_()
+    rendered = False
 
-    # --- Resumen bajo el mapa ---
-    total_espana = trafico_rt.get("total_incidencias", len(incs))
-    timestamp = trafico_rt.get("timestamp", "—")
-    st.caption(
-        f"\U0001f4cd **{len(incs)}** incidencias en Valencia | "
-        f"**{total_espana}** en toda Espa\u00f1a | "
-        f"\U0001f552 {timestamp}"
-    )
+    # Approach 1: st.components.v1.html (most reliable for Folium)
+    try:
+        import streamlit.components.v1 as components
+        components.html(map_html, height=600, scrolling=False)
+        rendered = True
+    except Exception:
+        pass
 
-    # Desglose por tipo y severidad
-    col_tipo, col_sev = st.columns(2)
-    from collections import Counter
-    conteo_tipo = Counter(inc.get("causa", "obstruction") for inc in incs)
-    conteo_sev = Counter(inc.get("severidad", "desconocida") for inc in incs)
+    # Approach 2: st.html (Streamlit 1.32+)
+    if not rendered:
+        try:
+            st.html(map_html)
+            rendered = True
+        except Exception:
+            pass
 
-    with col_tipo:
-        lineas = [
-            f"{_ICONO_TIPO.get(t, '')} {_LABEL_TIPO.get(t, t)}: **{n}**"
-            for t, n in conteo_tipo.most_common()
+    # Approach 3: base64 iframe fallback
+    if not rendered:
+        import base64
+        b64 = base64.b64encode(map_html.encode()).decode()
+        st.markdown(
+            f'<iframe src="data:text/html;base64,{b64}" '
+            f'width="100%" height="600" frameborder="0"></iframe>',
+            unsafe_allow_html=True,
+        )
+        rendered = True
+
+    if not rendered:
+        incs_con_coords = [
+            inc for inc in (trafico_rt or {}).get("incidencias", [])
+            if inc.get("lat") is not None and inc.get("lon") is not None
         ]
-        st.caption("**Por tipo:** " + " · ".join(lineas))
+        st.info(
+            f"Mapa generado ({len(map_html):,} bytes) pero no se puede "
+            f"renderizar en este entorno. Espiras: "
+            f"{len(sensores)} sensores. "
+            f"DGT: {len(incs_con_coords)} incidencias."
+        )
 
-    with col_sev:
-        lineas_sev = [
-            f"{s}: **{n}**"
-            for s, n in conteo_sev.most_common()
-        ]
-        st.caption("**Por severidad:** " + " · ".join(lineas_sev))
+    # ------------------------------------------------------------------
+    # STATS BELOW MAP (two columns)
+    # ------------------------------------------------------------------
+    col_esp, col_dgt = st.columns(2)
+
+    with col_esp:
+        if sensores:
+            ihs = [s["ih"] for s in sensores]
+            avg_ih = sum(ihs) / len(ihs)
+            max_ih = max(ihs)
+            busiest = next(s for s in sensores if s["ih"] == max_ih)
+
+            # Congestion distribution
+            n_libre = sum(1 for v in ihs if v < _IH_LIBRE)
+            n_fluido = sum(1 for v in ihs if _IH_LIBRE <= v < _IH_FLUIDO)
+            n_denso = sum(1 for v in ihs if _IH_FLUIDO <= v < _IH_DENSO)
+            n_saturado = sum(1 for v in ihs if _IH_DENSO <= v < _IH_SATURADO)
+            n_congest = sum(1 for v in ihs if v >= _IH_SATURADO)
+            n = len(ihs)
+
+            st.caption(
+                f"\U0001f6a6 **Espiras VLCi** — {len(sensores)} sensores activos\n\n"
+                f"Media: **{avg_ih:.0f}** veh/h · "
+                f"Máx: **{max_ih:.0f}** veh/h (sensor {busiest.get('idpm', '?')})\n\n"
+                f"\U0001f7e2 Libre: {n_libre} ({100*n_libre//n}%) · "
+                f"\U0001f7e1 Fluido: {n_fluido} ({100*n_fluido//n}%) · "
+                f"\U0001f7e0 Denso: {n_denso} ({100*n_denso//n}%)\n\n"
+                f"\U0001f534 Saturado: {n_saturado} ({100*n_saturado//n}%) · "
+                f"\u26ab Congest.: {n_congest} ({100*n_congest//n}%)"
+            )
+        else:
+            st.caption(
+                "\U0001f6a6 **Espiras VLCi** — Sin datos. "
+                "Ejecuta streaming_vlci_trafico.py"
+            )
+
+    with col_dgt:
+        if incs_geo:
+            total_espana = (trafico_rt or {}).get(
+                "total_incidencias", len(incs_geo)
+            )
+            timestamp = (trafico_rt or {}).get("timestamp", "\u2014")
+            conteo_tipo = Counter(
+                inc.get("causa", "obstruction") for inc in incs_geo
+            )
+            top3 = conteo_tipo.most_common(3)
+            top3_text = " · ".join(
+                f"{_ICONO_TIPO.get(t, '')} {_LABEL_TIPO.get(t, t)}: **{n}**"
+                for t, n in top3
+            )
+            st.caption(
+                f"\u26a0\ufe0f **Incidencias DGT** — "
+                f"**{len(incs_geo)}** en Valencia "
+                f"(de {total_espana} en España)\n\n"
+                f"{top3_text}\n\n"
+                f"\U0001f552 {timestamp}"
+            )
+        else:
+            st.caption(
+                "\u26a0\ufe0f **Incidencias DGT** — Sin datos geolocalizados. "
+                "Ejecuta streaming_master.py"
+            )
 
     logger.info(
-        f"[Mapa RT] {len(incs)} incidencias Valencia renderizadas"
+        f"[Mapa combinado] {len(sensores)} espiras + "
+        f"{len(incs_geo)} incidencias DGT renderizadas"
     )
 
 
-def render_mapa_trafico(trafico_rt: Optional[dict] = None) -> None:
+def render_mapa_trafico(
+    trafico_rt: Optional[dict] = None,
+    espiras_rt: Optional[dict] = None,
+) -> None:
     """
-    Renderiza el mapa de trafico con 3 niveles de prioridad:
-      1. Mapa Folium en tiempo real con datos DGT
+    Renderiza el mapa de trafico combinado con hasta 3 niveles de prioridad:
+      1. Mapa Folium combinado (espiras + DGT)
       2. HTML pre-generado (Fase 6.1)
       3. Mensaje informativo
 
     Args:
         trafico_rt: Diccionario de datos RT de DGT (puede ser None).
-                    Espera claves: 'incidencias' (list), 'timestamp' (str),
-                    'total_incidencias' (int).
+        espiras_rt: Diccionario de datos RT de espiras VLCi (puede ser None).
     """
     st.markdown(
         '<div class="section-header">'
-        '<h4>Mapa de incidencias de tr\u00e1fico</h4>'
+        '<h4>Mapa de tr\u00e1fico en tiempo real</h4>'
         '<p style="color:#888;font-size:0.85rem;">'
-        'Incidencias DGT en tiempo real'
+        'Flujo vehicular (espiras municipales) + incidencias DGT'
         '</p></div>',
         unsafe_allow_html=True,
     )
 
-    # Prioridad 1: mapa RT con Folium
+    # Prioridad 1: mapa combinado RT si hay algun dato
+    has_espiras = (
+        espiras_rt is not None
+        and espiras_rt.get("sensores_activos")
+    )
+    has_dgt = False
     if trafico_rt is not None:
-        incidencias = trafico_rt.get("incidencias", [])
-        if incidencias:
-            incs_geo = [
-                inc for inc in incidencias
-                if inc.get("lat") is not None and inc.get("lon") is not None
-            ]
-            if incs_geo:
-                _render_mapa_rt_folium(incs_geo, trafico_rt)
-                return
-            st.info(
-                f"Se han recibido **{len(incidencias)}** incidencias DGT "
-                "pero ninguna incluye coordenadas geogr\u00e1ficas. "
-                "El feed DATEX II no siempre proporciona lat/lon para "
-                "todas las situaciones."
-            )
-            logger.info(
-                f"[Mapa RT] {len(incidencias)} incidencias sin coordenadas"
-            )
+        incs = trafico_rt.get("incidencias", [])
+        has_dgt = any(
+            inc.get("lat") is not None and inc.get("lon") is not None
+            for inc in incs
+        )
+
+    if has_espiras or has_dgt:
+        _render_mapa_combinado(trafico_rt, espiras_rt)
+        return
 
     # Prioridad 2: HTML pre-generado
     if MAPA_TRAFICO_HTML.exists():
@@ -566,16 +768,27 @@ def render_mapa_trafico(trafico_rt: Optional[dict] = None) -> None:
                 f"Mapa pre-generado: `{MAPA_TRAFICO_HTML.name}` "
                 "(regenerar con generar_mapas.py)"
             )
-            components.html(html_content, height=MAP_HEIGHT, scrolling=False)
+            try:
+                import streamlit.components.v1 as components
+                components.html(html_content, height=600, scrolling=False)
+            except Exception:
+                import base64
+                b64 = base64.b64encode(html_content.encode()).decode()
+                st.markdown(
+                    f'<iframe src="data:text/html;base64,{b64}" '
+                    f'width="100%" height="600" frameborder="0"></iframe>',
+                    unsafe_allow_html=True,
+                )
             return
 
     # Prioridad 3: sin mapa
     st.info(
         "Mapa de tr\u00e1fico no disponible. "
-        "Genera el mapa ejecutando:\n\n"
-        "`python 2.SCRIPTS/procesamiento/generar_mapas.py`"
+        "Genera datos ejecutando:\n\n"
+        "`python 2.SCRIPTS/recopilacion/streaming_vlci_trafico.py`\n\n"
+        "`python 2.SCRIPTS/recopilacion/streaming_master.py`"
     )
-    logger.warning("[Mapa] mapa_trafico.html no encontrado")
+    logger.warning("[Mapa] Sin datos RT ni mapa_trafico.html")
 
 
 # ==============================================================================
@@ -595,7 +808,7 @@ def render_tab_trafico(datos: dict) -> None:
 
     Args:
         datos: Diccionario con datos filtrados.
-              Claves usadas: 'trafico', 'trafico_rt', '_filtros'.
+              Claves usadas: 'trafico', 'trafico_rt', 'espiras_rt', '_filtros'.
     """
     # Header
     st.markdown(
@@ -615,7 +828,7 @@ def render_tab_trafico(datos: dict) -> None:
         return
 
     # 1. KPIs
-    render_kpis_trafico(df)
+    render_kpis_trafico(df, espiras_rt=datos.get("espiras_rt"))
 
     st.divider()
 
@@ -631,7 +844,10 @@ def render_tab_trafico(datos: dict) -> None:
         render_distribucion_semana(df)
 
     with col_mapa:
-        render_mapa_trafico(trafico_rt=datos.get("trafico_rt"))
+        render_mapa_trafico(
+            trafico_rt=datos.get("trafico_rt"),
+            espiras_rt=datos.get("espiras_rt"),
+        )
 
     # 4. Resumen de filtros
     filtros = datos.get("_filtros", {})

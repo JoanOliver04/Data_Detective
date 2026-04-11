@@ -25,6 +25,7 @@ from config import (
     METEO_DINAMICA_DIR, FORECAST_GLOB_PATTERN,
     CONTAM_DINAMICA_DIR, AQICN_GLOB_PATTERN,
     TRAFICO_DINAMICO_DIR, DGT_GLOB_PATTERN,
+    TRAFICO_VLCI_DIR, VLCI_TRAFICO_GLOB,
     ESTACION_BARRIO_MAP,
     ESQUEMA_CONTAMINACION, ESQUEMA_METEOROLOGIA,
     ESQUEMA_TRAFICO, ESQUEMA_IMPACTO_EVENTOS,
@@ -522,6 +523,43 @@ def cargar_trafico_realtime() -> Optional[dict]:
         f"[{nombre}] Revisadas {len(incidencias_raw)} incidencias totales; "
         f"{len(valencia_incs)} coinciden con Valencia (Comunitat Valenciana) "
         f"desde {result['archivo']}"
+    )
+    return result
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def cargar_espiras_realtime() -> Optional[dict]:
+    """
+    Carga el ultimo JSON de VLCi con datos de espiras de trafico.
+
+    Returns:
+        Diccionario con: timestamp, archivo, total_sensores,
+        sensores_activos (lista de dicts con idpm, ih, lat, lon, angulo,
+        fecha_actualizacion, hora_actualizacion).
+        None si no hay datos disponibles.
+    """
+    nombre = "Espiras VLCi RT"
+    data = _cargar_ultimo_json(TRAFICO_VLCI_DIR, VLCI_TRAFICO_GLOB, nombre)
+    if data is None:
+        return None
+
+    metadata = data.get("_metadata", {})
+    sensores_raw = data.get("sensores", [])
+
+    sensores = [
+        s for s in sensores_raw
+        if s.get("lat") and s.get("lon") and s.get("ih") is not None
+    ]
+
+    result = {
+        "timestamp": metadata.get("timestamp_captura", ""),
+        "archivo": data.get("_archivo_fuente", ""),
+        "total_sensores": len(sensores_raw),
+        "sensores_activos": sensores,
+    }
+    logger.info(
+        f"[{nombre}] {len(sensores)} sensores activos "
+        f"(de {len(sensores_raw)} totales) desde {result['archivo']}"
     )
     return result
 

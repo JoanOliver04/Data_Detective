@@ -12,7 +12,11 @@
       "Bash(python tests/run_tests.py -v)",
       "Bash(python:*)",
       "WebFetch(domain:mapas.valencia.es)",
-      "WebFetch(domain:geoportal.valencia.es)"
+      "WebFetch(domain:geoportal.valencia.es)",
+      "Bash(streamlit run:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8501/)",
+      "Bash(curl -s http://localhost:8501/)",
+      "Bash(curl:*)"
     ]
   }
 }

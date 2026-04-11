@@ -33,7 +33,7 @@ from data_loader import (
     cargar_impacto_eventos, cargar_contam_anual_barrio,
     cargar_precip_mensual, cargar_tendencias, cargar_pronostico_72h,
     cargar_contaminacion_realtime, cargar_meteo_realtime,
-    cargar_trafico_realtime,
+    cargar_trafico_realtime, cargar_espiras_realtime,
     diagnostico_datos,
 )
 from config import PAGE_CONFIG, TAB_NAMES, DESCRIPCION_TABS
@@ -210,6 +210,7 @@ def _cargar_todos_los_datos():
     datos["contam_rt"] = cargar_contaminacion_realtime()
     datos["meteo_rt"] = cargar_meteo_realtime()
     datos["trafico_rt"] = cargar_trafico_realtime()
+    datos["espiras_rt"] = cargar_espiras_realtime()
     return datos
 
 
@@ -251,6 +252,7 @@ def _aplicar_filtros_globales(datos, filtros):
     if df is not None and tipos_ev:
         datos_f["eventos"] = df[df["tipo_evento"].isin(tipos_ev)]
 
+    datos_f["espiras_rt"] = datos.get("espiras_rt")
     datos_f["_variable"] = filtros["variable"]
     datos_f["_filtros"] = filtros
 
