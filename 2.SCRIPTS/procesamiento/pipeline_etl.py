@@ -6,16 +6,21 @@ Fase 5.6: Pipeline Maestro de Procesamiento ETL
 ==============================================================================
 
 Descripción:
-    Script maestro que orquesta la ejecución secuencial de los 5 scripts
-    de procesamiento ETL del proyecto Data Detective (Fase 5).
+    Script maestro que orquesta la ejecución secuencial de los 10 scripts
+    de procesamiento ETL del proyecto Data Detective (Fases 5-6).
 
     Orden de ejecución:
     ───────────────────
-    1. normalizar_contaminacion.py  → Fase 5.1: Normalización contaminación
-    2. limpiar_meteorologia.py      → Fase 5.2: Limpieza meteorología
-    3. limpiar_trafico.py           → Fase 5.3: Limpieza tráfico
-    4. calcular_estadisticas.py     → Fase 5.4: Estadísticas agregadas
-    5. correlacion_eventos.py       → Fase 5.5: Correlación eventos
+    1.  normalizar_contaminacion.py       → Fase 5.1:  Normalización contaminación
+    2.  limpiar_meteorologia.py           → Fase 5.2:  Limpieza meteorología
+    3.  limpiar_trafico.py                → Fase 5.3:  Limpieza tráfico
+    4.  calcular_estadisticas.py          → Fase 5.4:  Estadísticas agregadas
+    5.  correlacion_eventos.py            → Fase 5.5:  Correlación eventos
+    6.  clasificar_eventos.py             → Fase 5.6:  Clasificación eventos
+    7.  generar_graficos.py               → Fase 5.7:  Generación de gráficos
+    8.  generar_mapas.py                  → Fase 5.8:  Generación de mapas
+    9.  generar_pronostico.py             → Fase 5.9:  Generación de pronóstico
+    10. generar_visualizaciones_eventos.py → Fase 5.10: Visualizaciones eventos
 
     Cada script se ejecuta de forma independiente. Si uno falla, los
     siguientes se ejecutan igualmente. Se captura el estado y duración
@@ -66,6 +71,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPTS_DIR = PROJECT_ROOT / "2.SCRIPTS" / "procesamiento"
 DATOS_LIMPIOS_DIR = PROJECT_ROOT / "3.DATOS_LIMPIOS"
 STATS_DIR = DATOS_LIMPIOS_DIR / "estadisticas"
+VISUALIZACIONES_DIR = PROJECT_ROOT / "4.VISUALIZACIONES"
 LOG_DIR = PROJECT_ROOT / "logs"
 
 # Asegurar que el directorio de scripts está en sys.path para imports
@@ -101,6 +107,31 @@ ETL_MODULES = [
         "module": "correlacion_eventos",
         "name": "Correlación Eventos",
         "fase": "5.5",
+    },
+    {
+        "module": "clasificar_eventos",
+        "name": "Clasificación Eventos",
+        "fase": "5.6",
+    },
+    {
+        "module": "generar_graficos",
+        "name": "Generación de Gráficos",
+        "fase": "5.7",
+    },
+    {
+        "module": "generar_mapas",
+        "name": "Generación de Mapas",
+        "fase": "5.8",
+    },
+    {
+        "module": "generar_pronostico",
+        "name": "Generación de Pronóstico",
+        "fase": "5.9",
+    },
+    {
+        "module": "generar_visualizaciones_eventos",
+        "name": "Visualizaciones de Eventos",
+        "fase": "5.10",
     },
 ]
 
@@ -150,6 +181,54 @@ EXPECTED_OUTPUTS = [
         "key_column": "evento_id",
         "format": "csv",
         "min_rows": 1,
+    },
+    {
+        "path": VISUALIZACIONES_DIR / "graficos" / "evolucion_no2.html",
+        "description": "Gráfico evolución NO2 (HTML)",
+        "key_column": None,
+        "format": "html",
+    },
+    {
+        "path": VISUALIZACIONES_DIR / "graficos" / "precipitaciones_anuales.html",
+        "description": "Gráfico precipitaciones anuales (HTML)",
+        "key_column": None,
+        "format": "html",
+    },
+    {
+        "path": VISUALIZACIONES_DIR / "mapas" / "mapa_no2.html",
+        "description": "Mapa NO2 (HTML)",
+        "key_column": None,
+        "format": "html",
+    },
+    {
+        "path": VISUALIZACIONES_DIR / "mapas" / "mapa_pm25.html",
+        "description": "Mapa PM2.5 (HTML)",
+        "key_column": None,
+        "format": "html",
+    },
+    {
+        "path": VISUALIZACIONES_DIR / "mapas" / "mapa_trafico.html",
+        "description": "Mapa tráfico (HTML)",
+        "key_column": None,
+        "format": "html",
+    },
+    {
+        "path": VISUALIZACIONES_DIR / "pronostico" / "pronostico_72h.html",
+        "description": "Pronóstico 72h (HTML)",
+        "key_column": None,
+        "format": "html",
+    },
+    {
+        "path": VISUALIZACIONES_DIR / "eventos" / "impacto_no2_por_tipo.html",
+        "description": "Impacto NO2 por tipo evento (HTML)",
+        "key_column": None,
+        "format": "html",
+    },
+    {
+        "path": VISUALIZACIONES_DIR / "eventos" / "timeline_eventos.html",
+        "description": "Timeline de eventos (HTML)",
+        "key_column": None,
+        "format": "html",
     },
 ]
 
@@ -568,7 +647,7 @@ def main():
     """
     Función principal del pipeline maestro ETL.
 
-    Orquesta secuencialmente los 5 módulos de procesamiento (Fases 5.1-5.5),
+    Orquesta secuencialmente los 10 módulos de procesamiento (Fases 5.1-5.10),
     registra resultados, valida la integridad de los archivos generados
     y genera un resumen final con el estado de cada módulo.
 
