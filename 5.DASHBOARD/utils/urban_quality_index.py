@@ -240,7 +240,7 @@ def _score_trafico(trafico_rt: Optional[dict]) -> Optional[Dict[str, Any]]:
         - >10 incidencias o varias graves: 1
 
     Args:
-        trafico_rt: Diccionario RT con clave 'incidencias_valencia' (lista).
+        trafico_rt: Diccionario RT con clave 'incidencias' (lista).
 
     Returns:
         Diccionario con 'score' (float 0-10) y 'detalle' (info incidencias),
@@ -249,7 +249,7 @@ def _score_trafico(trafico_rt: Optional[dict]) -> Optional[Dict[str, Any]]:
     if trafico_rt is None:
         return None
 
-    incidencias = trafico_rt.get("incidencias_valencia", [])
+    incidencias = trafico_rt.get("incidencias", [])
     total = len(incidencias)
 
     # Contar incidencias graves (high/highest)
@@ -409,22 +409,22 @@ if __name__ == "__main__":
     def test_score_trafico():
         """Verifica logica de incidencias de trafico."""
         assert _score_trafico(None) is None
-        assert _score_trafico({"incidencias_valencia": []})["score"] == 10.0
+        assert _score_trafico({"incidencias": []})["score"] == 10.0
         assert _score_trafico({
-            "incidencias_valencia": [
+            "incidencias": [
                 {"severidad": "low"}, {"severidad": "low"},
             ]
         })["score"] == 7.0
         assert _score_trafico({
-            "incidencias_valencia": [
+            "incidencias": [
                 {"severidad": "high"}, {"severidad": "low"},
             ]
         })["score"] == 4.0
         assert _score_trafico({
-            "incidencias_valencia": [{"severidad": "low"}] * 12
+            "incidencias": [{"severidad": "low"}] * 12
         })["score"] == 1.0
         assert _score_trafico({
-            "incidencias_valencia": [
+            "incidencias": [
                 {"severidad": "highest"}, {"severidad": "high"},
             ]
         })["score"] == 1.0
@@ -443,7 +443,7 @@ if __name__ == "__main__":
     def test_indice_urbano_parcial():
         """Verifica que funciona con datos parciales."""
         # Solo trafico
-        result = calcular_indice_urbano(trafico_rt={"incidencias_valencia": []})
+        result = calcular_indice_urbano(trafico_rt={"incidencias": []})
         assert result is not None
         assert result["score"] == 10.0
         assert result["ejes_disponibles"] == 1
@@ -451,7 +451,7 @@ if __name__ == "__main__":
         # Meteo + trafico
         result2 = calcular_indice_urbano(
             meteo_rt={"temp": 22.0, "humedad": 55.0},
-            trafico_rt={"incidencias_valencia": []},
+            trafico_rt={"incidencias": []},
         )
         assert result2 is not None
         assert result2["score"] == 10.0

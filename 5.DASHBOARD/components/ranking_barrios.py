@@ -183,7 +183,7 @@ def _score_trafico_citywide(trafico_rt: Optional[dict]) -> Optional[float]:
     Calcula el score de trafico (0-10) a partir de incidencias en Valencia.
 
     Args:
-        trafico_rt: Diccionario RT de DGT con clave 'incidencias_valencia'.
+        trafico_rt: Diccionario RT de DGT con clave 'incidencias' (lista).
 
     Returns:
         Score float 0-10, o None si no hay datos.
@@ -191,7 +191,7 @@ def _score_trafico_citywide(trafico_rt: Optional[dict]) -> Optional[float]:
     if trafico_rt is None:
         return None
 
-    incidencias = trafico_rt.get("incidencias_valencia", [])
+    incidencias = trafico_rt.get("incidencias", [])
     total = len(incidencias)
     graves = sum(
         1 for inc in incidencias
@@ -308,7 +308,7 @@ def _calcular_filas_fusion(
     # Scores ciudad (iguales para todos los barrios)
     score_meteo = _score_meteo_citywide(meteo_rt)
     score_trafico = _score_trafico_citywide(trafico_rt)
-    n_incidencias = len(trafico_rt.get("incidencias_valencia", [])) if trafico_rt else None
+    n_incidencias = len(trafico_rt.get("incidencias", [])) if trafico_rt else None
 
     filas = []
     for barrio in barrios:
@@ -724,7 +724,7 @@ def render_ranking_barrios(
         # Leyenda con scores ciudad
         score_meteo = _score_meteo_citywide(meteo_rt)
         score_trafico = _score_trafico_citywide(trafico_rt)
-        n_inc = len(trafico_rt.get("incidencias_valencia", [])) if trafico_rt else None
+        n_inc = len(trafico_rt.get("incidencias", [])) if trafico_rt else None
         _render_leyenda_fusion(score_meteo, score_trafico, n_inc)
 
         logger.info(

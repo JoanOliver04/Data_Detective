@@ -269,8 +269,8 @@ def _render_trafico(trafico_rt: Optional[dict]) -> None:
     if antiguo:
         st.warning(f"Datos no recientes ({frescura}). Ejecuta streaming_master.py.")
 
-    incs_valencia = trafico_rt.get("incidencias_valencia", [])
-    total_espana = trafico_rt.get("total_espana", 0)
+    incs_valencia = trafico_rt.get("incidencias", [])
+    total_espana = trafico_rt.get("total_incidencias", 0)
 
     st.metric(
         label="Incidencias activas (Valencia)",

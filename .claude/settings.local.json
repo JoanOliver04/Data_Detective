@@ -10,7 +10,9 @@
       "Bash(python -c \"import folium; from streamlit_folium import st_folium; print\\('OK: folium', folium.__version__\\)\")",
       "Bash(python -c \"import py_compile; py_compile.compile\\('5.DASHBOARD/components/maps.py', doraise=True\\); print\\('OK'\\)\")",
       "Bash(python tests/run_tests.py -v)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "WebFetch(domain:mapas.valencia.es)",
+      "WebFetch(domain:geoportal.valencia.es)"
     ]
   }
 }

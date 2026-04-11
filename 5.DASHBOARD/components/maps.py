@@ -184,7 +184,7 @@ def _generar_mapa_dinamico(
     Args:
         df: DataFrame filtrado de contaminacion.
         variable: Variable que determina el color de los CircleMarkers.
-        trafico_rt: Diccionario de trafico RT con 'incidencias_valencia'.
+        trafico_rt: Diccionario de trafico RT con 'incidencias' (lista).
         contam_rt: Resultado de cargar_contaminacion_realtime(). Enriquece popups.
         meteo_rt: Resultado de cargar_meteo_realtime(). Aparece en todos los popups.
     """
@@ -904,7 +904,7 @@ def _anadir_capa_trafico(m, trafico_rt: Optional[dict], theme: Optional[dict] = 
     if trafico_rt is None:
         return 0
 
-    incidencias = trafico_rt.get("incidencias_valencia", [])
+    incidencias = trafico_rt.get("incidencias", [])
     if not incidencias:
         return 0
 

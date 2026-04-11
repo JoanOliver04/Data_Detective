@@ -6,9 +6,9 @@ Módulo: Hilo de streaming en background para el dashboard
 ==============================================================================
 
 Lanza un threading.Thread(daemon=True) que ejecuta el ciclo de captura
-de datos en tiempo real (AQICN, OpenWeather, AVAMET, DGT) cada
-INTERVALO_SEGUNDOS.  El thread muere automáticamente cuando el proceso
-Streamlit termina.
+de datos en tiempo real (AQICN, OpenWeather, AVAMET, DGT, VLCi, eventos)
+cada INTERVALO_SEGUNDOS.  El thread muere automáticamente cuando el
+proceso Streamlit termina.
 
 Reutiliza run_module() y STREAMING_MODULES de streaming_master.py
 para no duplicar lógica de reintentos ni importación dinámica.

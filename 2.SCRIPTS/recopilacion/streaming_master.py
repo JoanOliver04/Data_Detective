@@ -6,19 +6,20 @@ Fase 3.6: Script Maestro de Streaming (Orquestador)
 ==============================================================================
 
 Descripción:
-    Script maestro que orquesta la ejecución secuencial de los 8 scripts
+    Script maestro que orquesta la ejecución secuencial de los 9 scripts
     de captura de datos en tiempo real del proyecto Data Detective.
 
     Orden de ejecución:
     ───────────────────
-    1. streaming_aqicn.py            → Calidad del aire (AQICN/WAQI)
-    2. streaming_openweather.py      → Meteorología (OpenWeatherMap)
-    3. scraping_avamet.py            → Precipitaciones (AVAMET)
-    4. streaming_dgt.py              → Tráfico (DGT DATEX II v3.6)
-    5. streaming_gva.py              → Calidad del aire (GVA sensores)
-    6. eventos_visitvalencia.py      → Eventos agenda Visit Valencia
-    7. eventos_ayuntamiento.py       → Eventos agenda Ayuntamiento Valencia
-    8. eventos_valenciacf.py         → Partidos Valencia CF (iCalendar)
+    1. streaming_aqicn.py                 → Calidad del aire (AQICN/WAQI)
+    2. streaming_openweather.py           → Meteorología (OpenWeatherMap)
+    3. scraping_avamet.py                 → Precipitaciones (AVAMET)
+    4. streaming_dgt.py                   → Tráfico (DGT DATEX II v3.6)
+    5. streaming_vlci_contaminacion.py    → Contaminación municipal (VLCi)
+    6. streaming_vlci_trafico.py          → Tráfico espiras municipales (VLCi)
+    7. eventos_visitvalencia.py           → Eventos agenda Visit Valencia
+    8. eventos_ayuntamiento.py            → Eventos agenda Ayuntamiento Valencia
+    9. eventos_valenciacf.py              → Partidos Valencia CF (iCalendar)
     
     Cada script se ejecuta de forma independiente. Si uno falla,
     los siguientes se ejecutan igualmente. Se aplican reintentos
@@ -71,6 +72,10 @@ if str(SCRIPTS_DIR) not in sys.path:
 
 # Definición de los módulos a ejecutar (en orden)
 # Cada entrada: (nombre_modulo, descripcion, nombre_funcion_main)
+#
+# NOTE: streaming_gva.py removed — GVA agroambient API returns HTTP 404
+# on all stations since ~2025. Air quality RT data is now sourced from
+# AQICN (streaming_aqicn.py) which aggregates the same GVA stations.
 STREAMING_MODULES = [
     {
         "module": "streaming_aqicn",
@@ -93,9 +98,14 @@ STREAMING_MODULES = [
         "fase": "3.4",
     },
     {
-        "module": "streaming_gva",
-        "name": "Calidad del Aire (GVA)",
+        "module": "streaming_vlci_contaminacion",
+        "name": "Contaminación Municipal (VLCi Ayuntamiento)",
         "fase": "3.5",
+    },
+    {
+        "module": "streaming_vlci_trafico",
+        "name": "Tráfico Espiras Municipales (VLCi Ayuntamiento)",
+        "fase": "3.6",
     },
     {
         "module": "eventos_visitvalencia",
@@ -347,7 +357,7 @@ def main():
     """
     Función principal del orquestador de streaming.
     
-    Ejecuta secuencialmente los 8 módulos de captura, registra
+    Ejecuta secuencialmente los 9 módulos de captura, registra
     resultados y genera un resumen final con el estado de cada uno.
     """
     logger = setup_logging()

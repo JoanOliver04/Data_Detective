@@ -478,7 +478,7 @@ def cargar_trafico_realtime() -> Optional[dict]:
         punto_to = loc.get("punto_to", {})
         es_valencia = any(
             p.get("comunidad_autonoma") == "Comunitat Valenciana"
-            or p.get("provincia") == "Valencia"
+            or p.get("provincia") == "València/Valencia"
             for p in [punto_from, punto_to]
         )
         if es_valencia:
@@ -512,9 +512,16 @@ def cargar_trafico_realtime() -> Optional[dict]:
         "total_incidencias": len(incidencias_raw),
         "incidencias": valencia_incs,
     }
+    primer_match = valencia_incs[0] if valencia_incs else None
+    if primer_match:
+        primer_ca = primer_match.get("provincia", "?")
+        logger.debug(
+            f"[{nombre}] 1er match Valencia → provincia={primer_ca!r}"
+        )
     logger.info(
-        f"[{nombre}] {len(valencia_incs)} incidencias Valencia "
-        f"(de {len(incidencias_raw)} totales) desde {result['archivo']}"
+        f"[{nombre}] Revisadas {len(incidencias_raw)} incidencias totales; "
+        f"{len(valencia_incs)} coinciden con Valencia (Comunitat Valenciana) "
+        f"desde {result['archivo']}"
     )
     return result
 
