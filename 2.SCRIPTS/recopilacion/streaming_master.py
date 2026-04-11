@@ -6,15 +6,19 @@ Fase 3.6: Script Maestro de Streaming (Orquestador)
 ==============================================================================
 
 Descripción:
-    Script maestro que orquesta la ejecución secuencial de los 4 scripts
+    Script maestro que orquesta la ejecución secuencial de los 8 scripts
     de captura de datos en tiempo real del proyecto Data Detective.
-    
+
     Orden de ejecución:
     ───────────────────
-    1. streaming_aqicn.py       → Calidad del aire (AQICN/WAQI)
-    2. streaming_openweather.py → Meteorología (OpenWeatherMap)
-    3. scraping_avamet.py       → Precipitaciones (AVAMET)
-    4. streaming_dgt.py         → Tráfico (DGT DATEX II v3.6)
+    1. streaming_aqicn.py            → Calidad del aire (AQICN/WAQI)
+    2. streaming_openweather.py      → Meteorología (OpenWeatherMap)
+    3. scraping_avamet.py            → Precipitaciones (AVAMET)
+    4. streaming_dgt.py              → Tráfico (DGT DATEX II v3.6)
+    5. streaming_gva.py              → Calidad del aire (GVA sensores)
+    6. eventos_visitvalencia.py      → Eventos agenda Visit Valencia
+    7. eventos_ayuntamiento.py       → Eventos agenda Ayuntamiento Valencia
+    8. eventos_valenciacf.py         → Partidos Valencia CF (iCalendar)
     
     Cada script se ejecuta de forma independiente. Si uno falla,
     los siguientes se ejecutan igualmente. Se aplican reintentos
@@ -87,6 +91,26 @@ STREAMING_MODULES = [
         "module": "streaming_dgt",
         "name": "Tráfico (DGT DATEX II)",
         "fase": "3.4",
+    },
+    {
+        "module": "streaming_gva",
+        "name": "Calidad del Aire (GVA)",
+        "fase": "3.5",
+    },
+    {
+        "module": "eventos_visitvalencia",
+        "name": "Eventos Visit Valencia",
+        "fase": "4.1",
+    },
+    {
+        "module": "eventos_ayuntamiento",
+        "name": "Eventos Ayuntamiento Valencia",
+        "fase": "4.2",
+    },
+    {
+        "module": "eventos_valenciacf",
+        "name": "Partidos Valencia CF",
+        "fase": "4.3",
     },
 ]
 
@@ -323,7 +347,7 @@ def main():
     """
     Función principal del orquestador de streaming.
     
-    Ejecuta secuencialmente los 4 módulos de captura, registra
+    Ejecuta secuencialmente los 8 módulos de captura, registra
     resultados y genera un resumen final con el estado de cada uno.
     """
     logger = setup_logging()
