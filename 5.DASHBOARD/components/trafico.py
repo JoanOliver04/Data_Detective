@@ -182,134 +182,88 @@ def render_kpis_trafico(df: pd.DataFrame) -> None:
 
 def render_grafico_trafico(df: pd.DataFrame) -> None:
     """
-    Grafico temporal de incidencias con granularidad adaptativa:
-      - Rango > 5 anios -> barras con total anual
-      - Rango <= 5 anios -> linea con total mensual
-
-    Args:
-        df: DataFrame de trafico filtrado.
+    Grafico de incidencias mensuales del año más reciente con datos.
+    Se muestra siempre en vista mensual porque los datos DGT históricos
+    son escasos — solo el año en curso tiene volumen significativo.
     """
     if df is None or df.empty:
         st.info("Sin datos para generar el gráfico de tráfico.")
         return
 
-    if "anio" not in df.columns:
-        st.info("Columna de año no disponible para graficar.")
+    if "anio" not in df.columns or "mes" not in df.columns:
+        st.info("Columnas de año/mes no disponibles para graficar.")
         return
 
-    anio_min = int(df["anio"].min())
-    anio_max = int(df["anio"].max())
-    rango = anio_max - anio_min
+    # Usar el año con más registros (normalmente el año en curso)
+    anio_principal = int(df.groupby("anio").size().idxmax())
+    df_anio = df[df["anio"] == anio_principal].copy()
 
-    if rango > 2:
-        _grafico_trafico_anual(df, anio_min, anio_max)
-    else:
-        _grafico_trafico_mensual(df, anio_min, anio_max)
+    _grafico_trafico_mensual(df_anio, anio_principal)
 
 
-def _grafico_trafico_anual(
-    df: pd.DataFrame, anio_min: int, anio_max: int,
-) -> None:
-    """Barras de incidencias totales por anio."""
-    serie = (
-        df.groupby("anio", as_index=False)
+_MESES_ES = {
+    1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
+    7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic",
+}
+
+
+def _grafico_trafico_mensual(df: pd.DataFrame, anio: int) -> None:
+    """Barras de incidencias por mes para un año concreto."""
+    conteo = (
+        df.groupby("mes", as_index=False)
         .size()
         .rename(columns={"size": "incidencias"})
     )
-    serie = serie.sort_values("anio")
+
+    # Rango completo 1-12 para que los meses sin datos aparezcan como 0
+    todos_meses = pd.DataFrame({"mes": range(1, 13)})
+    serie = todos_meses.merge(conteo, on="mes", how="left")
+    serie["incidencias"] = serie["incidencias"].fillna(0).astype(int)
+    serie["mes_nombre"] = serie["mes"].map(_MESES_ES)
+
+    pico_idx = serie["incidencias"].idxmax()
+    colores = [
+        COLOR_TRAFICO if i == pico_idx else COLOR_TRAFICO_LIGHT
+        for i in serie.index
+    ]
 
     fig = go.Figure()
-
     fig.add_trace(go.Bar(
-        x=serie["anio"],
+        x=serie["mes_nombre"],
         y=serie["incidencias"],
-        name="Incidencias",
-        marker_color=COLOR_TRAFICO_LIGHT,
-        opacity=0.85,
+        marker_color=colores,
         hovertemplate=(
-            "<b>%{x}</b><br>"
-            "Incidencias: %{y:,}<br>"
-            "<extra></extra>"
+            f"<b>%{{x}} {anio}</b><br>"
+            "Incidencias: %{y:,}<extra></extra>"
         ),
     ))
 
     fig.update_layout(
         title=dict(
-            text=f"Incidencias de tráfico anuales ({anio_min}\u2013{anio_max})",
+            text=f"Incidencias de tráfico por mes \u2014 {anio}",
             font=dict(size=16),
         ),
-        xaxis_title="Año",
+        xaxis_title="Mes",
         yaxis_title="Incidencias",
         template=get_theme()["plotly_template"],
-        height=450,
+        height=420,
         margin=dict(l=60, r=30, t=60, b=50),
         hovermode="x unified",
-        bargap=0.15,
-    )
-
-    st.plotly_chart(fig, width="stretch")
-    logger.info(f"[Grafico] Trafico anual: {len(serie)} puntos")
-
-
-def _grafico_trafico_mensual(
-    df: pd.DataFrame, anio_min: int, anio_max: int,
-) -> None:
-    """Linea de incidencias mensuales."""
-    df = df.copy()
-
-    # Construir periodo YYYY-MM-01 (asegurar int para evitar floats)
-    df["periodo"] = pd.to_datetime(
-        df["anio"].astype(int).astype(str) + "-" +
-        df["mes"].astype(int).astype(str).str.zfill(2) + "-01"
-    )
-
-    serie = (
-        df.groupby("periodo", as_index=False)
-        .size()
-        .rename(columns={"size": "incidencias"})
-    )
-    serie = serie.sort_values("periodo")
-
-    fig = go.Figure()
-
-    fig.add_trace(go.Scatter(
-        x=serie["periodo"],
-        y=serie["incidencias"],
-        name="Incidencias mensuales",
-        mode="lines+markers",
-        line=dict(color=COLOR_TRAFICO, width=2.5),
-        marker=dict(size=5, color=COLOR_TRAFICO),
-        fill="tozeroy",
-        fillcolor="rgba(255,127,14,0.12)",
-        hovertemplate=(
-            "<b>%{x|%b %Y}</b><br>"
-            "Incidencias: %{y:,}<br>"
-            "<extra></extra>"
-        ),
-    ))
-
-    log_scale = st.checkbox(
-        "Escala logarítmica (útil si hay picos extremos en algún mes)",
-        value=False,
-        key="trafico_log_scale",
-    )
-
-    fig.update_layout(
-        title=dict(
-            text=f"Incidencias de tráfico mensuales ({anio_min}\u2013{anio_max})",
-            font=dict(size=16),
-        ),
-        xaxis_title="Fecha",
-        yaxis_title="Incidencias",
-        yaxis_type="log" if log_scale else "linear",
-        template=get_theme()["plotly_template"],
-        height=450,
-        margin=dict(l=60, r=30, t=60, b=50),
-        hovermode="x unified",
+        bargap=0.18,
     )
 
     st.plotly_chart(fig, use_container_width=True)
-    logger.info(f"[Grafico] Trafico mensual: {len(serie)} puntos")
+
+    total = int(serie["incidencias"].sum())
+    mes_pico = _MESES_ES[int(serie.loc[pico_idx, "mes"])]
+    pico = int(serie.loc[pico_idx, "incidencias"])
+    st.caption(
+        f"Total {anio}: {total:,} incidencias · "
+        f"Mes pico: {mes_pico} ({pico:,})"
+    )
+
+    meses_con_datos = int((serie["incidencias"] > 0).sum())
+    logger.info(f"[Grafico] Trafico mensual {anio}: {meses_con_datos} meses con datos")
 
 
 # ==============================================================================
