@@ -471,7 +471,7 @@ def main():
     _aplicar_estilos()
 
     if st_autorefresh:
-        st_autorefresh(interval=600000, limit=None, key="data_refresh")
+        st_autorefresh(interval=1800000, limit=None, key="data_refresh")
     else:
         st.info("Auto-refresh no disponible. Instala streamlit-autorefresh==1.0.1")
 

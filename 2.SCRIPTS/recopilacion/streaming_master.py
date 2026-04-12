@@ -117,11 +117,6 @@ STREAMING_MODULES = [
         "name": "Eventos Ayuntamiento Valencia",
         "fase": "4.2",
     },
-    {
-        "module": "eventos_valenciacf",
-        "name": "Partidos Valencia CF",
-        "fase": "4.3",
-    },
 ]
 
 # Configuración de reintentos

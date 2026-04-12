@@ -1060,6 +1060,36 @@ def _render_correlaciones(
 
 # --- c) PATRONES TEMPORALES ---
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def _preparar_datos_temporales(
+    df: pd.DataFrame,
+    variables: tuple,
+) -> pd.DataFrame:
+    """
+    Prepara el DataFrame para analisis temporal: parsea fechas y aniade
+    columnas dia_semana, hora y trimestre.  Cacheado 1h para evitar
+    repetir pd.to_datetime sobre datos que no cambian.
+
+    Args:
+        df: DataFrame de contaminacion filtrado.
+        variables: Tupla de variables a incluir (hashable para cache).
+
+    Returns:
+        DataFrame listo con columnas dia_semana, hora, trimestre.
+    """
+    df_work = df[df["variable"].isin(variables)].copy()
+    df_work["fecha_dt"] = pd.to_datetime(
+        df_work["fecha_utc"], utc=True, errors="coerce"
+    )
+    df_work = df_work.dropna(subset=["fecha_dt"])
+    if df_work.empty:
+        return df_work
+    df_work["dia_semana"] = df_work["fecha_dt"].dt.day_name()
+    df_work["hora"] = df_work["fecha_dt"].dt.hour
+    df_work["trimestre"] = df_work["fecha_dt"].dt.quarter
+    return df_work
+
+
 def _render_patrones_temporales(
     df: pd.DataFrame,
     variables: List[str],
@@ -1071,19 +1101,11 @@ def _render_patrones_temporales(
         df: DataFrame de contaminacion.
         variables: Variables disponibles.
     """
-    df_work = df[df["variable"].isin(variables)].copy()
-    df_work["fecha_dt"] = pd.to_datetime(
-        df_work["fecha_utc"], utc=True, errors="coerce"
-    )
-    df_work = df_work.dropna(subset=["fecha_dt"])
+    df_work = _preparar_datos_temporales(df, tuple(variables))
 
     if df_work.empty:
         st.info("Sin datos temporales para analizar.")
         return
-
-    df_work["dia_semana"] = df_work["fecha_dt"].dt.day_name()
-    df_work["hora"] = df_work["fecha_dt"].dt.hour
-    df_work["trimestre"] = df_work["fecha_dt"].dt.quarter
 
     # Variable principal para analisis (la de mas registros)
     var_counts = df_work["variable"].value_counts()
@@ -1189,6 +1211,53 @@ def _render_patrones_temporales(
 
 # --- d) RESUMEN AUTOMATICO ---
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def _calcular_patron_temporal(
+    df: pd.DataFrame,
+) -> tuple:
+    """
+    Calcula el peor dia de la semana y la hora pico de contaminacion.
+    Cacheado 1h para no repetir pd.to_datetime + groupby en cada rerun.
+
+    Args:
+        df: DataFrame de contaminacion de un periodo.
+
+    Returns:
+        Tupla (peor_dia_es, media_peor_dia, hora_pico, media_hora_pico).
+        Devuelve (None, 0, None, 0) si no hay datos suficientes.
+    """
+    dias_es = {
+        "Monday": "lunes", "Tuesday": "martes", "Wednesday": "miércoles",
+        "Thursday": "jueves", "Friday": "viernes",
+        "Saturday": "sábado", "Sunday": "domingo",
+    }
+    df_temp = df.copy()
+    df_temp["fecha_dt"] = pd.to_datetime(
+        df_temp["fecha_utc"], utc=True, errors="coerce"
+    )
+    df_temp = df_temp.dropna(subset=["fecha_dt"])
+    if df_temp.empty:
+        return None, 0.0, None, 0.0
+
+    df_temp["dia_semana"] = df_temp["fecha_dt"].dt.day_name()
+    df_temp["hora"] = df_temp["fecha_dt"].dt.hour
+
+    peor_dia_es, media_peor = None, 0.0
+    media_dia = df_temp.groupby("dia_semana")["valor"].mean()
+    if not media_dia.empty:
+        peor_dia = media_dia.idxmax()
+        peor_dia_es = dias_es.get(peor_dia, peor_dia)
+        media_peor = float(media_dia[peor_dia])
+
+    hora_pico, media_hora_pico = None, 0.0
+    if df_temp["hora"].nunique() > 1:
+        media_hora = df_temp.groupby("hora")["valor"].mean()
+        hora_pico = media_hora.idxmax()
+        media_hora_pico = float(media_hora[hora_pico])
+
+    return peor_dia_es, media_peor, hora_pico, media_hora_pico
+
+
 def _render_resumen_detective(
     df_a: pd.DataFrame,
     df_b: pd.DataFrame,
@@ -1251,39 +1320,19 @@ def _render_resumen_detective(
 
     # Patron temporal (dia y hora del periodo principal)
     if len(df_principal) >= _MIN_REGISTROS_DETECTIVE:
-        df_temp = df_principal.copy()
-        df_temp["fecha_dt"] = pd.to_datetime(
-            df_temp["fecha_utc"], utc=True, errors="coerce"
+        peor_dia_es, media_peor_dia, hora_pico, media_hora_pico = (
+            _calcular_patron_temporal(df_principal)
         )
-        df_temp = df_temp.dropna(subset=["fecha_dt"])
-
-        if not df_temp.empty:
-            df_temp["dia_semana"] = df_temp["fecha_dt"].dt.day_name()
-            df_temp["hora"] = df_temp["fecha_dt"].dt.hour
-
-            dias_es = {
-                "Monday": "lunes", "Tuesday": "martes", "Wednesday": "miércoles",
-                "Thursday": "jueves", "Friday": "viernes",
-                "Saturday": "sábado", "Sunday": "domingo",
-            }
-
-            media_dia = df_temp.groupby("dia_semana")["valor"].mean()
-            if not media_dia.empty:
-                peor_dia = media_dia.idxmax()
-                peor_dia_es = dias_es.get(peor_dia, peor_dia)
-                parrafos.append(
-                    f"El peor día de la semana es el **{peor_dia_es}** "
-                    f"(media: {media_dia[peor_dia]:.1f} µg/m³)."
-                )
-
-            horas_unicas = df_temp["hora"].nunique()
-            if horas_unicas > 1:
-                media_hora = df_temp.groupby("hora")["valor"].mean()
-                hora_pico = media_hora.idxmax()
-                parrafos.append(
-                    f"La hora pico de contaminación es las **{int(hora_pico)}:00** "
-                    f"({media_hora[hora_pico]:.1f} µg/m³)."
-                )
+        if peor_dia_es:
+            parrafos.append(
+                f"El peor día de la semana es el **{peor_dia_es}** "
+                f"(media: {media_peor_dia:.1f} µg/m³)."
+            )
+        if hora_pico is not None:
+            parrafos.append(
+                f"La hora pico de contaminación es las **{int(hora_pico)}:00** "
+                f"({media_hora_pico:.1f} µg/m³)."
+            )
 
     # Componer informe
     if not parrafos:

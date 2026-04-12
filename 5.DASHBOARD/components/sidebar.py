@@ -109,11 +109,24 @@ def _filtro_variable(df_contam):
     )
 
 
-def _filtro_barrios(df_contam):
+@st.cache_data(ttl=3600, show_spinner=False)
+def _opciones_barrios(df_contam: Optional[pd.DataFrame]) -> list:
+    """Calcula la lista de barrios disponibles. Cacheada 1 h."""
     if df_contam is not None and "barrio" in df_contam.columns:
-        disponibles = sorted(df_contam["barrio"].dropna().unique().tolist())
-    else:
-        disponibles = sorted(set(ESTACION_BARRIO_MAP.values()))
+        return sorted(df_contam["barrio"].dropna().unique().tolist())
+    return sorted(set(ESTACION_BARRIO_MAP.values()))
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _opciones_tipos_evento(df_eventos: Optional[pd.DataFrame]) -> list:
+    """Calcula la lista de tipos de evento disponibles. Cacheada 1 h."""
+    if df_eventos is not None and "tipo_evento" in df_eventos.columns:
+        return sorted(df_eventos["tipo_evento"].dropna().unique().tolist())
+    return []
+
+
+def _filtro_barrios(df_contam):
+    disponibles = _opciones_barrios(df_contam)
     return st.multiselect(
         "Distritos", options=disponibles, default=[],
         help="Si no seleccionas ninguno, se muestran todos.",
@@ -121,11 +134,7 @@ def _filtro_barrios(df_contam):
 
 
 def _filtro_tipos_evento(df_eventos):
-    if df_eventos is not None and "tipo_evento" in df_eventos.columns:
-        disponibles = sorted(
-            df_eventos["tipo_evento"].dropna().unique().tolist())
-    else:
-        disponibles = []
+    disponibles = _opciones_tipos_evento(df_eventos)
     if not disponibles:
         st.caption("Tipos de evento: sin datos disponibles")
         return []

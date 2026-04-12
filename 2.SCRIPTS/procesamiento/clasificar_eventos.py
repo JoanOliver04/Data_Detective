@@ -66,7 +66,6 @@ LOG_DIR = PROJECT_ROOT / "logs"
 INPUT_FILES = {
     "visitvalencia": EVENTOS_DIR / "visitvalencia.json",
     "ayuntamiento":  EVENTOS_DIR / "ayuntamiento.json",
-    "valenciacf":    EVENTOS_DIR / "valenciacf.json",
 }
 
 OUTPUT_FILE = EVENTOS_DIR / "eventos_clasificados.json"
@@ -288,10 +287,7 @@ def extract_events_from_source(
     Valencia CF usa "partidos", las demas usan "eventos".
     Anade campo "fuente" a cada evento.
     """
-    if fuente == "valenciacf":
-        raw_list = data.get("partidos", None)
-    else:
-        raw_list = data.get("eventos", None)
+    raw_list = data.get("eventos", None)
 
     if raw_list is None or not isinstance(raw_list, list):
         logger.warning(f"  '{fuente}': sin lista de eventos valida")
@@ -418,11 +414,7 @@ def _determine_categoria_y_subcategoria(
     """
     fuente = evento.get("fuente", "")
 
-    # --- Regla 1: Valencia CF siempre deportivo/partido_futbol ---
-    if fuente == "valenciacf":
-        return ("deportivo", "partido_futbol")
-
-    # --- Regla 2: Buscar por keywords ---
+    # --- Regla 1: Buscar por keywords ---
     texto = _get_texto_combinado(evento)
 
     for categoria, subcategoria, keywords in REGLAS_SUBCATEGORIA:
