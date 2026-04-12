@@ -11,7 +11,7 @@
 [![Folium](https://img.shields.io/badge/Folium-Geospatial_Maps-77B829?style=for-the-badge&logo=leaflet&logoColor=white)](https://python-visualization.github.io/folium/)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-**An end-to-end data engineering platform that ingests, processes, and visualizes 70+ years of environmental and mobility data from Valencia, Spain — combining historical archives with live sensor feeds to measure the real impact of mass events like Fallas, football matches, and concerts on air quality and urban traffic.**
+**An end-to-end data engineering platform that ingests, processes, and visualizes 70+ years of environmental and mobility data from Valencia, Spain — combining historical archives with live sensor feeds to measure the real impact of mass events like Fallas, concerts, and citywide festivities on air quality and urban traffic.**
 
 [Features](#-key-features) · [Architecture](#-architecture) · [Data Sources](#-data-sources) · [Getting Started](#-getting-started) · [Tech Stack](#-tech-stack) · [Testing](#-testing) · [Screenshots](#-screenshots)
 
@@ -23,11 +23,11 @@
 
 **Data Detective Valencia** is a full-cycle Big Data project developed as an academic portfolio piece for a graduate-level data engineering course. It addresses a concrete urban analytics question: _how do mass events affect air quality and traffic congestion in Valencia?_
 
-The platform integrates data from **8 official sources** — including the Generalitat Valenciana, AEMET, the European Environment Agency, and real-time APIs — spanning meteorological records from **1956** and air quality measurements from **1963** through to live streaming data captured today. All data flows through a modular ETL pipeline before being served through an interactive Streamlit dashboard that covers all **19 official districts** of Valencia.
+The platform integrates data from **9 official sources** — including the Generalitat Valenciana, AEMET, the European Environment Agency, the Valencia City Council Open-Data platform (VLCi), and real-time APIs — spanning meteorological records from **1956** and air quality measurements from **1963** through to live streaming data captured today. All data flows through a modular ETL pipeline before being served through an interactive Streamlit dashboard that covers all **19 official districts** of Valencia.
 
-The dashboard runs a **background streaming daemon** that continuously captures live data from four sources (AQICN, OpenWeather, AVAMET, DGT) while serving the UI — no separate process needed. Real-time sensor readings are fused into an **Urban Quality Index** (0–10) that combines pollution, weather, and traffic into a single score per district.
+The dashboard runs a **background streaming daemon** that continuously captures live data from **8 ingestion modules** (AQICN, OpenWeatherMap, AVAMET, DGT DATEX II, two VLCi municipal feeds for pollution and traffic loops, and two event calendars) while serving the UI — no separate process needed. A manual **Update Data** button in the sidebar lets the user trigger an on-demand refresh cycle, and real-time sensor readings are fused into an **Urban Quality Index** (0–10) that combines pollution, weather, and traffic into a single score per district.
 
-The analytical core is a **quasi-experimental baseline comparison model** that quantifies how events like Fallas (a 19-day UNESCO-heritage festival) or a Valencia CF match deviate NO₂, PM2.5, and traffic incident counts from a carefully constructed baseline of comparable non-event days — controlling for season, day of week, and precipitation. A **Pattern Detective** mode extends this with anomaly detection across arbitrary date ranges.
+The analytical core is a **quasi-experimental baseline comparison model** that quantifies how events like Fallas (a 19-day UNESCO-heritage festival), open-air concerts, or major civic festivities deviate NO₂, PM2.5, and traffic incident counts from a carefully constructed baseline of comparable non-event days — controlling for season, day of week, and precipitation. A **Pattern Detective** mode extends this with anomaly detection across arbitrary date ranges.
 
 The result is a production-grade, self-contained analytics environment: from raw HTTP responses to polished, exportable visualizations — entirely on a single Windows machine, no cloud infrastructure required.
 
@@ -43,10 +43,11 @@ The result is a production-grade, self-contained analytics environment: from raw
 - 🚨 **Real-Time Contamination Alerts** — Dual alert system: historical alerts scanning the most recent 30 days against WHO thresholds, plus live real-time alerts triggered when any neighborhood currently exceeds WHO limits
 - 📈 **Historical Comparator with Pattern Detective** — Triple-mode comparison tool: _Event vs. Baseline_ (bar chart), _Period vs. Period_ (radar chart), and _Pattern Detective_ mode with anomaly detection to uncover unusual pollution behavior
 - 🔮 **Dual Forecast System** — 72-hour weather-based risk forecast (atmospheric washout heuristic) plus a statistical pollution forecast for tomorrow based on historical trends, interannual tendency correction, and real-time data weighting
-- 🎆 **Mass Event Impact Analysis** — Gantt-style timeline and grouped bar charts quantifying NO₂, PM10, PM2.5, and traffic deviation (%) during Fallas, Valencia CF matches, concerts, and other classified events
-- 🔄 **Background Streaming & Auto-Refresh** — Daemon thread captures live data from all four sources (AQICN, OpenWeather, AVAMET, DGT) in the background while the dashboard runs; `streamlit-autorefresh` polls for updates every 5 minutes; sidebar shows data freshness indicators per source
+- 🎆 **Mass Event Impact Analysis** — Gantt-style timeline and grouped bar charts quantifying NO₂, PM10, PM2.5, and traffic deviation (%) during Fallas, civic celebrations, open-air concerts, and other classified events
+- 🔄 **Background Streaming & On-Demand Refresh** — Daemon thread captures live data from **8 ingestion modules** (AQICN, OpenWeatherMap, AVAMET, DGT DATEX II, two VLCi municipal feeds, and two event calendars) in the background while the dashboard runs; a sidebar **Update Data** button lets the user trigger a manual cycle on demand (with thread-safe locking and automatic cache invalidation); `streamlit-autorefresh` polls for UI updates every 30 minutes; sidebar shows data freshness indicators per source
 - 🌗 **Dark / Light Theme Toggle** — Full theme system with coherent color tokens across Plotly charts, Folium maps, and inline HTML; user preference persisted in session state
 - 📥 **Multi-Format Data Export** — Every tab includes a collapsible export panel offering CSV (`;` separator, UTF-8 BOM for Excel), JSON (with metadata envelope), XML (auto-sanitized element names), and PDF (formatted table with header and metadata) — for any filtered slice of data
+- ⚡ **Performance Engineering** — Multi-tier caching strategy (`@st.cache_data` with TTLs from 5 min for live data to 1 h for static datasets), `@st.fragment`-scoped reruns to prevent full-page re-renders, session-state memoization of filter combinations, columnar Parquet storage for the 121K-row pollution dataset, and pre-rendered HTML maps and charts for sub-second tab switching
 - 🧪 **Integration Test Suite** — Pytest-based tests validating core dashboard components (quality index, data loading, configuration) without requiring real data or network access
 
 ---
@@ -62,12 +63,20 @@ DATA_DETECTIVE/
 │   └── eventos/                       .ics feeds + classified event records
 │
 ├── 2.SCRIPTS/
-│   ├── recopilacion/                  11 scripts: API clients, web scrapers, .ics parsers
-│   │   ├── streaming_master.py        Orchestrates all 4 live sources sequentially
-│   │   ├── streaming_aqicn.py         Real-time air quality (AQICN/WAQI)
-│   │   ├── streaming_openweather.py   Weather + 72h forecast (OpenWeatherMap)
-│   │   ├── scraping_avamet.py         Precipitation scraping (AVAMET)
-│   │   └── streaming_dgt.py           Traffic feed (DGT DATEX II v3.6)
+│   ├── recopilacion/                  16 scripts: API clients, web scrapers, .ics parsers
+│   │   ├── streaming_master.py            Orchestrates all 8 live ingestion modules sequentially
+│   │   ├── streaming_aqicn.py             Real-time air quality (AQICN / WAQI)
+│   │   ├── streaming_openweather.py       Weather + 72h forecast (OpenWeatherMap)
+│   │   ├── scraping_avamet.py             Precipitation scraping (AVAMET)
+│   │   ├── streaming_dgt.py               National traffic feed (DGT DATEX II v3.6)
+│   │   ├── streaming_vlci_contaminacion.py  Municipal air quality (VLCi — Valencia City Council)
+│   │   ├── streaming_vlci_trafico.py        Municipal traffic loops / espiras (VLCi)
+│   │   ├── eventos_visitvalencia.py       Tourism event calendar scraping
+│   │   ├── eventos_ayuntamiento.py        City Council event calendar scraping
+│   │   ├── descargar_aemet_historico.py   AEMET historical batch downloader
+│   │   ├── descargar_gva_historico.py     GVA historical pollutant downloader
+│   │   ├── descargar_dgt_historico.py     DGT historical traffic downloader
+│   │   └── procesar_eea_historico.py      EEA bulk dataset processor
 │   └── procesamiento/                 ETL + visualization generation
 │       ├── pipeline_etl.py            Orchestrates phases 5.1 → 5.5 in order
 │       ├── normalizar_contaminacion.py  5.1 — WHO/EU normalization + quality flags
@@ -92,13 +101,13 @@ DATA_DETECTIVE/
 │   └── pronostico/                72h interactive forecast chart
 │
 ├── 5.DASHBOARD/                   ← Streamlit Application
-│   ├── app.py                     Main orchestrator — 6 tabs, global filters, CSS
+│   ├── app.py                     Main orchestrator — 7 tabs, global filters, CSS, fragment-scoped reruns
 │   ├── config.py                  Centralized paths, WHO/EU thresholds, 19 districts
 │   ├── data_loader.py             Cached loading layer (@st.cache_data, Parquet/CSV)
 │   ├── streaming_background.py    Daemon thread for live data capture while dashboard runs
 │   ├── theme.py                   Dark/light theme system with Plotly + Folium tokens
 │   ├── components/
-│   │   ├── sidebar.py             Year range, variable, district filters + freshness indicators
+│   │   ├── sidebar.py             Year range, variable, district filters + freshness indicators + manual refresh button
 │   │   ├── kpis.py                Air quality KPIs + composite quality index
 │   │   ├── alertas.py             WHO threshold alerts (historical + real-time)
 │   │   ├── ranking_barrios.py     19-district ranking with 3-axis urban fusion score
@@ -136,14 +145,14 @@ DATA_DETECTIVE/
 ### Data Flow
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        DATA SOURCES                             │
-│  GVA · AEMET · EEA · AQICN · OpenWeatherMap · AVAMET · DGT     │
-│  REST APIs · Web scraping · DATEX II XML · .ics calendars       │
-└──────────────┬─────────────────────────────┬────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                            DATA SOURCES                              │
+│  GVA · AEMET · EEA · AQICN · OpenWeatherMap · AVAMET · DGT · VLCi    │
+│  REST APIs · Web scraping · DATEX II XML · Open-Data · .ics calendars│
+└──────────────┬─────────────────────────────┬─────────────────────────┘
                │  Historical + batch capture  │  Live streaming
-               ▼                              │  (background daemon)
-  1.DATOS_EN_CRUDO  (Landing Zone)            │
+               ▼                              │  (background daemon
+  1.DATOS_EN_CRUDO  (Landing Zone)            │   + manual refresh button)
          JSON · CSV · XML · .ics              │
                │                              │
                │  pipeline_etl.py             │
@@ -158,49 +167,54 @@ DATA_DETECTIVE/
  └────────────────┬────────────────────┘      │
                   │                            │
                   ▼                            │
- 3.DATOS_LIMPIOS  +  4.VISUALIZACIONES        │
+ 3.DATOS_LIMPIOS  +  4.VISUALIZACIONES         │
    Parquet · CSV · Folium · Plotly HTML        │
                   │                            │
-                  │  streamlit run app.py       │
+                  │  streamlit run app.py      │
                   ▼                            ▼
-         ┌─────────────────────────────────────┐
-         │        STREAMLIT DASHBOARD          │
-         │  Dark/Light theme toggle            │
-         │  Sidebar: filters + freshness       │
-         │  Real-time data panel (collapsible) │
-         │  Background streaming daemon        │
-         │                                     │
-         │  Tab 1 — Air Quality                │
-         │    KPIs · Sensor map · RT layers    │
-         │    District heatmap · Walking routes│
-         │    Ranking (19 districts)           │
-         │    Alerts (historical + real-time)  │
-         │  Tab 2 — Precipitation              │
-         │  Tab 3 — Traffic                    │
-         │  Tab 4 — Event Impact               │
-         │  Tab 5 — Historical Comparator      │
-         │    + Pattern Detective (anomalies)  │
-         │  Tab 6 — Forecast                   │
+         ┌──────────────────────────────────────┐
+         │         STREAMLIT DASHBOARD          │
+         │  Dark/Light theme toggle             │
+         │  Sidebar: filters + freshness        │
+         │             + Update Data button     │
+         │  Real-time data panel (collapsible)  │
+         │  Background streaming daemon         │
+         │  (8 ingestion modules, sequential)   │
+         │                                      │
+         │  Tab 1 — Air Quality                 │
+         │    KPIs · Sensor map · RT layers     │
+         │    District heatmap                  │
+         │    Ranking (19 districts)            │
+         │    Alerts (historical + real-time)   │
+         │  Tab 2 — Precipitation               │
+         │  Tab 3 — Traffic                     │
+         │  Tab 4 — Event Impact                │
+         │  Tab 5 — Historical Comparator       │
+         │    + Pattern Detective (anomalies)   │
+         │  Tab 6 — Forecast                    │
          │    72h weather + statistical next-day│
-         │                                     │
-         │  Each tab → Export CSV/JSON/XML/PDF │
-         └─────────────────────────────────────┘
+         │  Tab 7 — Clean Air Walking Routes    │
+         │    5 routes with live AQI overlay    │
+         │                                      │
+         │  Each tab → Export CSV/JSON/XML/PDF  │
+         └──────────────────────────────────────┘
 ```
 
 ---
 
 ## 📡 Data Sources
 
-| Source                                 | Type              | Variables                                        | Period         |
-| -------------------------------------- | ----------------- | ------------------------------------------------ | -------------- |
-| **GVA** — Generalitat Valenciana       | REST API          | NO₂, O₃, PM10, PM2.5, SO₂, CO                    | 1963 – present |
-| **AEMET** OpenData                     | REST API          | Temperature, humidity, precipitation             | 1956 – present |
-| **European Environment Agency**        | Bulk download     | EU-wide air quality records                      | Multi-decade   |
-| **AQICN / WAQI**                       | REST API          | Real-time AQI (6 stations)                       | Live           |
-| **OpenWeatherMap**                     | REST API          | Current weather + 72h forecast                   | Live           |
-| **AVAMET**                             | Web scraping      | Precipitation, temperature (Valencia network)    | Live           |
-| **DGT** — Dirección General de Tráfico | DATEX II v3.6 XML | Traffic intensity, speed, incidents              | Live           |
-| **Visit Valencia / City Council**      | .ics + scraping   | Mass events calendar (Fallas, concerts, matches) | Current season |
+| Source                                 | Type              | Variables                                            | Period         |
+| -------------------------------------- | ----------------- | ---------------------------------------------------- | -------------- |
+| **GVA** — Generalitat Valenciana       | REST API          | NO₂, O₃, PM10, PM2.5, SO₂, CO                        | 1963 – present |
+| **AEMET** OpenData                     | REST API          | Temperature, humidity, precipitation                 | 1956 – present |
+| **European Environment Agency**        | Bulk download     | EU-wide air quality records                          | Multi-decade   |
+| **AQICN / WAQI**                       | REST API          | Real-time AQI (6 stations)                           | Live           |
+| **OpenWeatherMap**                     | REST API          | Current weather + 72h forecast                       | Live           |
+| **AVAMET**                             | Web scraping      | Precipitation, temperature (Valencia network)        | Live           |
+| **DGT** — Dirección General de Tráfico | DATEX II v3.6 XML | National traffic intensity, speed, incidents         | Live           |
+| **VLCi** — Valencia City Council       | Municipal Open-Data API | Municipal air quality + traffic loops (espiras) | Live           |
+| **Visit Valencia / City Council**      | .ics + scraping   | Mass events calendar (Fallas, concerts, festivities) | Current season |
 
 **Monitoring stations (GVA network, Valencia city):**
 
@@ -274,7 +288,7 @@ streamlit run 5.DASHBOARD/app.py
 
 Open your browser at `http://localhost:8501`.
 
-> **Note:** The dashboard automatically starts a background streaming thread that captures live data from AQICN, OpenWeather, AVAMET, and DGT while the UI is running. Step 1 is only needed to seed initial data before the first launch.
+> **Note:** The dashboard automatically starts a background streaming thread that captures live data from all 8 ingestion modules (AQICN, OpenWeatherMap, AVAMET, DGT, VLCi pollution, VLCi traffic loops, and two event calendars) while the UI is running. You can also trigger an on-demand refresh from the **🔄 Update Data** button in the sidebar. Step 1 is only needed to seed initial data before the first launch.
 
 ### Automating Data Collection (Windows Task Scheduler)
 
@@ -306,7 +320,7 @@ To schedule live data capture every 10 minutes without keeping a terminal open:
 | **Paths**            | pathlib               | Portable cross-version path handling         |
 | **Logging**          | logging (stdlib)      | Structured logs with rotation, no `print()`  |
 | **Streaming**        | threading (stdlib)    | Background daemon for live data capture      |
-| **Auto-refresh**     | streamlit-autorefresh | Dashboard self-refresh every 5 minutes       |
+| **Auto-refresh**     | streamlit-autorefresh | Dashboard self-refresh every 30 minutes      |
 | **Testing**          | pytest                | Integration test suite for dashboard         |
 | **Version control**  | Git                   | Conventional commits spec                    |
 
@@ -372,7 +386,7 @@ The analytical core of the project is a **quasi-experimental baseline comparison
      (temperature, precipitation) as descriptive controls
 ```
 
-This produces a dataset (`impacto_eventos.csv`) with one row per event × pollutant combination, enabling grouped analysis — e.g., whether prolonged high-impact events like Fallas generate sustained NO₂ increases versus short spikes from a single football match.
+This produces a dataset (`impacto_eventos.csv`) with one row per event × pollutant combination, enabling grouped analysis — e.g., whether prolonged high-impact events like Fallas generate sustained NO₂ increases, or whether short open-air concerts produce localized traffic-incident spikes that fade within hours.
 
 ---
 
