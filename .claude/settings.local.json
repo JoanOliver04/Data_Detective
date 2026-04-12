@@ -16,7 +16,8 @@
       "Bash(streamlit run:*)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8501/)",
       "Bash(curl -s http://localhost:8501/)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(./env_data_detective/Scripts/python.exe 2.SCRIPTS/procesamiento/generar_pronostico.py)"
     ]
   }
 }

@@ -14,6 +14,7 @@ import pandas as pd
 import streamlit as st
 from config import VARIABLES_PRINCIPALES, ESTACION_BARRIO_MAP
 from components.realtime import _calcular_frescura
+from streaming_background import _ejecutar_ciclo, _lock, estado_streaming
 from theme import THEME_TOGGLE_KEY
 
 FiltrosGlobales = Dict[str, Any]
@@ -61,6 +62,9 @@ def render_sidebar(
         filtros["variable"] = _filtro_variable(df_contam)
         filtros["barrios"] = _filtro_barrios(df_contam)
         filtros["tipos_evento"] = _filtro_tipos_evento(df_eventos)
+
+        st.divider()
+        _render_boton_actualizar()
 
         st.divider()
         _render_info_datos(df_contam, df_meteo, df_trafico, df_eventos, datos_rt)
@@ -204,6 +208,53 @@ def _linea_rt(nombre: str, timestamp_str: Optional[str]) -> None:
         f'<span style="color:#555;">({frescura})</span></small>',
         unsafe_allow_html=True,
     )
+
+
+def _render_boton_actualizar() -> None:
+    """
+    Renderiza el botón de actualización manual de datos.
+
+    Ejecuta el ciclo completo de streaming de forma síncrona, mostrando
+    un spinner. Limpia la caché de Streamlit al terminar para forzar
+    una recarga de los datos frescos.
+    """
+    en_curso = bool(estado_streaming.get("en_ejecucion"))
+
+    if st.button(
+        "🔄 Actualizar datos",
+        use_container_width=True,
+        disabled=en_curso,
+        help="Ejecuta los módulos de streaming para capturar datos frescos.",
+    ):
+        if not _lock.acquire(blocking=False):
+            st.warning("Ya hay una actualización en curso. Espera unos segundos.")
+            return
+
+        try:
+            estado_streaming["en_ejecucion"] = True
+            with st.spinner("Actualizando datos... (puede tardar ~1 min)"):
+                _ejecutar_ciclo()
+
+            st.cache_data.clear()
+
+            resultados = estado_streaming.get("resultado_ultimo_ciclo") or []
+            exitosos = sum(1 for r in resultados if r.get("estado") == "exitoso")
+            total = len(resultados)
+            hora = datetime.now().strftime("%H:%M:%S")
+            st.session_state["_actualizacion_msg"] = (
+                f"✅ {exitosos}/{total} módulos actualizados ({hora})"
+            )
+        finally:
+            estado_streaming["en_ejecucion"] = False
+            try:
+                _lock.release()
+            except RuntimeError:
+                pass
+        st.rerun()
+
+    msg = st.session_state.pop("_actualizacion_msg", None)
+    if msg:
+        st.success(msg)
 
 
 def _render_info_datos(
