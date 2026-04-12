@@ -466,6 +466,7 @@ def generate_visualization(
             name="Temperatura (\u00b0C)",
             legendgroup="meteo",
             legendgrouptitle_text="Meteorolog\u00eda",
+            legend="legend",
             line=dict(color=COLOR_TEMP, width=2.5),
             marker=dict(size=5),
             hovertemplate=(
@@ -486,6 +487,7 @@ def generate_visualization(
             mode="lines",
             name="Humedad (%)",
             legendgroup="meteo",
+            legend="legend",
             line=dict(color=COLOR_HUMIDITY, width=1.5, dash="dot"),
             hovertemplate=(
                 "<b>%{x|%d/%m %H:%M}</b><br>"
@@ -524,6 +526,7 @@ def generate_visualization(
             name="Lluvia (mm/3h)",
             legendgroup="precip",
             legendgrouptitle_text="Precipitaci\u00f3n",
+            legend="legend2",
             marker_color=COLOR_RAIN,
             opacity=0.7,
             hovertemplate=(
@@ -544,6 +547,7 @@ def generate_visualization(
             mode="lines+markers",
             name="Prob. lluvia (%)",
             legendgroup="precip",
+            legend="legend2",
             line=dict(color=COLOR_POP, width=2),
             marker=dict(size=4),
             hovertemplate=(
@@ -625,18 +629,28 @@ def generate_visualization(
         template="plotly_white",
         font=dict(family="Arial, sans-serif", size=12),
         height=700,
-        margin=dict(l=70, r=70, t=120, b=160),
+        margin=dict(l=70, r=70, t=120, b=140),
         legend=dict(
             orientation="h",
             yanchor="top",
-            y=-0.15,
-            xanchor="center",
-            x=0.5,
+            y=-0.14,
+            xanchor="left",
+            x=0.02,
             font=dict(size=11),
             bgcolor="rgba(0,0,0,0)",
-            tracegroupgap=30,
-            traceorder="grouped",
-            itemwidth=40,
+            title_text="Meteorolog\u00eda",
+            title_font=dict(size=11, color="#666"),
+        ),
+        legend2=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.14,
+            xanchor="right",
+            x=0.98,
+            font=dict(size=11),
+            bgcolor="rgba(0,0,0,0)",
+            title_text="Precipitaci\u00f3n",
+            title_font=dict(size=11, color="#666"),
         ),
         hovermode="x unified",
     )
