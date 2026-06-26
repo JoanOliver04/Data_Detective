@@ -1,0 +1,23 @@
+# ==============================================================================
+# DATA DETECTIVE - VALENCIA  ·  Configuracion de Streamlit
+# ==============================================================================
+# Endurecimiento y coherencia visual del dashboard. Estos ajustes aplican
+# automaticamente al ejecutar `streamlit run 5.DASHBOARD/app.py`.
+
+[browser]
+# No enviar telemetria de uso a Streamlit (privacidad).
+gatherUsageStats = false
+
+[server]
+# Proteccion XSRF activa (defensa CSRF en formularios/botones).
+enableXsrfProtection = true
+# Limite de subida de archivos en MB. El dashboard no recibe uploads de
+# usuario, asi que un limite bajo reduce la superficie de ataque.
+maxUploadSize = 20
+
+[theme]
+# Tema oscuro por defecto, coherente con el CSS del dashboard (plotly_dark,
+# CartoDB dark_matter en Folium). El toggle claro/oscuro de la app sigue
+# funcionando por encima de este valor base.
+base = "dark"
+primaryColor = "#17becf"

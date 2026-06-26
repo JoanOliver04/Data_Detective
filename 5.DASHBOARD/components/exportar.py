@@ -32,6 +32,7 @@ import streamlit as st
 
 from utils.exportador import (
     dataframe_a_csv,
+    dataframe_a_excel,
     dataframe_a_json,
     dataframe_a_xml,
     dataframe_a_pdf,
@@ -257,7 +258,7 @@ def render_panel_exportacion(
         if metadata_extra:
             metadata_json.update(metadata_extra)
 
-        col_csv, col_json, col_xml, col_pdf = st.columns(4)
+        col_csv, col_xlsx, col_json, col_xml, col_pdf = st.columns(5)
 
         with col_csv:
             csv_bytes = dataframe_a_csv(df)
@@ -270,7 +271,28 @@ def render_panel_exportacion(
                 use_container_width=True,
                 help=(
                     "Descarga en CSV con separador ';' (compatible con "
-                    "Excel europeo). Codificación UTF-8 con BOM."
+                    "Excel europeo). Codificación UTF-8 con BOM. "
+                    "Protegido frente a inyección de fórmulas."
+                ),
+            )
+
+        with col_xlsx:
+            xlsx_bytes = dataframe_a_excel(
+                df, nombre_hoja=info.get("label", nombre_dataset)
+            )
+            st.download_button(
+                label="Excel",
+                data=xlsx_bytes,
+                file_name=generar_nombre_archivo(nombre_dataset, "xlsx"),
+                mime=(
+                    "application/vnd.openxmlformats-officedocument."
+                    "spreadsheetml.sheet"
+                ),
+                icon=":material/grid_on:",
+                use_container_width=True,
+                help=(
+                    "Descarga en Excel nativo (.xlsx). Preserva tipos y no "
+                    "depende del separador regional."
                 ),
             )
 

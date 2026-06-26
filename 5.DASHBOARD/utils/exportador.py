@@ -35,6 +35,50 @@ logger = logging.getLogger("Exportador")
 # BOM UTF-8 para que Excel reconozca tildes/acentos automaticamente
 _UTF8_BOM = b"\xef\xbb\xbf"
 
+# Caracteres que disparan la evaluacion de formulas en Excel / LibreOffice /
+# Google Sheets. Una celda de texto que empiece por uno de estos puede
+# ejecutar codigo al abrir el archivo (CSV / formula injection, CWE-1236).
+_CHARS_INYECCION = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _sanitizar_celda_inyeccion(valor):
+    """
+    Neutraliza la inyeccion de formulas en celdas de texto.
+
+    Si el valor es una cadena que empieza por un caracter de formula
+    (= + - @ TAB CR), se le antepone un apostrofo para que la hoja de
+    calculo lo trate como texto literal y no como formula ejecutable.
+
+    Solo afecta a cadenas; los numeros y fechas se devuelven intactos,
+    de modo que las columnas numericas no se ven alteradas.
+
+    Args:
+        valor: Valor de una celda (cualquier tipo).
+
+    Returns:
+        El valor saneado (str con apostrofo) o el valor original.
+    """
+    if isinstance(valor, str) and valor and valor[0] in _CHARS_INYECCION:
+        return "'" + valor
+    return valor
+
+
+def _df_saneado(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Devuelve una copia del DataFrame con las columnas de texto saneadas
+    frente a inyeccion de formulas. Las columnas no-objeto (numericas,
+    fechas) se dejan sin tocar para no degradar los datos.
+    """
+    df_safe = df.copy()
+    for col in df_safe.columns:
+        # Cubrir tanto object como el nuevo dtype string de pandas >= 2.1.
+        # Las columnas numericas/fecha quedan fuera y no se tocan.
+        if df_safe[col].dtype == object or pd.api.types.is_string_dtype(
+            df_safe[col].dtype
+        ):
+            df_safe[col] = df_safe[col].map(_sanitizar_celda_inyeccion)
+    return df_safe
+
 
 # ==============================================================================
 # CSV
@@ -44,6 +88,7 @@ def dataframe_a_csv(
     df: pd.DataFrame,
     separador: str = ";",
     incluir_indice: bool = False,
+    proteger_inyeccion: bool = True,
 ) -> bytes:
     """
     Convierte un DataFrame a bytes CSV con BOM UTF-8.
@@ -55,12 +100,16 @@ def dataframe_a_csv(
         df: DataFrame a exportar.
         separador: Caracter separador de columnas (default ';').
         incluir_indice: Si True, incluye el indice del DataFrame.
+        proteger_inyeccion: Si True (default), sanea las celdas de texto
+            que empiezan por caracteres de formula para evitar inyeccion
+            al abrir el CSV en Excel/Sheets.
 
     Returns:
         bytes listos para st.download_button(data=...).
     """
+    df_out = _df_saneado(df) if proteger_inyeccion else df
     buffer = io.StringIO()
-    df.to_csv(
+    df_out.to_csv(
         buffer,
         sep=separador,
         index=incluir_indice,
@@ -69,6 +118,47 @@ def dataframe_a_csv(
     csv_str = buffer.getvalue()
     logger.debug(f"CSV generado: {len(df)} filas, {len(df.columns)} columnas")
     return _UTF8_BOM + csv_str.encode("utf-8")
+
+
+# ==============================================================================
+# EXCEL (XLSX)
+# ==============================================================================
+
+def dataframe_a_excel(
+    df: pd.DataFrame,
+    nombre_hoja: str = "Datos",
+    proteger_inyeccion: bool = True,
+) -> bytes:
+    """
+    Convierte un DataFrame a bytes XLSX (Excel nativo) con openpyxl.
+
+    A diferencia del CSV, el XLSX preserva tipos (numeros, fechas) y no
+    depende del separador regional, por lo que evita los problemas de
+    apertura en Excel con configuraciones locales distintas.
+
+    Args:
+        df: DataFrame a exportar.
+        nombre_hoja: Nombre de la pestana de la hoja de calculo.
+        proteger_inyeccion: Si True (default), sanea las celdas de texto
+            frente a inyeccion de formulas.
+
+    Returns:
+        bytes listos para st.download_button(data=...).
+    """
+    # _df_saneado ya devuelve copia; si no se sanea, copiamos para no mutar
+    # el DataFrame del llamante al normalizar timezones.
+    df_out = _df_saneado(df) if proteger_inyeccion else df.copy()
+    # Excel no admite datetimes con timezone; se normalizan a naive.
+    for col in df_out.columns:
+        if isinstance(df_out[col].dtype, pd.DatetimeTZDtype):
+            df_out[col] = df_out[col].dt.tz_localize(None)
+    # Nombre de hoja: Excel limita a 31 chars y prohibe []:*?/\\
+    hoja = "".join(c for c in nombre_hoja if c not in r"[]:*?/\\")[:31] or "Datos"
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        df_out.to_excel(writer, sheet_name=hoja, index=False)
+    logger.debug(f"XLSX generado: {len(df)} filas, {len(df.columns)} columnas")
+    return buffer.getvalue()
 
 
 # ==============================================================================

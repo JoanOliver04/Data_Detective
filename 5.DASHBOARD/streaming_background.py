@@ -49,6 +49,11 @@ estado_streaming = {
 # Lock para evitar ciclos concurrentes (por si Streamlit recarga rápido)
 _lock = threading.Lock()
 
+# Lock para arrancar el thread de forma atomica. Sin el, dos sesiones de
+# Streamlit que llamen a iniciar_streaming_background() a la vez podrian
+# pasar ambas la comprobacion de threading.enumerate() y lanzar dos hilos.
+_lock_arranque = threading.Lock()
+
 
 def _ejecutar_ciclo() -> None:
     """Ejecuta un ciclo completo de streaming (los 4 módulos secuenciales)."""
@@ -136,15 +141,17 @@ def iniciar_streaming_background() -> None:
     Idempotente: llamar varias veces es seguro.  El thread es daemon,
     así que muere automáticamente cuando Streamlit cierra el proceso.
     """
-    # Comprobar si ya hay un thread vivo con nuestro nombre
-    for t in threading.enumerate():
-        if t.name == "DataDetective_StreamingBG" and t.is_alive():
-            return  # Ya corriendo
+    # La comprobacion + arranque debe ser atomica para evitar lanzar dos
+    # hilos si dos sesiones entran a la vez.
+    with _lock_arranque:
+        for t in threading.enumerate():
+            if t.name == "DataDetective_StreamingBG" and t.is_alive():
+                return  # Ya corriendo
 
-    thread = threading.Thread(
-        target=_loop_streaming,
-        name="DataDetective_StreamingBG",
-        daemon=True,
-    )
-    thread.start()
-    logger.info("[StreamingBG] Thread daemon lanzado: %s", thread.name)
+        thread = threading.Thread(
+            target=_loop_streaming,
+            name="DataDetective_StreamingBG",
+            daemon=True,
+        )
+        thread.start()
+        logger.info("[StreamingBG] Thread daemon lanzado: %s", thread.name)

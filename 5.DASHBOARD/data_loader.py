@@ -103,6 +103,7 @@ def cargar_contaminacion():
         return None
     if not _validar_columnas(df, ESQUEMA_CONTAMINACION, nombre):
         return None
+    df = _safe_to_datetime(df, "fecha_utc")
     df["barrio"] = df["estacion_id"].map(ESTACION_BARRIO_MAP)
     df["anio"] = df["fecha_utc"].dt.year
     logger.info(

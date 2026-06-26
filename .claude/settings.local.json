@@ -25,7 +25,10 @@
       "Bash(pip show *)",
       "Bash(echo \"EXIT=$?\")",
       "Bash(../env_data_detective/Scripts/python.exe -c ' *)",
-      "Bash(grep -vE \"^\\\\s*$\")"
+      "Bash(grep -vE \"^\\\\s*$\")",
+      "Bash(ls -la .streamlit)",
+      "Bash(find . -name \"config.toml\" -not -path \"*/env_data_detective/*\")",
+      "Bash(echo \"COMPILE=$?\")"
     ]
   }
 }
