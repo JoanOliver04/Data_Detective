@@ -55,13 +55,16 @@ The whole thing runs self-contained on a single Windows machine — from raw HTT
 - **Background streaming daemon** — a daemon thread captures live data from **8 ingestion modules** while the dashboard serves the UI; a sidebar **Update Data** button triggers an on-demand cycle with thread-safe locking and cache invalidation. No separate process to babysit.
 - **19 official districts, not 6 stations** — real-time AQICN readings are interpolated (proximity-weighted) from the GVA station network onto all 19 administrative districts, powering a live league table and dual WHO-threshold alerting.
 - **Performance-engineered Streamlit** — columnar Parquet for the 121K-row pollution set, multi-tier `@st.cache_data` TTLs, `@st.fragment`-scoped reruns, and pre-rendered HTML maps/charts for sub-second tab switching.
-- **Export everything** — every tab ships a CSV / JSON / XML / PDF export panel over the *currently filtered* slice, Excel-safe (UTF-8 BOM, `;` separator).
+- **Export everything** — every tab ships a CSV / Excel / JSON / XML / PDF export panel over the *currently filtered* slice (UTF-8 BOM, `;` separator), with formula-injection sanitization on the spreadsheet formats.
+- **Hardened by default** — CSV/Excel formula-injection guards, HTML escaping of untrusted API strings (XSS), XSRF on and telemetry off via `.streamlit/config.toml`, secrets only in a git-ignored `.env`. CI runs `ruff` + `black` + `mypy` + `pytest` (90% coverage) on every push.
 
 ---
 
 ## Screenshots
 
-> Generate them with `streamlit run 5.DASHBOARD/app.py` and save to `docs/screenshots/`.
+> Run `streamlit run 5.DASHBOARD/app.py`, capture each tab and drop the PNGs into `docs/screenshots/` with these exact names:
+> `tab_contaminacion.png` · `tab_eventos.png` · `tab_ranking.png` · `tab_comparador.png` · `tab_precipitaciones.png` · `tab_pronostico.png`
+> (see [`docs/screenshots/README.md`](docs/screenshots/README.md)).
 
 <table>
   <tr>
@@ -162,7 +165,7 @@ sequenceDiagram
         MAP->>MAP: build Folium map dynamically
         MAP-->>U: rendered map + RT sensor layer
     end
-    U->>U: expand export panel → CSV / JSON / XML / PDF
+    U->>U: expand export panel → CSV / Excel / JSON / XML / PDF
 ```
 
 <details>
@@ -232,6 +235,7 @@ DATA_DETECTIVE/                       ← project root (holds .env marker)
 | HTTP / APIs | **requests, aiohttp** | REST calls with retry + backoff; aiohttp where concurrency helps |
 | Scraping | **BeautifulSoup4, lxml** | AVAMET network + event calendars have no API |
 | Calendars | **icalendar, icalevents** | Parse the `.ics` event feeds into typed records |
+| Excel export | **openpyxl** | Native `.xlsx` via `pandas.ExcelWriter`, preserves types regardless of locale |
 | PDF export | **fpdf2** | Formatted tables with header + metadata, no headless browser dependency |
 | Config / secrets | **python-dotenv** | API keys live only in `.env` (git-ignored); `.env` doubles as the PROJECT_ROOT marker |
 | Scheduling | **schedule** | Windows-Task-Scheduler-friendly; explicitly *not* cron |
@@ -259,7 +263,7 @@ DATA_DETECTIVE/                       ← project root (holds .env marker)
 
 ### UX & export
 - **Dark / light theme** — coherent tokens across Plotly, Folium and inline HTML, persisted in session state.
-- **Multi-format export** — every tab exports the filtered slice as CSV (`;`, UTF-8 BOM), JSON (metadata envelope), XML (sanitized element names) or PDF.
+- **Multi-format export** — every tab exports the filtered slice as CSV (`;`, UTF-8 BOM), Excel (`.xlsx`, native types), JSON (metadata envelope), XML (sanitized element names) or PDF. Spreadsheet formats are sanitized against formula injection.
 
 ---
 
