@@ -31,7 +31,8 @@
       "Bash(echo \"COMPILE=$?\")",
       "Bash(grep -ivE \"^\\\\s+[0-9]+ \\(components|config|data_loader|streaming_background|theme|utils|os|sys|io|json|re|math|time|typing|datetime|pathlib|logging|hashlib|importlib|threading|collections|unicodedata|xml|abc|functools\\)$\")",
       "Bash(echo \"black-exit=$?\")",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(echo \"black=$?\")"
     ]
   }
 }

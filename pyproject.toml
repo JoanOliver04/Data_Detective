@@ -27,6 +27,10 @@ ignore = ["E701"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+filterwarnings = [
+    # pandas avisa de dayfirst al parsear fechas ISO de eventos; es esperado.
+    "ignore:Parsing dates in.*dayfirst:UserWarning",
+]
 
 [tool.coverage.run]
 branch = true
@@ -39,3 +43,11 @@ omit = ["*/__pycache__/*", "tests/*"]
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
+# Los bloques de auto-test bajo `if __name__ == "__main__"` se prueban via
+# pytest (tests/), no al importar; se excluyen de la medicion.
+exclude_also = [
+    'if __name__ == .__main__.:',
+    "pragma: no cover",
+    "raise NotImplementedError",
+]
+fail_under = 85

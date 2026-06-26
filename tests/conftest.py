@@ -16,9 +16,11 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DASHBOARD_DIR = REPO_ROOT / "5.DASHBOARD"
+PROCESAMIENTO_DIR = REPO_ROOT / "2.SCRIPTS" / "procesamiento"
 
-if str(DASHBOARD_DIR) not in sys.path:
-    sys.path.insert(0, str(DASHBOARD_DIR))
+for _p in (DASHBOARD_DIR, PROCESAMIENTO_DIR):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 # ---------------------------------------------------------------------------
 # Parche de Streamlit: cache_data y cache_resource como no-ops

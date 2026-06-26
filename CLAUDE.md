@@ -270,7 +270,7 @@ VARIABLES_PRINCIPALES = ["NO2", "O3", "PM10", "PM2.5"]
 | Fuente         | Variable .env         | Uso                                |
 | -------------- | --------------------- | ---------------------------------- |
 | AQICN/WAQI     | `AQI_TOKEN`           | Contaminación tiempo real          |
-| OpenWeatherMap | `OWM_API_KEY`         | Meteorología + pronóstico 72h      |
+| OpenWeatherMap | `OPENWEATHER_API_KEY` | Meteorología + pronóstico 72h      |
 | AEMET          | `AEMET_API_KEY`       | Datos históricos meteorología      |
 | DGT DATEX II   | (sin clave)           | Tráfico tiempo real                |
 | AVAMET         | (sin clave, scraping) | Precipitaciones Valencia           |

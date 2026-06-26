@@ -13,7 +13,8 @@
   <img src="https://img.shields.io/badge/Folium-geospatial-77B829?logo=leaflet&logoColor=white" alt="Folium" />
   <img src="https://img.shields.io/badge/data-121K%2B%20rows-brightgreen" alt="121K rows" />
   <img src="https://img.shields.io/badge/sources-9%20official-blue" alt="9 sources" />
-  <img src="https://img.shields.io/badge/tests-65%20passing-brightgreen" alt="65 tests" />
+  <img src="https://img.shields.io/badge/tests-123%20passing-brightgreen" alt="123 tests" />
+  <img src="https://img.shields.io/badge/coverage-90%25-brightgreen" alt="Coverage 90%" />
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="License MIT" />
 </p>
 
@@ -205,7 +206,7 @@ DATA_DETECTIVE/                       ← project root (holds .env marker)
 │       ├── urban_quality_index.py    3-axis urban fusion (pollution+weather+traffic)
 │       ├── pronostico_estadistico.py statistical next-day pollution forecast
 │       └── exportador.py             format converters (BOM, XML sanitization)
-├── tests/                           integration suite (65 tests, fully offline)
+├── tests/                           test suite (123 tests, 90% coverage, offline)
 ├── utils/paths.py                   PROJECT_ROOT resolver (.env-anchored)
 ├── .env                             API keys (git-ignored)
 ├── requirements.txt · CLAUDE.md · README.md
@@ -373,7 +374,7 @@ copy .env.example .env   # then edit .env
 ```ini
 # .env — never commit this file
 AQI_TOKEN=your_aqicn_token_here
-OWM_API_KEY=your_openweathermap_key_here
+OPENWEATHER_API_KEY=your_openweathermap_key_here
 AEMET_API_KEY=your_aemet_key_here
 ```
 
@@ -424,19 +425,20 @@ pip install -r requirements-dev.txt   # ruff, black, pytest, pytest-cov
 
 ruff check  "5.DASHBOARD" "2.SCRIPTS" "utils" "tests"   # lint
 black --check "5.DASHBOARD" "2.SCRIPTS" "utils" "tests" # format
-pytest --cov --cov-report=term-missing                  # 65 tests + coverage
+pytest --cov --cov-report=term-missing                  # 123 tests, ~90% coverage
 ```
 
 Covered:
 - Composite air-quality index and 3-axis urban index (0–10 scale, grade labels, weight redistribution, edge cases)
-- Export layer — CSV/Excel formula-injection sanitization, XLSX integrity, XML/JSON
+- Statistical next-day forecast (stratification, confidence tiers, trend factor, RT fusion, fallbacks)
+- Quasi-experimental baseline (date parsing, event dedup, baseline mask: month/weekday/event/rain controls)
+- Export layer — CSV/Excel formula-injection sanitization, XLSX/PDF integrity, XML/JSON
 - HTML escaping of untrusted external strings (XSS hardening)
-- Data-loader functions (schema validation, column normalization)
-- Configuration integrity (WHO/EU thresholds, station maps, 19 districts)
+- Data-loader functions and configuration integrity (WHO/EU thresholds, station maps, 19 districts)
 
-Every push runs **GitHub Actions CI** (`ruff` + `black --check` + `pytest`) on Python 3.11 and 3.12. Style and config live in `pyproject.toml`; every source file is UTF-8 with Google-style docstrings, type hints on public functions, and `logging` (never `print`) for diagnostics.
+Every push runs **GitHub Actions CI** (`ruff` + `black --check` + `pytest --cov`, gate **85%**) on Python 3.11 and 3.12. Style, coverage and config live in `pyproject.toml`; a coverage gate fails the build below threshold. Every source file is UTF-8 with Google-style docstrings, type hints on public functions, and `logging` (never `print`) for diagnostics.
 
-> Coverage is measured on the pure-logic layer (`utils/`); the Streamlit UI is validated separately via a headless smoke launch.
+> Coverage targets the pure-logic layer (`utils/` + ETL baseline helpers) at ~90%; the Streamlit UI is validated separately via a headless smoke launch.
 
 ---
 
