@@ -24,6 +24,16 @@ select = ["E4", "E7", "E9", "F"]
 # E701: sentencias en una linea (estilo compacto deliberado en formatters.py).
 ignore = ["E701"]
 
+[tool.mypy]
+# Comprobacion de tipos sobre la capa de logica pura (utils). Las librerias
+# de terceros (streamlit, folium, pandas...) no traen stubs completos, asi
+# que se ignoran sus imports sin tipar.
+python_version = "3.11"
+ignore_missing_imports = true
+pretty = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/sources-9%20official-blue" alt="9 sources" />
   <img src="https://img.shields.io/badge/tests-123%20passing-brightgreen" alt="123 tests" />
   <img src="https://img.shields.io/badge/coverage-90%25-brightgreen" alt="Coverage 90%" />
+  <img src="https://img.shields.io/badge/mypy-checked-2A6DB2" alt="mypy checked" />
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="License MIT" />
 </p>
 
@@ -425,6 +426,7 @@ pip install -r requirements-dev.txt   # ruff, black, pytest, pytest-cov
 
 ruff check  "5.DASHBOARD" "2.SCRIPTS" "utils" "tests"   # lint
 black --check "5.DASHBOARD" "2.SCRIPTS" "utils" "tests" # format
+mypy utils                                              # type check (logic layer)
 pytest --cov --cov-report=term-missing                  # 123 tests, ~90% coverage
 ```
 
@@ -436,7 +438,7 @@ Covered:
 - HTML escaping of untrusted external strings (XSS hardening)
 - Data-loader functions and configuration integrity (WHO/EU thresholds, station maps, 19 districts)
 
-Every push runs **GitHub Actions CI** (`ruff` + `black --check` + `pytest --cov`, gate **85%**) on Python 3.11 and 3.12. Style, coverage and config live in `pyproject.toml`; a coverage gate fails the build below threshold. Every source file is UTF-8 with Google-style docstrings, type hints on public functions, and `logging` (never `print`) for diagnostics.
+Every push runs **GitHub Actions CI** (`ruff` + `black --check` + `mypy` + `pytest --cov`, gate **85%**) on Python 3.11 and 3.12. `mypy` type-checks the pure-logic layer (`utils/`). Style, types, coverage and config all live in `pyproject.toml`; a coverage gate fails the build below threshold. Every source file is UTF-8 with Google-style docstrings, type hints on public functions, and `logging` (never `print`) for diagnostics.
 
 > Coverage targets the pure-logic layer (`utils/` + ETL baseline helpers) at ~90%; the Streamlit UI is validated separately via a headless smoke launch.
 

@@ -36,5 +36,10 @@ jobs:
       - name: Black (format check)
         run: black --check "5.DASHBOARD" "2.SCRIPTS" "utils" "tests"
 
+      - name: Mypy (type check, logic layer)
+        run: |
+          mypy utils
+          MYPYPATH=5.DASHBOARD mypy 5.DASHBOARD/utils
+
       - name: Pytest (with coverage)
         run: pytest --cov --cov-report=term-missing

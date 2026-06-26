@@ -32,7 +32,10 @@
       "Bash(grep -ivE \"^\\\\s+[0-9]+ \\(components|config|data_loader|streaming_background|theme|utils|os|sys|io|json|re|math|time|typing|datetime|pathlib|logging|hashlib|importlib|threading|collections|unicodedata|xml|abc|functools\\)$\")",
       "Bash(echo \"black-exit=$?\")",
       "Bash(git check-ignore *)",
-      "Bash(echo \"black=$?\")"
+      "Bash(echo \"black=$?\")",
+      "Bash(../env_data_detective/Scripts/python.exe -m mypy utils --ignore-missing-imports --no-error-summary)",
+      "Bash(../env_data_detective/Scripts/python.exe -m mypy utils --ignore-missing-imports)",
+      "Bash(MYPYPATH=5.DASHBOARD ./env_data_detective/Scripts/python.exe -m mypy 5.DASHBOARD/utils)"
     ]
   }
 }

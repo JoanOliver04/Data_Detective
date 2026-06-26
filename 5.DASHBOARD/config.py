@@ -19,6 +19,8 @@ _PROJECT_ROOT_CANDIDATE = _CONFIG_DIR.parent           # DATA_DETECTIVE/
 _PATHS_PY = _PROJECT_ROOT_CANDIDATE / "utils" / "paths.py"
 
 _spec = importlib.util.spec_from_file_location("project_utils.paths", _PATHS_PY)
+if _spec is None or _spec.loader is None:
+    raise ImportError(f"No se pudo cargar utils/paths.py desde {_PATHS_PY}")
 _paths_module = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_paths_module)
 
