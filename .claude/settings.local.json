@@ -19,7 +19,9 @@
       "Bash(curl:*)",
       "Bash(./env_data_detective/Scripts/python.exe 2.SCRIPTS/procesamiento/generar_pronostico.py)",
       "Bash(wc -l ./5.DASHBOARD/components/*.py)",
-      "Bash(./env_data_detective/Scripts/python.exe:*)"
+      "Bash(./env_data_detective/Scripts/python.exe:*)",
+      "Bash(grep -c \"def test_\" tests/test_dashboard_basico.py)",
+      "Bash(grep -rc \"def test_\" tests/)"
     ]
   }
 }
