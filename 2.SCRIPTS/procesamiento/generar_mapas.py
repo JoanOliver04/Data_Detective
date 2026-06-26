@@ -54,7 +54,6 @@ from typing import Dict, Optional, Tuple
 import pandas as pd
 import folium
 
-
 # ==============================================================================
 # CONFIGURACIÓN
 # ==============================================================================
@@ -63,12 +62,13 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 # --- Entrada ---
 CONTAM_STATS_PATH = (
-    PROJECT_ROOT / "3.DATOS_LIMPIOS" / "estadisticas"
+    PROJECT_ROOT
+    / "3.DATOS_LIMPIOS"
+    / "estadisticas"
     / "contaminacion_media_anual_barrio.csv"
 )
 TRAFICO_PATH = PROJECT_ROOT / "3.DATOS_LIMPIOS" / "trafico_limpio.csv"
-GEOJSON_PATH = PROJECT_ROOT / "1.DATOS_EN_CRUDO" / \
-    "geo" / "barrios_valencia.geojson"
+GEOJSON_PATH = PROJECT_ROOT / "1.DATOS_EN_CRUDO" / "geo" / "barrios_valencia.geojson"
 
 # --- Salida ---
 MAPAS_DIR = PROJECT_ROOT / "4.VISUALIZACIONES" / "mapas"
@@ -129,151 +129,211 @@ POLLUTION_VARIABLES = {
 
 DISTRITOS_VALENCIA_GEOJSON = {
     "type": "FeatureCollection",
-    "crs": {
-        "type": "name",
-        "properties": {"name": "urn:ogc:def:crs:EPSG::4326"}
-    },
+    "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::4326"}},
     "features": [
         {
             "type": "Feature",
             "properties": {"nombre": "Ciutat Vella", "codigo": "01"},
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [-0.3860, 39.4780], [-0.3780, 39.4790],
-                    [-0.3720, 39.4760], [-0.3700, 39.4720],
-                    [-0.3730, 39.4680], [-0.3800, 39.4670],
-                    [-0.3850, 39.4700], [-0.3870, 39.4740],
-                    [-0.3860, 39.4780],
-                ]]
-            }
+                "coordinates": [
+                    [
+                        [-0.3860, 39.4780],
+                        [-0.3780, 39.4790],
+                        [-0.3720, 39.4760],
+                        [-0.3700, 39.4720],
+                        [-0.3730, 39.4680],
+                        [-0.3800, 39.4670],
+                        [-0.3850, 39.4700],
+                        [-0.3870, 39.4740],
+                        [-0.3860, 39.4780],
+                    ]
+                ],
+            },
         },
         {
             "type": "Feature",
             "properties": {"nombre": "L'Eixample", "codigo": "02"},
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [-0.3850, 39.4700], [-0.3800, 39.4670],
-                    [-0.3730, 39.4680], [-0.3680, 39.4650],
-                    [-0.3650, 39.4610], [-0.3720, 39.4580],
-                    [-0.3810, 39.4590], [-0.3880, 39.4630],
-                    [-0.3870, 39.4670], [-0.3850, 39.4700],
-                ]]
-            }
+                "coordinates": [
+                    [
+                        [-0.3850, 39.4700],
+                        [-0.3800, 39.4670],
+                        [-0.3730, 39.4680],
+                        [-0.3680, 39.4650],
+                        [-0.3650, 39.4610],
+                        [-0.3720, 39.4580],
+                        [-0.3810, 39.4590],
+                        [-0.3880, 39.4630],
+                        [-0.3870, 39.4670],
+                        [-0.3850, 39.4700],
+                    ]
+                ],
+            },
         },
         {
             "type": "Feature",
             "properties": {"nombre": "Extramurs", "codigo": "03"},
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [-0.3950, 39.4740], [-0.3870, 39.4740],
-                    [-0.3850, 39.4700], [-0.3880, 39.4630],
-                    [-0.3960, 39.4600], [-0.4020, 39.4640],
-                    [-0.4010, 39.4700], [-0.3950, 39.4740],
-                ]]
-            }
+                "coordinates": [
+                    [
+                        [-0.3950, 39.4740],
+                        [-0.3870, 39.4740],
+                        [-0.3850, 39.4700],
+                        [-0.3880, 39.4630],
+                        [-0.3960, 39.4600],
+                        [-0.4020, 39.4640],
+                        [-0.4010, 39.4700],
+                        [-0.3950, 39.4740],
+                    ]
+                ],
+            },
         },
         {
             "type": "Feature",
             "properties": {"nombre": "Campanar", "codigo": "04"},
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [-0.4010, 39.4870], [-0.3900, 39.4870],
-                    [-0.3860, 39.4820], [-0.3870, 39.4770],
-                    [-0.3950, 39.4740], [-0.4010, 39.4760],
-                    [-0.4060, 39.4800], [-0.4050, 39.4850],
-                    [-0.4010, 39.4870],
-                ]]
-            }
+                "coordinates": [
+                    [
+                        [-0.4010, 39.4870],
+                        [-0.3900, 39.4870],
+                        [-0.3860, 39.4820],
+                        [-0.3870, 39.4770],
+                        [-0.3950, 39.4740],
+                        [-0.4010, 39.4760],
+                        [-0.4060, 39.4800],
+                        [-0.4050, 39.4850],
+                        [-0.4010, 39.4870],
+                    ]
+                ],
+            },
         },
         {
             "type": "Feature",
             "properties": {"nombre": "Camins al Grau", "codigo": "12"},
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [-0.3700, 39.4720], [-0.3620, 39.4740],
-                    [-0.3530, 39.4710], [-0.3500, 39.4660],
-                    [-0.3550, 39.4620], [-0.3650, 39.4610],
-                    [-0.3680, 39.4650], [-0.3730, 39.4680],
-                    [-0.3700, 39.4720],
-                ]]
-            }
+                "coordinates": [
+                    [
+                        [-0.3700, 39.4720],
+                        [-0.3620, 39.4740],
+                        [-0.3530, 39.4710],
+                        [-0.3500, 39.4660],
+                        [-0.3550, 39.4620],
+                        [-0.3650, 39.4610],
+                        [-0.3680, 39.4650],
+                        [-0.3730, 39.4680],
+                        [-0.3700, 39.4720],
+                    ]
+                ],
+            },
         },
         {
             "type": "Feature",
             "properties": {"nombre": "Quatre Carreres", "codigo": "10"},
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [-0.3650, 39.4610], [-0.3550, 39.4620],
-                    [-0.3450, 39.4570], [-0.3420, 39.4500],
-                    [-0.3480, 39.4430], [-0.3580, 39.4400],
-                    [-0.3680, 39.4430], [-0.3740, 39.4500],
-                    [-0.3720, 39.4580], [-0.3650, 39.4610],
-                ]]
-            }
+                "coordinates": [
+                    [
+                        [-0.3650, 39.4610],
+                        [-0.3550, 39.4620],
+                        [-0.3450, 39.4570],
+                        [-0.3420, 39.4500],
+                        [-0.3480, 39.4430],
+                        [-0.3580, 39.4400],
+                        [-0.3680, 39.4430],
+                        [-0.3740, 39.4500],
+                        [-0.3720, 39.4580],
+                        [-0.3650, 39.4610],
+                    ]
+                ],
+            },
         },
         {
             "type": "Feature",
             "properties": {"nombre": "Poblats Maritims", "codigo": "11"},
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [-0.3500, 39.4660], [-0.3380, 39.4680],
-                    [-0.3250, 39.4620], [-0.3200, 39.4540],
-                    [-0.3280, 39.4470], [-0.3420, 39.4500],
-                    [-0.3450, 39.4570], [-0.3530, 39.4610],
-                    [-0.3500, 39.4660],
-                ]]
-            }
+                "coordinates": [
+                    [
+                        [-0.3500, 39.4660],
+                        [-0.3380, 39.4680],
+                        [-0.3250, 39.4620],
+                        [-0.3200, 39.4540],
+                        [-0.3280, 39.4470],
+                        [-0.3420, 39.4500],
+                        [-0.3450, 39.4570],
+                        [-0.3530, 39.4610],
+                        [-0.3500, 39.4660],
+                    ]
+                ],
+            },
         },
         {
             "type": "Feature",
             "properties": {"nombre": "Jesus", "codigo": "08"},
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [-0.3880, 39.4630], [-0.3810, 39.4590],
-                    [-0.3720, 39.4580], [-0.3740, 39.4500],
-                    [-0.3780, 39.4440], [-0.3880, 39.4420],
-                    [-0.3960, 39.4470], [-0.3990, 39.4540],
-                    [-0.3960, 39.4600], [-0.3880, 39.4630],
-                ]]
-            }
+                "coordinates": [
+                    [
+                        [-0.3880, 39.4630],
+                        [-0.3810, 39.4590],
+                        [-0.3720, 39.4580],
+                        [-0.3740, 39.4500],
+                        [-0.3780, 39.4440],
+                        [-0.3880, 39.4420],
+                        [-0.3960, 39.4470],
+                        [-0.3990, 39.4540],
+                        [-0.3960, 39.4600],
+                        [-0.3880, 39.4630],
+                    ]
+                ],
+            },
         },
         {
             "type": "Feature",
             "properties": {"nombre": "Patraix", "codigo": "09"},
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [-0.4020, 39.4640], [-0.3960, 39.4600],
-                    [-0.3990, 39.4540], [-0.3960, 39.4470],
-                    [-0.4050, 39.4440], [-0.4130, 39.4480],
-                    [-0.4140, 39.4560], [-0.4080, 39.4620],
-                    [-0.4020, 39.4640],
-                ]]
-            }
+                "coordinates": [
+                    [
+                        [-0.4020, 39.4640],
+                        [-0.3960, 39.4600],
+                        [-0.3990, 39.4540],
+                        [-0.3960, 39.4470],
+                        [-0.4050, 39.4440],
+                        [-0.4130, 39.4480],
+                        [-0.4140, 39.4560],
+                        [-0.4080, 39.4620],
+                        [-0.4020, 39.4640],
+                    ]
+                ],
+            },
         },
         {
             "type": "Feature",
             "properties": {"nombre": "Benimaclet", "codigo": "14"},
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [-0.3780, 39.4900], [-0.3680, 39.4910],
-                    [-0.3600, 39.4870], [-0.3580, 39.4820],
-                    [-0.3620, 39.4780], [-0.3720, 39.4770],
-                    [-0.3780, 39.4790], [-0.3810, 39.4840],
-                    [-0.3780, 39.4900],
-                ]]
-            }
+                "coordinates": [
+                    [
+                        [-0.3780, 39.4900],
+                        [-0.3680, 39.4910],
+                        [-0.3600, 39.4870],
+                        [-0.3580, 39.4820],
+                        [-0.3620, 39.4780],
+                        [-0.3720, 39.4770],
+                        [-0.3780, 39.4790],
+                        [-0.3810, 39.4840],
+                        [-0.3780, 39.4900],
+                    ]
+                ],
+            },
         },
-    ]
+    ],
 }
 
 
@@ -341,6 +401,7 @@ TRAFICO_UBICACION_KEYWORDS = [
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
 
+
 def setup_logging() -> logging.Logger:
     """
     Configura logging dual (archivo + consola).
@@ -373,6 +434,7 @@ def setup_logging() -> logging.Logger:
 # ==============================================================================
 # UTILIDADES DE NORMALIZACIÓN
 # ==============================================================================
+
 
 def _normalize_name(name: str) -> str:
     """
@@ -409,11 +471,10 @@ def _normalize_name(name: str) -> str:
 # CARGA DE DATOS
 # ==============================================================================
 
-def load_data(logger: logging.Logger) -> Tuple[
-    Optional[pd.DataFrame],
-    Optional[pd.DataFrame],
-    Optional[dict]
-]:
+
+def load_data(
+    logger: logging.Logger,
+) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame], Optional[dict]]:
     """
     Carga los tres datasets necesarios para generar los mapas.
 
@@ -437,12 +498,8 @@ def load_data(logger: logging.Logger) -> Tuple[
             df_contam = pd.read_csv(CONTAM_STATS_PATH)
             logger.info(f"      {len(df_contam):,} filas cargadas")
             logger.info(f"      Columnas: {list(df_contam.columns)}")
-            logger.info(
-                f"      Barrios: {sorted(df_contam['barrio'].unique())}"
-            )
-            logger.info(
-                f"      Variables: {sorted(df_contam['variable'].unique())}"
-            )
+            logger.info(f"      Barrios: {sorted(df_contam['barrio'].unique())}")
+            logger.info(f"      Variables: {sorted(df_contam['variable'].unique())}")
             logger.info(
                 f"      Años: {df_contam['año'].min()} → {df_contam['año'].max()}"
             )
@@ -475,8 +532,7 @@ def load_data(logger: logging.Logger) -> Tuple[
             with open(GEOJSON_PATH, "r", encoding="utf-8") as f:
                 geojson = json.load(f)
             n_features = len(geojson.get("features", []))
-            logger.info(
-                f"      {n_features} polígonos cargados (archivo externo)")
+            logger.info(f"      {n_features} polígonos cargados (archivo externo)")
         except Exception as e:
             logger.error(f"      Error leyendo GeoJSON: {e}")
     else:
@@ -509,6 +565,7 @@ def load_data(logger: logging.Logger) -> Tuple[
 # ==============================================================================
 # ASIGNACIÓN DE DISTRITO PARA TRÁFICO
 # ==============================================================================
+
 
 def _assign_traffic_distrito(ubicacion: str) -> Optional[str]:
     """
@@ -573,7 +630,8 @@ def prepare_traffic_by_distrito(
 
     logger.info(f"  Incidencias totales:   {n_total:,}")
     logger.info(
-        f"  Asignadas a distrito:  {n_asignados:,} ({n_asignados/n_total*100:.1f}%)")
+        f"  Asignadas a distrito:  {n_asignados:,} ({n_asignados/n_total*100:.1f}%)"
+    )
     logger.info(f"  Sin distrito (excluidas): {n_sin_distrito:,}")
 
     if n_asignados == 0:
@@ -587,13 +645,9 @@ def prepare_traffic_by_distrito(
     df_ok["fecha_dia"] = pd.to_datetime(df_ok["fecha"], utc=True).dt.date
     n_dias_totales = df_ok["fecha_dia"].nunique()
 
-    trafico_agg = (
-        df_ok
-        .groupby("distrito", as_index=False)
-        .agg(
-            n_incidencias=("fecha", "count"),
-            n_dias=("fecha_dia", "nunique"),
-        )
+    trafico_agg = df_ok.groupby("distrito", as_index=False).agg(
+        n_incidencias=("fecha", "count"),
+        n_dias=("fecha_dia", "nunique"),
     )
 
     # Media diaria = incidencias / días únicos con datos en ese distrito
@@ -616,6 +670,7 @@ def prepare_traffic_by_distrito(
 # ==============================================================================
 # CREACIÓN DE MAPAS DE CONTAMINACIÓN
 # ==============================================================================
+
 
 def create_pollution_map(
     df_contam: pd.DataFrame,
@@ -715,9 +770,7 @@ def create_pollution_map(
             "Verifica nombres de barrios."
         )
         # Mostrar qué nombres hay en cada lado para debug
-        logger.debug(
-            f"  Datos:   {sorted(datos_por_barrio.keys())}"
-        )
+        logger.debug(f"  Datos:   {sorted(datos_por_barrio.keys())}")
         logger.debug(
             f"  GeoJSON: {sorted(f['properties']['barrio_norm'] for f in geojson_copy['features'])}"
         )
@@ -793,6 +846,7 @@ def create_pollution_map(
 # CREACIÓN DE MAPA DE TRÁFICO
 # ==============================================================================
 
+
 def create_traffic_map(
     df_trafico_agg: pd.DataFrame,
     geojson: dict,
@@ -828,8 +882,7 @@ def create_traffic_map(
     geojson_copy = json.loads(json.dumps(geojson))  # Deep copy
     for feature in geojson_copy["features"]:
         nombre_original = feature["properties"].get("nombre", "")
-        feature["properties"]["distrito_norm"] = _normalize_name(
-            nombre_original)
+        feature["properties"]["distrito_norm"] = _normalize_name(nombre_original)
         feature["properties"]["info_trafico"] = "Sin datos"
 
     # --- 2. Inyectar datos ---
@@ -922,6 +975,7 @@ def create_traffic_map(
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
 
+
 def main():
     """
     Orquesta la generación de los 3 mapas de calor de Valencia.
@@ -960,17 +1014,14 @@ def main():
 
     if df_contam is not None and not df_contam.empty:
         for variable, config in POLLUTION_VARIABLES.items():
-            result = create_pollution_map(
-                df_contam, geojson, variable, config, logger
-            )
+            result = create_pollution_map(df_contam, geojson, variable, config, logger)
             if result:
                 mapas_generados.append(result.name)
             else:
                 mapas_fallidos.append(config["output_file"])
     else:
         logger.warning("Sin datos de contaminación → mapas NO₂/PM2.5 omitidos")
-        mapas_fallidos.extend([c["output_file"]
-                              for c in POLLUTION_VARIABLES.values()])
+        mapas_fallidos.extend([c["output_file"] for c in POLLUTION_VARIABLES.values()])
 
     # ------------------------------------------------------------------
     # 4-5. Mapa de tráfico
@@ -1008,8 +1059,7 @@ def main():
 
     # Mensaje para consola
     if mapas_generados:
-        print(
-            f"\n\u2705 {len(mapas_generados)} mapas generados en: {MAPAS_DIR}")
+        print(f"\n\u2705 {len(mapas_generados)} mapas generados en: {MAPAS_DIR}")
         for nombre in mapas_generados:
             print(f"   \u2192 {nombre}")
     else:

@@ -31,20 +31,30 @@ logger = logging.getLogger("Meteorologia")
 
 # Nombres de meses en espanol (index 1-12)
 MESES_NOMBRES = {
-    1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr",
-    5: "May", 6: "Jun", 7: "Jul", 8: "Ago",
-    9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic",
+    1: "Ene",
+    2: "Feb",
+    3: "Mar",
+    4: "Abr",
+    5: "May",
+    6: "Jun",
+    7: "Jul",
+    8: "Ago",
+    9: "Sep",
+    10: "Oct",
+    11: "Nov",
+    12: "Dic",
 }
 
 # Color principal para precipitaciones
-COLOR_PRECIP = "#17becf"          # Azul agua (config.COLORS["info"])
-COLOR_PRECIP_LIGHT = "#7fdbea"    # Azul agua claro (barras)
-COLOR_TEMP = "#ff7f0e"            # Naranja para temperatura
+COLOR_PRECIP = "#17becf"  # Azul agua (config.COLORS["info"])
+COLOR_PRECIP_LIGHT = "#7fdbea"  # Azul agua claro (barras)
+COLOR_TEMP = "#ff7f0e"  # Naranja para temperatura
 
 
 # ==============================================================================
 # 1. KPIs
 # ==============================================================================
+
 
 def render_kpis_meteorologia(df: pd.DataFrame) -> None:
     """
@@ -77,8 +87,7 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
     precip_anual = df_ok.groupby("anio", as_index=False).agg(
         acumulado=("precipitacion_mm", "sum"),
     )
-    media_anual = precip_anual["acumulado"].mean(
-    ) if not precip_anual.empty else 0
+    media_anual = precip_anual["acumulado"].mean() if not precip_anual.empty else 0
 
     # Anio mas lluvioso y mas seco
     if not precip_anual.empty:
@@ -98,7 +107,7 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
         f'margin-bottom:1rem;">'
         f'<h4 style="margin:0;">Indicadores de precipitación</h4>'
         f'<small style="color:#888;">Datos con calidad validada</small>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
 
@@ -119,8 +128,7 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
     c3.metric(
         label="Año más lluvioso",
         value=str(anio_lluvioso),
-        delta=f"{val_lluvioso:,.1f} mm" if isinstance(
-            anio_lluvioso, int) else None,
+        delta=f"{val_lluvioso:,.1f} mm" if isinstance(anio_lluvioso, int) else None,
         delta_color="off",
         help="Año con mayor precipitación acumulada en el periodo.",
     )
@@ -143,6 +151,7 @@ def render_kpis_meteorologia(df: pd.DataFrame) -> None:
 # ==============================================================================
 # 2. GRAFICO TEMPORAL ADAPTATIVO
 # ==============================================================================
+
 
 def render_grafico_precipitacion(df: pd.DataFrame) -> None:
     """
@@ -186,34 +195,34 @@ def _grafico_anual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
     fig = go.Figure()
 
     # Barras de precipitacion
-    fig.add_trace(go.Bar(
-        x=serie["anio"],
-        y=serie["acumulado"],
-        name="Precipitacion (mm)",
-        marker_color=COLOR_PRECIP_LIGHT,
-        opacity=0.85,
-        hovertemplate=(
-            "<b>%{x}</b><br>"
-            "Precipitación: %{y:,.1f} mm<br>"
-            "<extra></extra>"
-        ),
-    ))
+    fig.add_trace(
+        go.Bar(
+            x=serie["anio"],
+            y=serie["acumulado"],
+            name="Precipitacion (mm)",
+            marker_color=COLOR_PRECIP_LIGHT,
+            opacity=0.85,
+            hovertemplate=(
+                "<b>%{x}</b><br>" "Precipitación: %{y:,.1f} mm<br>" "<extra></extra>"
+            ),
+        )
+    )
 
     # Linea de temperatura media (eje secundario)
-    fig.add_trace(go.Scatter(
-        x=serie["anio"],
-        y=serie["temp_media"],
-        name="Temp. media (C)",
-        mode="lines+markers",
-        line=dict(color=COLOR_TEMP, width=2),
-        marker=dict(size=5),
-        yaxis="y2",
-        hovertemplate=(
-            "<b>%{x}</b><br>"
-            "Temp. media: %{y:.1f} °C<br>"
-            "<extra></extra>"
-        ),
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=serie["anio"],
+            y=serie["temp_media"],
+            name="Temp. media (C)",
+            mode="lines+markers",
+            line=dict(color=COLOR_TEMP, width=2),
+            marker=dict(size=5),
+            yaxis="y2",
+            hovertemplate=(
+                "<b>%{x}</b><br>" "Temp. media: %{y:.1f} °C<br>" "<extra></extra>"
+            ),
+        )
+    )
 
     fig.update_layout(
         title=dict(
@@ -239,17 +248,17 @@ def _grafico_anual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
         hovermode="x unified",
         legend=dict(
             orientation="h",
-            yanchor="bottom", y=1.02,
-            xanchor="right", x=1,
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
         ),
         bargap=0.15,
     )
 
     st.plotly_chart(fig, width="stretch")
 
-    logger.info(
-        f"[Grafico] Precipitación anual: {len(serie)} puntos"
-    )
+    logger.info(f"[Grafico] Precipitación anual: {len(serie)} puntos")
 
 
 def _grafico_mensual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
@@ -257,8 +266,10 @@ def _grafico_mensual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
     # Crear columna periodo YYYY-MM para ordenar correctamente
     df = df.copy()
     df["periodo"] = pd.to_datetime(
-        df["anio"].astype(int).astype(str) + "-" +
-        df["mes"].astype(int).astype(str).str.zfill(2) + "-01"
+        df["anio"].astype(int).astype(str)
+        + "-"
+        + df["mes"].astype(int).astype(str).str.zfill(2)
+        + "-01"
     )
 
     serie = df.groupby("periodo", as_index=False).agg(
@@ -269,20 +280,22 @@ def _grafico_mensual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
     fig = go.Figure()
 
     # Area + linea de precipitacion mensual
-    fig.add_trace(go.Scatter(
-        x=serie["periodo"],
-        y=serie["acumulado"],
-        name="Precipitacion mensual",
-        mode="lines",
-        line=dict(color=COLOR_PRECIP, width=2),
-        fill="tozeroy",
-        fillcolor="rgba(23,190,207,0.15)",
-        hovertemplate=(
-            "<b>%{x|%b %Y}</b><br>"
-            "Precipitación: %{y:,.1f} mm<br>"
-            "<extra></extra>"
-        ),
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=serie["periodo"],
+            y=serie["acumulado"],
+            name="Precipitacion mensual",
+            mode="lines",
+            line=dict(color=COLOR_PRECIP, width=2),
+            fill="tozeroy",
+            fillcolor="rgba(23,190,207,0.15)",
+            hovertemplate=(
+                "<b>%{x|%b %Y}</b><br>"
+                "Precipitación: %{y:,.1f} mm<br>"
+                "<extra></extra>"
+            ),
+        )
+    )
 
     fig.update_layout(
         title=dict(
@@ -297,21 +310,22 @@ def _grafico_mensual(df: pd.DataFrame, anio_min: int, anio_max: int) -> None:
         hovermode="x unified",
         legend=dict(
             orientation="h",
-            yanchor="bottom", y=1.02,
-            xanchor="right", x=1,
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
         ),
     )
 
     st.plotly_chart(fig, width="stretch")
 
-    logger.info(
-        f"[Grafico] Precipitacion mensual: {len(serie)} puntos"
-    )
+    logger.info(f"[Grafico] Precipitacion mensual: {len(serie)} puntos")
 
 
 # ==============================================================================
 # 3. CLIMATOLOGIA MENSUAL HISTORICA
 # ==============================================================================
+
 
 def render_climatologia_mensual(df: pd.DataFrame) -> None:
     """
@@ -358,44 +372,46 @@ def render_climatologia_mensual(df: pd.DataFrame) -> None:
     fig = go.Figure()
 
     # Barras de media mensual
-    fig.add_trace(go.Bar(
-        x=clima["mes_nombre"],
-        y=clima["media"],
-        name="Media mensual",
-        marker_color=COLOR_PRECIP_LIGHT,
-        opacity=0.85,
-        hovertemplate=(
-            "<b>%{x}</b><br>"
-            "Media: %{y:.1f} mm<br>"
-            "<extra></extra>"
-        ),
-    ))
+    fig.add_trace(
+        go.Bar(
+            x=clima["mes_nombre"],
+            y=clima["media"],
+            name="Media mensual",
+            marker_color=COLOR_PRECIP_LIGHT,
+            opacity=0.85,
+            hovertemplate=(
+                "<b>%{x}</b><br>" "Media: %{y:.1f} mm<br>" "<extra></extra>"
+            ),
+        )
+    )
 
     # Barras de error (desviacion estandar)
     # Construir customdata con n_anios y desviacion para hover
-    fig.add_trace(go.Scatter(
-        x=clima["mes_nombre"],
-        y=clima["media"],
-        error_y=dict(
-            type="data",
-            array=clima["desviacion"],
-            visible=True,
-            color="rgba(255,255,255,0.3)",
-            thickness=1.5,
-        ),
-        mode="markers",
-        marker=dict(color=COLOR_PRECIP, size=6),
-        name="Desviación std.",
-        customdata=list(zip(clima["desviacion"], clima["n_anios"])),
-        hovertemplate=(
-            "<b>%{x}</b><br>"
-            "Media: %{y:.1f} mm<br>"
-            "Std: %{customdata[0]:.1f} mm<br>"
-            "Años con datos: %{customdata[1]}"
-            "<extra></extra>"
-        ),
-        showlegend=True,
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=clima["mes_nombre"],
+            y=clima["media"],
+            error_y=dict(
+                type="data",
+                array=clima["desviacion"],
+                visible=True,
+                color="rgba(255,255,255,0.3)",
+                thickness=1.5,
+            ),
+            mode="markers",
+            marker=dict(color=COLOR_PRECIP, size=6),
+            name="Desviación std.",
+            customdata=list(zip(clima["desviacion"], clima["n_anios"])),
+            hovertemplate=(
+                "<b>%{x}</b><br>"
+                "Media: %{y:.1f} mm<br>"
+                "Std: %{customdata[0]:.1f} mm<br>"
+                "Años con datos: %{customdata[1]}"
+                "<extra></extra>"
+            ),
+            showlegend=True,
+        )
+    )
 
     fig.update_layout(
         title=dict(
@@ -410,8 +426,10 @@ def render_climatologia_mensual(df: pd.DataFrame) -> None:
         hovermode="x unified",
         legend=dict(
             orientation="h",
-            yanchor="bottom", y=1.02,
-            xanchor="right", x=1,
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
         ),
         bargap=0.2,
     )
@@ -428,15 +446,13 @@ def render_climatologia_mensual(df: pd.DataFrame) -> None:
             f"con {val_max:.1f} mm de media."
         )
 
-    logger.info(
-        f"[Climatologia] {len(clima)} meses, "
-        f"periodo {anio_min}-{anio_max}"
-    )
+    logger.info(f"[Climatologia] {len(clima)} meses, " f"periodo {anio_min}-{anio_max}")
 
 
 # ==============================================================================
 # 4. FUNCION ORQUESTADORA
 # ==============================================================================
+
 
 def render_tab_meteorologia(datos: dict) -> None:
     """

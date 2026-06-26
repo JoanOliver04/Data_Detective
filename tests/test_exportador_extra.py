@@ -15,11 +15,13 @@ from utils.exportador import (
 
 
 def test_pdf_firma_y_unicode():
-    df = pd.DataFrame({
-        "variable": ["PM2.5", "NO₂"],
-        "valor µg/m³": [12.0, 30.5],
-        "fecha": pd.to_datetime(["2026-01-01", "2026-01-02"]),
-    })
+    df = pd.DataFrame(
+        {
+            "variable": ["PM2.5", "NO₂"],
+            "valor µg/m³": [12.0, 30.5],
+            "fecha": pd.to_datetime(["2026-01-01", "2026-01-02"]),
+        }
+    )
     raw = dataframe_a_pdf(df, subtitulo="Contaminación")
     assert raw[:4] == b"%PDF"
     assert len(raw) > 500
@@ -32,10 +34,12 @@ def test_pdf_trunca_filas():
 
 
 def test_json_metadata_y_estructura():
-    df = pd.DataFrame({
-        "x": [1, 2],
-        "fecha": pd.to_datetime(["2026-01-01", "2026-01-02"]),
-    })
+    df = pd.DataFrame(
+        {
+            "x": [1, 2],
+            "fecha": pd.to_datetime(["2026-01-01", "2026-01-02"]),
+        }
+    )
     raw = dataframe_a_json(df, metadata={"dataset": "demo"})
     obj = json.loads(raw.decode("utf-8"))
     assert obj["_metadata"]["dataset"] == "demo"

@@ -49,8 +49,8 @@ def render_sidebar(
             '<div style="text-align:center;padding:0.5rem 0 1rem 0;">'
             '<h1 style="font-size:1.6rem;margin-bottom:0.2rem;">Data Detective</h1>'
             '<p style="font-size:0.85rem;color:var(--dd-text-label);margin:0;">'
-            'Valencia - Análisis Urbano</p>'
-            '</div>',
+            "Valencia - Análisis Urbano</p>"
+            "</div>",
             unsafe_allow_html=True,
         )
         st.toggle("🌙 Tema oscuro", value=True, key=THEME_TOGGLE_KEY)
@@ -79,6 +79,7 @@ def render_sidebar(
 # FILTROS
 # ==============================================================================
 
+
 def _filtro_rango_anios(df_contam):
     if df_contam is not None and "anio" in df_contam.columns:
         anio_min = int(df_contam["anio"].min())
@@ -87,7 +88,8 @@ def _filtro_rango_anios(df_contam):
         anio_min, anio_max = 2020, 2026
     rango = st.slider(
         "Rango de años",
-        min_value=anio_min, max_value=anio_max,
+        min_value=anio_min,
+        max_value=anio_max,
         value=(anio_min, anio_max),
         help="Filtra datos por periodo temporal.",
     )
@@ -104,7 +106,9 @@ def _filtro_variable(df_contam):
         opciones = VARIABLES_PRINCIPALES
     default_idx = opciones.index("O3") if "O3" in opciones else 0
     return st.selectbox(
-        "Variable contaminante", options=opciones, index=default_idx,
+        "Variable contaminante",
+        options=opciones,
+        index=default_idx,
         help="O3 y NO2 son los más relevantes para calidad del aire urbana.",
     )
 
@@ -128,7 +132,9 @@ def _opciones_tipos_evento(df_eventos: Optional[pd.DataFrame]) -> list:
 def _filtro_barrios(df_contam):
     disponibles = _opciones_barrios(df_contam)
     return st.multiselect(
-        "Distritos", options=disponibles, default=[],
+        "Distritos",
+        options=disponibles,
+        default=[],
         help="Si no seleccionas ninguno, se muestran todos.",
     )
 
@@ -139,7 +145,9 @@ def _filtro_tipos_evento(df_eventos):
         st.caption("Tipos de evento: sin datos disponibles")
         return []
     return st.multiselect(
-        "Tipo de evento", options=disponibles, default=[],
+        "Tipo de evento",
+        options=disponibles,
+        default=[],
         help="Si no seleccionas ninguno, se muestran todos.",
     )
 
@@ -147,6 +155,7 @@ def _filtro_tipos_evento(df_eventos):
 # ==============================================================================
 # ESTADO DE DATOS
 # ==============================================================================
+
 
 def _semaforo_rt(timestamp_str: Optional[str]):
     """
@@ -194,7 +203,7 @@ def _linea_historico(nombre: str, df: Optional[pd.DataFrame], extra: str = "") -
     else:
         st.markdown(
             f'<small><span style="color:#d62728;">○</span> '
-            f'{nombre}: No disponible</small>',
+            f"{nombre}: No disponible</small>",
             unsafe_allow_html=True,
         )
 
@@ -208,11 +217,13 @@ def _linea_rt(nombre: str, timestamp_str: Optional[str]) -> None:
         timestamp_str: Timestamp ISO de ultima captura.
     """
     emoji, color, frescura = _semaforo_rt(timestamp_str)
-    nivel = "Activo" if color == "#2ca02c" else (
-        "Antiguo" if color == "#ffbb33" else "Sin datos"
+    nivel = (
+        "Activo"
+        if color == "#2ca02c"
+        else ("Antiguo" if color == "#ffbb33" else "Sin datos")
     )
     st.markdown(
-        f'<small>📡 {nombre}: '
+        f"<small>📡 {nombre}: "
         f'<span style="color:{color};">{emoji} {nivel}</span> '
         f'<span style="color:#555;">({frescura})</span></small>',
         unsafe_allow_html=True,
@@ -296,7 +307,9 @@ def _render_info_datos(
 
     extra_contam = ""
     if df_contam is not None and "anio" in df_contam.columns:
-        extra_contam = f" · {int(df_contam['anio'].min())}-{int(df_contam['anio'].max())}"
+        extra_contam = (
+            f" · {int(df_contam['anio'].min())}-{int(df_contam['anio'].max())}"
+        )
     _linea_historico("Contaminación", df_contam, extra_contam)
     _linea_historico("Meteorología", df_meteo)
     _linea_historico("Tráfico", df_trafico)
@@ -317,7 +330,7 @@ def _render_info_datos(
     if not hay_alguno_rt:
         st.markdown(
             '<small><span style="color:#d62728;">🔴</span> '
-            'Sin datos RT. Ejecuta streaming_master.py.</small>',
+            "Sin datos RT. Ejecuta streaming_master.py.</small>",
             unsafe_allow_html=True,
         )
     else:
@@ -332,9 +345,9 @@ def _render_info_datos(
     st.markdown(
         '<div style="text-align:center;padding:0.3rem 0;">'
         '<small style="color:#555;">'
-        '🔍 Data Detective Valencia<br>'
-        'Proyecto Big Data · Universitat de València<br>'
-        '2026 · Joan Oliver'
-        '</small></div>',
+        "🔍 Data Detective Valencia<br>"
+        "Proyecto Big Data · Universitat de València<br>"
+        "2026 · Joan Oliver"
+        "</small></div>",
         unsafe_allow_html=True,
     )

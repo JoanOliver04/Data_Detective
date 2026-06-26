@@ -7,16 +7,16 @@ Fase 2.3: Descarga de Datos Meteorológicos Históricos (AEMET OpenData)
 
 Descripción:
     Este script descarga datos meteorológicos históricos desde la API de AEMET.
-    
+
     AEMET usa un sistema de DOBLE PETICIÓN:
     1) Primera petición: obtiene URL temporal con los datos
     2) Segunda petición: descarga los datos reales desde esa URL
-    
+
     La URL temporal caduca aproximadamente en 1 hora.
 
 API Documentation:
     https://opendata.aemet.es/dist/index.html
-    
+
 Endpoints utilizados:
     - /api/valores/climatologicos/diarios/datos/fechaini/{}/fechafin/{}/estacion/{}
     - /api/valores/climatologicos/inventarioestaciones/todasestaciones
@@ -25,7 +25,7 @@ Uso:
     1. Obtener API Key en: https://opendata.aemet.es/centrodedescargas/altaUsuario
     2. Guardar en .env: AEMET_API_KEY=tu_clave_aqui
     3. Ejecutar: python descargar_aemet_historico.py
-    
+
 Salida:
     - 1.DATOS_EN_CRUDO/estaticos/meteorologia/aemet_valencia_historico.csv
     - Formato: [fecha, estacion, variable, valor]
@@ -82,19 +82,19 @@ MAX_ESTACIONES_LITE = 3  # Solo procesar las primeras 3 estaciones encontradas
 # Variables meteorológicas de interés y su mapeo
 # Nombres de campos en respuesta AEMET -> nombres estándar
 VARIABLES_MAPPING = {
-    "prec": "precipitacion",      # Precipitación diaria (mm)
-    "tmed": "temperatura_media",   # Temperatura media (°C)
-    "tmax": "temperatura_max",     # Temperatura máxima (°C)
-    "tmin": "temperatura_min",     # Temperatura mínima (°C)
-    "hrMedia": "humedad_media",    # Humedad relativa media (%)
-    "hrMax": "humedad_max",        # Humedad máxima (%)
-    "hrMin": "humedad_min",        # Humedad mínima (%)
+    "prec": "precipitacion",  # Precipitación diaria (mm)
+    "tmed": "temperatura_media",  # Temperatura media (°C)
+    "tmax": "temperatura_max",  # Temperatura máxima (°C)
+    "tmin": "temperatura_min",  # Temperatura mínima (°C)
+    "hrMedia": "humedad_media",  # Humedad relativa media (%)
+    "hrMax": "humedad_max",  # Humedad máxima (%)
+    "hrMin": "humedad_min",  # Humedad mínima (%)
     "velmedia": "viento_velocidad",  # Velocidad media del viento (m/s)
-    "racha": "viento_racha",       # Racha máxima (m/s)
-    "dir": "viento_direccion",     # Dirección del viento (grados)
-    "presMax": "presion_max",      # Presión máxima (hPa)
-    "presMin": "presion_min",      # Presión mínima (hPa)
-    "sol": "horas_sol",            # Horas de sol
+    "racha": "viento_racha",  # Racha máxima (m/s)
+    "dir": "viento_direccion",  # Dirección del viento (grados)
+    "presMax": "presion_max",  # Presión máxima (hPa)
+    "presMin": "presion_min",  # Presión mínima (hPa)
+    "sol": "horas_sol",  # Horas de sol
 }
 
 # Configuración de descarga
@@ -108,6 +108,7 @@ AÑOS_HISTORICO = 5
 # ==============================================================================
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
+
 
 def setup_logging() -> logging.Logger:
     """Configura el sistema de logging."""
@@ -139,6 +140,7 @@ def setup_logging() -> logging.Logger:
 # FUNCIONES DE LA API AEMET (DOBLE PETICIÓN)
 # ==============================================================================
 
+
 def aemet_request(endpoint: str, logger: logging.Logger) -> Optional[Dict[str, Any]]:
     """
     Realiza una petición a la API de AEMET.
@@ -157,10 +159,7 @@ def aemet_request(endpoint: str, logger: logging.Logger) -> Optional[Dict[str, A
         return None
 
     url = f"{AEMET_BASE_URL}{endpoint}"
-    headers = {
-        "api_key": AEMET_API_KEY,
-        "Accept": "application/json"
-    }
+    headers = {"api_key": AEMET_API_KEY, "Accept": "application/json"}
 
     for intento in range(MAX_REINTENTOS):
         try:
@@ -179,12 +178,10 @@ def aemet_request(endpoint: str, logger: logging.Logger) -> Optional[Dict[str, A
                 logger.debug(f"No hay datos disponibles para: {endpoint}")
                 return None
             else:
-                logger.warning(
-                    f"Error HTTP {response.status_code}: {response.text}")
+                logger.warning(f"Error HTTP {response.status_code}: {response.text}")
 
         except requests.exceptions.Timeout:
-            logger.warning(
-                f"Timeout en intento {intento + 1}/{MAX_REINTENTOS}")
+            logger.warning(f"Timeout en intento {intento + 1}/{MAX_REINTENTOS}")
         except requests.exceptions.RequestException as e:
             logger.error(f"Error de conexión: {str(e)}")
 
@@ -216,8 +213,7 @@ def aemet_fetch_data(data_url: str, logger: logging.Logger) -> Optional[List[Dic
                 logger.warning("URL de datos caducada o no disponible")
                 return None
             else:
-                logger.warning(
-                    f"Error descargando datos: HTTP {response.status_code}")
+                logger.warning(f"Error descargando datos: HTTP {response.status_code}")
 
         except requests.exceptions.Timeout:
             logger.warning(f"Timeout descargando datos, intento {intento + 1}")
@@ -234,10 +230,7 @@ def aemet_fetch_data(data_url: str, logger: logging.Logger) -> Optional[List[Dic
 
 
 def get_climatologia_diaria(
-    estacion: str,
-    fecha_inicio: datetime,
-    fecha_fin: datetime,
-    logger: logging.Logger
+    estacion: str, fecha_inicio: datetime, fecha_fin: datetime, logger: logging.Logger
 ) -> Optional[List[Dict]]:
     """
     Obtiene datos climatológicos diarios para una estación y rango de fechas.
@@ -260,7 +253,8 @@ def get_climatologia_diaria(
     endpoint = f"/valores/climatologicos/diarios/datos/fechaini/{fecha_ini_str}/fechafin/{fecha_fin_str}/estacion/{estacion}"
 
     logger.debug(
-        f"Solicitando datos: {estacion} ({fecha_inicio.date()} - {fecha_fin.date()})")
+        f"Solicitando datos: {estacion} ({fecha_inicio.date()} - {fecha_fin.date()})"
+    )
 
     # Primera petición: obtener URL de datos
     response = aemet_request(endpoint, logger)
@@ -321,6 +315,7 @@ def get_inventario_estaciones(logger: logging.Logger) -> Optional[List[Dict]]:
 # FUNCIONES DE PROCESAMIENTO
 # ==============================================================================
 
+
 def buscar_estaciones_valencia(logger: logging.Logger) -> Dict[str, str]:
     """
     Busca estaciones climatológicas en la provincia de Valencia.
@@ -335,7 +330,8 @@ def buscar_estaciones_valencia(logger: logging.Logger) -> Dict[str, str]:
     """
     if USAR_SOLO_ESTACIONES_PREDEFINIDAS:
         logger.info(
-            f"Modo LITE: usando {len(ESTACIONES_VALENCIA_FALLBACK)} estaciones predefinidas")
+            f"Modo LITE: usando {len(ESTACIONES_VALENCIA_FALLBACK)} estaciones predefinidas"
+        )
         for codigo, nombre in ESTACIONES_VALENCIA_FALLBACK.items():
             logger.info(f"  - {codigo}: {nombre}")
         return ESTACIONES_VALENCIA_FALLBACK
@@ -345,8 +341,7 @@ def buscar_estaciones_valencia(logger: logging.Logger) -> Dict[str, str]:
     inventario = get_inventario_estaciones(logger)
 
     if not inventario:
-        logger.warning(
-            "No se pudo obtener inventario, usando estaciones predefinidas")
+        logger.warning("No se pudo obtener inventario, usando estaciones predefinidas")
         return ESTACIONES_VALENCIA_FALLBACK
 
     estaciones_valencia = {}
@@ -370,25 +365,21 @@ def buscar_estaciones_valencia(logger: logging.Logger) -> Dict[str, str]:
         if MAX_ESTACIONES_LITE and len(estaciones_valencia) > MAX_ESTACIONES_LITE:
             # Tomar solo las primeras N estaciones
             estaciones_limitadas = dict(
-                list(estaciones_valencia.items())[:MAX_ESTACIONES_LITE])
-            logger.info(
-                f"Modo LITE: limitando a {MAX_ESTACIONES_LITE} estaciones")
+                list(estaciones_valencia.items())[:MAX_ESTACIONES_LITE]
+            )
+            logger.info(f"Modo LITE: limitando a {MAX_ESTACIONES_LITE} estaciones")
             estaciones_valencia = estaciones_limitadas
 
         for codigo, nombre in estaciones_valencia.items():
             logger.info(f"  - {codigo}: {nombre}")
     else:
-        logger.warning(
-            "No se encontraron estaciones de Valencia, usando predefinidas")
+        logger.warning("No se encontraron estaciones de Valencia, usando predefinidas")
         estaciones_valencia = ESTACIONES_VALENCIA_FALLBACK
 
     return estaciones_valencia
 
 
-def transform_to_long_format(
-    datos: List[Dict],
-    logger: logging.Logger
-) -> pd.DataFrame:
+def transform_to_long_format(datos: List[Dict], logger: logging.Logger) -> pd.DataFrame:
     """
     Transforma los datos de AEMET al formato largo normalizado.
 
@@ -440,12 +431,14 @@ def transform_to_long_format(
                     else:
                         valor = float(valor_str)
 
-                    records.append({
-                        "fecha": fecha,
-                        "estacion": estacion,
-                        "variable": variable_std,
-                        "valor": valor
-                    })
+                    records.append(
+                        {
+                            "fecha": fecha,
+                            "estacion": estacion,
+                            "variable": variable_std,
+                            "valor": valor,
+                        }
+                    )
                 except (ValueError, TypeError):
                     continue
 
@@ -453,9 +446,7 @@ def transform_to_long_format(
 
 
 def generar_rangos_fechas(
-    fecha_inicio: datetime,
-    fecha_fin: datetime,
-    dias_por_rango: int = DIAS_POR_PETICION
+    fecha_inicio: datetime, fecha_fin: datetime, dias_por_rango: int = DIAS_POR_PETICION
 ) -> List[tuple]:
     """
     Genera rangos de fechas para las peticiones (máx 31 días por petición).
@@ -482,6 +473,7 @@ def generar_rangos_fechas(
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """Función principal que orquesta la descarga de datos AEMET."""
@@ -547,11 +539,11 @@ def main():
             # Mostrar progreso
             if (i + 1) % 10 == 0 or i == 0:
                 logger.info(
-                    f"  Rango {i + 1}/{len(rangos)}: {fecha_ini.date()} - {fecha_fin_rango.date()}")
+                    f"  Rango {i + 1}/{len(rangos)}: {fecha_ini.date()} - {fecha_fin_rango.date()}"
+                )
 
             # Obtener datos
-            datos = get_climatologia_diaria(
-                codigo, fecha_ini, fecha_fin_rango, logger)
+            datos = get_climatologia_diaria(codigo, fecha_ini, fecha_fin_rango, logger)
 
             if datos:
                 datos_estacion.extend(datos)
@@ -589,10 +581,10 @@ def main():
     combined = pd.concat(all_data, ignore_index=True)
 
     # Eliminar duplicados y ordenar
-    combined = combined.drop_duplicates(
-        subset=["fecha", "estacion", "variable"])
-    combined = combined.sort_values(
-        ["fecha", "estacion", "variable"]).reset_index(drop=True)
+    combined = combined.drop_duplicates(subset=["fecha", "estacion", "variable"])
+    combined = combined.sort_values(["fecha", "estacion", "variable"]).reset_index(
+        drop=True
+    )
 
     # Guardar CSV
     output_file = OUTPUT_DIR / "aemet_valencia_historico.csv"

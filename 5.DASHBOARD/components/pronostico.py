@@ -33,8 +33,11 @@ import streamlit.components.v1 as components
 
 from theme import get_theme
 from config import (
-    TAB_NAMES, DESCRIPCION_TABS, VIS_PRONOSTICO_72H_HTML,
-    UMBRALES_OMS, VARIABLE_COLORS,
+    TAB_NAMES,
+    DESCRIPCION_TABS,
+    VIS_PRONOSTICO_72H_HTML,
+    UMBRALES_OMS,
+    VARIABLE_COLORS,
 )
 from data_loader import leer_html_visualizacion
 from utils.pronostico_estadistico import (
@@ -45,17 +48,21 @@ from utils.pronostico_estadistico import (
 logger = logging.getLogger("Pronostico")
 
 # Colores de la seccion
-COLOR_PRONOSTICO = "#17becf"     # Azul agua (coherente con meteo)
+COLOR_PRONOSTICO = "#17becf"  # Azul agua (coherente con meteo)
 
 # Umbrales de riesgo (replica generar_pronostico.py)
-RAIN_THRESHOLD_LOW = 10.0        # mm totales -> riesgo bajo
-POP_THRESHOLD_MOD = 60.0         # % prob. max. -> riesgo moderado
+RAIN_THRESHOLD_LOW = 10.0  # mm totales -> riesgo bajo
+POP_THRESHOLD_MOD = 60.0  # % prob. max. -> riesgo moderado
 
 # Colores de riesgo
 RIESGO_CONFIG = {
     "BAJO": {"color": "#2ca02c", "emoji": "🟢", "desc": "Washout atmosférico probable"},
     "MODERADO": {"color": "#ff7f0e", "emoji": "🟡", "desc": "Posible limpieza parcial"},
-    "ALTO": {"color": "#d62728", "emoji": "🔴", "desc": "Acumulación de contaminantes probable"},
+    "ALTO": {
+        "color": "#d62728",
+        "emoji": "🔴",
+        "desc": "Acumulación de contaminantes probable",
+    },
 }
 
 # Altura del grafico embebido (px)
@@ -65,6 +72,7 @@ CHART_HEIGHT = 900
 # ==============================================================================
 # 1. KPIs
 # ==============================================================================
+
 
 def render_kpis_pronostico(df: pd.DataFrame) -> None:
     """
@@ -91,7 +99,8 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
     lluvia_total = df["rain_mm"].sum() if "rain_mm" in df.columns else 0
     prob_max = (
         df["precip_probability_pct"].max()
-        if "precip_probability_pct" in df.columns else 0
+        if "precip_probability_pct" in df.columns
+        else 0
     )
 
     # Heuristica de riesgo (misma logica que generar_pronostico.py)
@@ -126,8 +135,8 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
         f'margin-bottom:1rem;">'
         f'<h4 style="margin:0;">Pronóstico próximas 72 horas</h4>'
         f'<small style="color:#888;">'
-        f'Fuente: OpenWeatherMap | Archivo: {archivo} | Captura: {captura}'
-        f'</small></div>',
+        f"Fuente: OpenWeatherMap | Archivo: {archivo} | Captura: {captura}"
+        f"</small></div>",
         unsafe_allow_html=True,
     )
 
@@ -137,9 +146,7 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
     c1.metric(
         label="Temp. máxima",
         value=f"{temp_max:.1f} °C" if pd.notna(temp_max) else "-",
-        delta=(
-            f"Mín: {temp_min:.1f} °C" if pd.notna(temp_min) else None
-        ),
+        delta=(f"Mín: {temp_min:.1f} °C" if pd.notna(temp_min) else None),
         delta_color="off",
         help="Temperatura máxima y mínima previstas en las próximas 72 horas.",
     )
@@ -181,6 +188,7 @@ def render_kpis_pronostico(df: pd.DataFrame) -> None:
 # 2. GRAFICO DE PRONOSTICO
 # ==============================================================================
 
+
 def render_grafico_pronostico(df: pd.DataFrame) -> None:
     """
     Renderiza el grafico de pronostico 72h.
@@ -194,10 +202,10 @@ def render_grafico_pronostico(df: pd.DataFrame) -> None:
     """
     st.markdown(
         '<div class="section-header">'
-        '<h4>Evolución prevista 72h</h4>'
+        "<h4>Evolución prevista 72h</h4>"
         '<p style="color:#888;font-size:0.85rem;">'
-        'Temperatura, precipitación y probabilidad de lluvia'
-        '</p></div>',
+        "Temperatura, precipitación y probabilidad de lluvia"
+        "</p></div>",
         unsafe_allow_html=True,
     )
 
@@ -232,6 +240,7 @@ def render_grafico_pronostico(df: pd.DataFrame) -> None:
 # 2b. GRAFICO DINAMICO (fallback si no hay HTML pre-generado)
 # ==============================================================================
 
+
 def _generar_grafico_pronostico_dinamico(df: pd.DataFrame) -> None:
     """
     Genera un grafico Plotly con temperatura, precipitacion y probabilidad
@@ -244,61 +253,77 @@ def _generar_grafico_pronostico_dinamico(df: pd.DataFrame) -> None:
             precip_probability_pct, humidity_pct.
     """
     fig = make_subplots(
-        rows=2, cols=1,
+        rows=2,
+        cols=1,
         shared_xaxes=True,
         vertical_spacing=0.12,
         row_heights=[0.6, 0.4],
-        subplot_titles=("Temperatura (°C)",
-                        "Precipitación (mm) y probabilidad (%)"),
+        subplot_titles=("Temperatura (°C)", "Precipitación (mm) y probabilidad (%)"),
     )
 
     # --- Temperatura ---
-    fig.add_trace(go.Scatter(
-        x=df["datetime"],
-        y=df["temp_c"],
-        name="Temperatura (°C)",
-        legend="legend",
-        mode="lines+markers",
-        line=dict(color="#ff7f0e", width=2.5),
-        marker=dict(size=4),
-        hovertemplate="<b>%{x|%d/%m %H:%M}</b><br>Temp: %{y:.1f}°C<extra></extra>",
-    ), row=1, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=df["datetime"],
+            y=df["temp_c"],
+            name="Temperatura (°C)",
+            legend="legend",
+            mode="lines+markers",
+            line=dict(color="#ff7f0e", width=2.5),
+            marker=dict(size=4),
+            hovertemplate="<b>%{x|%d/%m %H:%M}</b><br>Temp: %{y:.1f}°C<extra></extra>",
+        ),
+        row=1,
+        col=1,
+    )
 
     # --- Humedad (eje secundario, mas sutil) ---
     if "humidity_pct" in df.columns:
-        fig.add_trace(go.Scatter(
-            x=df["datetime"],
-            y=df["humidity_pct"],
-            name="Humedad (%)",
-            legend="legend",
-            mode="lines",
-            line=dict(color="#17becf", width=1.5, dash="dot"),
-            opacity=0.6,
-            hovertemplate="Humedad: %{y:.0f}%<extra></extra>",
-        ), row=1, col=1)
+        fig.add_trace(
+            go.Scatter(
+                x=df["datetime"],
+                y=df["humidity_pct"],
+                name="Humedad (%)",
+                legend="legend",
+                mode="lines",
+                line=dict(color="#17becf", width=1.5, dash="dot"),
+                opacity=0.6,
+                hovertemplate="Humedad: %{y:.0f}%<extra></extra>",
+            ),
+            row=1,
+            col=1,
+        )
 
     # --- Precipitacion (barras) ---
     if "rain_mm" in df.columns:
-        fig.add_trace(go.Bar(
-            x=df["datetime"],
-            y=df["rain_mm"],
-            name="Lluvia (mm/3h)",
-            legend="legend2",
-            marker_color="rgba(23,190,207,0.7)",
-            hovertemplate="Lluvia: %{y:.1f} mm<extra></extra>",
-        ), row=2, col=1)
+        fig.add_trace(
+            go.Bar(
+                x=df["datetime"],
+                y=df["rain_mm"],
+                name="Lluvia (mm/3h)",
+                legend="legend2",
+                marker_color="rgba(23,190,207,0.7)",
+                hovertemplate="Lluvia: %{y:.1f} mm<extra></extra>",
+            ),
+            row=2,
+            col=1,
+        )
 
     # --- Probabilidad de precipitacion (linea) ---
     if "precip_probability_pct" in df.columns:
-        fig.add_trace(go.Scatter(
-            x=df["datetime"],
-            y=df["precip_probability_pct"],
-            name="Prob. de lluvia (%)",
-            legend="legend2",
-            mode="lines",
-            line=dict(color="#3498db", width=2),
-            hovertemplate="Prob: %{y:.0f}%<extra></extra>",
-        ), row=2, col=1)
+        fig.add_trace(
+            go.Scatter(
+                x=df["datetime"],
+                y=df["precip_probability_pct"],
+                name="Prob. de lluvia (%)",
+                legend="legend2",
+                mode="lines",
+                line=dict(color="#3498db", width=2),
+                hovertemplate="Prob: %{y:.0f}%<extra></extra>",
+            ),
+            row=2,
+            col=1,
+        )
 
     fig.update_layout(
         template=get_theme()["plotly_template"],
@@ -349,12 +374,17 @@ def _generar_grafico_pronostico_dinamico(df: pd.DataFrame) -> None:
 
 # Mapping para nombres bonitos con subindices
 _VAR_DISPLAY = {
-    "NO2": "NO₂", "O3": "O₃", "PM10": "PM₁₀", "PM2.5": "PM₂.₅",
+    "NO2": "NO₂",
+    "O3": "O₃",
+    "PM10": "PM₁₀",
+    "PM2.5": "PM₂.₅",
 }
 
 # Emojis de confianza
 _CONFIANZA_EMOJI = {
-    "Alta": "🟢", "Media": "🟡", "Baja": "🟠",
+    "Alta": "🟢",
+    "Media": "🟡",
+    "Baja": "🟠",
 }
 
 
@@ -375,13 +405,27 @@ def render_pronostico_contaminacion(
     """
     manana = datetime.now() + timedelta(days=1)
     dias_es = {
-        0: "lunes", 1: "martes", 2: "miércoles", 3: "jueves",
-        4: "viernes", 5: "sábado", 6: "domingo",
+        0: "lunes",
+        1: "martes",
+        2: "miércoles",
+        3: "jueves",
+        4: "viernes",
+        5: "sábado",
+        6: "domingo",
     }
     meses_es = {
-        1: "enero", 2: "febrero", 3: "marzo", 4: "abril",
-        5: "mayo", 6: "junio", 7: "julio", 8: "agosto",
-        9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre",
+        1: "enero",
+        2: "febrero",
+        3: "marzo",
+        4: "abril",
+        5: "mayo",
+        6: "junio",
+        7: "julio",
+        8: "agosto",
+        9: "septiembre",
+        10: "octubre",
+        11: "noviembre",
+        12: "diciembre",
     }
     dia_str = dias_es.get(manana.weekday(), "")
     mes_str = meses_es.get(manana.month, "")
@@ -391,14 +435,16 @@ def render_pronostico_contaminacion(
         f'margin-bottom:1rem;">'
         f'<h4 style="margin:0;">📊 Pronóstico de Contaminación (mañana)</h4>'
         f'<small style="color:#888;">'
-        f'{dia_str.capitalize()} {manana.day} de {mes_str} — '
-        f'Basado en tendencias estadísticas históricas'
-        f'</small></div>',
+        f"{dia_str.capitalize()} {manana.day} de {mes_str} — "
+        f"Basado en tendencias estadísticas históricas"
+        f"</small></div>",
         unsafe_allow_html=True,
     )
 
     pronostico = pronosticar_contaminacion_manana(
-        df_contaminacion, contam_rt, manana,
+        df_contaminacion,
+        contam_rt,
+        manana,
     )
 
     if pronostico is None:
@@ -454,13 +500,10 @@ def render_pronostico_contaminacion(
                     f"Método: {datos['metodo']}"
                 ),
             )
-            st.caption(
-                f"{emoji_conf} {confianza} · {tendencia}"
-            )
+            st.caption(f"{emoji_conf} {confianza} · {tendencia}")
 
     # --- Boxplot de contexto historico ---
-    _render_boxplot_contexto(df_contaminacion, pronostico,
-                             manana.month, vars_con_datos)
+    _render_boxplot_contexto(df_contaminacion, pronostico, manana.month, vars_con_datos)
 
     # --- Explicacion del metodo ---
     with st.expander("¿Cómo se calcula este pronóstico?", expanded=False):
@@ -498,9 +541,18 @@ def _render_boxplot_contexto(
         variables: Variables a mostrar.
     """
     meses_es = {
-        1: "enero", 2: "febrero", 3: "marzo", 4: "abril",
-        5: "mayo", 6: "junio", 7: "julio", 8: "agosto",
-        9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre",
+        1: "enero",
+        2: "febrero",
+        3: "marzo",
+        4: "abril",
+        5: "mayo",
+        6: "junio",
+        7: "julio",
+        8: "agosto",
+        9: "septiembre",
+        10: "octubre",
+        11: "noviembre",
+        12: "diciembre",
     }
 
     fig = go.Figure()
@@ -516,34 +568,38 @@ def _render_boxplot_contexto(
         var_display = _VAR_DISPLAY.get(variable, variable)
 
         # Boxplot
-        fig.add_trace(go.Box(
-            y=serie.values,
-            name=var_display,
-            marker_color=color,
-            boxmean=True,
-            opacity=0.7,
-        ))
+        fig.add_trace(
+            go.Box(
+                y=serie.values,
+                name=var_display,
+                marker_color=color,
+                boxmean=True,
+                opacity=0.7,
+            )
+        )
 
         # Punto de prediccion
         if variable in pronostico:
             pred = pronostico[variable]["prediccion"]
-            fig.add_trace(go.Scatter(
-                x=[var_display],
-                y=[pred],
-                mode="markers",
-                name=f"Predicción {var_display}",
-                marker=dict(
-                    color="#ff0040",
-                    size=14,
-                    symbol="diamond",
-                    line=dict(width=2, color="white"),
-                ),
-                showlegend=False,
-                hovertemplate=(
-                    f"<b>Predicción {var_display}</b><br>"
-                    f"{pred:.1f} µg/m³<extra></extra>"
-                ),
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    x=[var_display],
+                    y=[pred],
+                    mode="markers",
+                    name=f"Predicción {var_display}",
+                    marker=dict(
+                        color="#ff0040",
+                        size=14,
+                        symbol="diamond",
+                        line=dict(width=2, color="white"),
+                    ),
+                    showlegend=False,
+                    hovertemplate=(
+                        f"<b>Predicción {var_display}</b><br>"
+                        f"{pred:.1f} µg/m³<extra></extra>"
+                    ),
+                )
+            )
 
     if not has_data:
         return
@@ -567,6 +623,7 @@ def _render_boxplot_contexto(
 # ==============================================================================
 # 5. FUNCION ORQUESTADORA
 # ==============================================================================
+
 
 def render_tab_pronostico(datos: dict) -> None:
     """

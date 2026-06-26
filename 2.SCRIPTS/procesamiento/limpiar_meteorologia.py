@@ -96,27 +96,28 @@ VARIABLES_CANONICAS = ["precipitacion_mm", "temp_c", "humedad_pct"]
 # Se usa un rango generoso para no descartar picos reales (p.ej. DANA).
 RANGOS_FISICOS = {
     "precipitacion_mm": {"min": 0.0, "max": 500.0},
-    "temp_c":           {"min": -20.0, "max": 50.0},
-    "humedad_pct":      {"min": 0.0, "max": 100.0},
+    "temp_c": {"min": -20.0, "max": 50.0},
+    "humedad_pct": {"min": 0.0, "max": 100.0},
 }
 
 # Mapeo de variables AEMET (descargar_aemet_historico.py) → canónicas
 # AEMET guarda en formato largo: [fecha, estacion, variable, valor]
 # donde 'variable' toma estos nombres (definidos en VARIABLES_MAPPING)
 AEMET_VARIABLE_MAP = {
-    "precipitacion":      "precipitacion_mm",
-    "temperatura_media":  "temp_c",
-    "humedad_media":      "humedad_pct",
+    "precipitacion": "precipitacion_mm",
+    "temperatura_media": "temp_c",
+    "humedad_media": "humedad_pct",
     # Aliases alternativos por si el CSV tiene los nombres originales AEMET
-    "prec":               "precipitacion_mm",
-    "tmed":               "temp_c",
-    "hrMedia":            "humedad_pct",
+    "prec": "precipitacion_mm",
+    "tmed": "temp_c",
+    "hrMedia": "humedad_pct",
 }
 
 
 # ==============================================================================
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
+
 
 def setup_logging() -> logging.Logger:
     """
@@ -153,6 +154,7 @@ def setup_logging() -> logging.Logger:
 # CARGADORES POR FUENTE
 # ==============================================================================
 
+
 def cargar_aemet(logger: logging.Logger) -> pd.DataFrame:
     """
     Carga todos los CSV generados por descargar_aemet_historico.py (Fase 2.3).
@@ -174,8 +176,7 @@ def cargar_aemet(logger: logging.Logger) -> pd.DataFrame:
     archivos = sorted(AEMET_DIR.glob(patron))
 
     if not archivos:
-        logger.warning(
-            f"AEMET: sin archivos en {AEMET_DIR} con patrón '{patron}'")
+        logger.warning(f"AEMET: sin archivos en {AEMET_DIR} con patrón '{patron}'")
         return pd.DataFrame()
 
     logger.info(f"AEMET: encontrados {len(archivos)} archivos")
@@ -193,13 +194,11 @@ def cargar_aemet(logger: logging.Logger) -> pd.DataFrame:
         return pd.DataFrame()
 
     df_largo = pd.concat(frames, ignore_index=True)
-    logger.info(
-        f"AEMET: {len(df_largo):,} registros totales cargados (formato largo)")
+    logger.info(f"AEMET: {len(df_largo):,} registros totales cargados (formato largo)")
 
     # --- Mapear nombres de variables a canónicos ---
     df_largo["variable"] = df_largo["variable"].map(
-        lambda v: AEMET_VARIABLE_MAP.get(
-            v, AEMET_VARIABLE_MAP.get(v.strip(), None))
+        lambda v: AEMET_VARIABLE_MAP.get(v, AEMET_VARIABLE_MAP.get(v.strip(), None))
     )
 
     # Filtrar solo variables que mapearon correctamente
@@ -223,10 +222,7 @@ def cargar_aemet(logger: logging.Logger) -> pd.DataFrame:
     # Agrupar por (fecha, estacion) y pivotar variables como columnas.
     # Si hay duplicados (misma fecha+estacion+variable), tomar la media.
     df_ancho = df_largo.pivot_table(
-        index=["fecha"],
-        columns="variable",
-        values="valor",
-        aggfunc="mean"
+        index=["fecha"], columns="variable", values="valor", aggfunc="mean"
     ).reset_index()
 
     # Asegurar que las 3 columnas canónicas existen (rellenar con NaN si no)
@@ -290,8 +286,7 @@ def cargar_avamet(logger: logging.Logger) -> pd.DataFrame:
             # Extraer timestamp de captura como fecha de referencia
             metadata = captura.get("_metadata", {})
             timestamp_str = metadata.get(
-                "timestamp_captura",
-                metadata.get("timestamp", None)
+                "timestamp_captura", metadata.get("timestamp", None)
             )
 
             if timestamp_str:
@@ -305,8 +300,7 @@ def cargar_avamet(logger: logging.Logger) -> pd.DataFrame:
                 fecha_captura = _extraer_fecha_de_nombre(archivo.name)
 
             if fecha_captura is None:
-                logger.warning(
-                    f"  {archivo.name}: sin timestamp válido, saltando")
+                logger.warning(f"  {archivo.name}: sin timestamp válido, saltando")
                 archivos_error += 1
                 continue
 
@@ -321,30 +315,35 @@ def cargar_avamet(logger: logging.Logger) -> pd.DataFrame:
                     continue
 
                 precip = _parsear_numero(
-                    registro.get("precipitacion_raw",
-                                 registro.get("precipitacion",
-                                              registro.get("lluvia", None)))
+                    registro.get(
+                        "precipitacion_raw",
+                        registro.get("precipitacion", registro.get("lluvia", None)),
+                    )
                 )
 
                 # AVAMET puede incluir temperatura y humedad
                 temp = _parsear_numero(
-                    registro.get("temperatura",
-                                 registro.get("temp",
-                                              registro.get("temperatura_c", None)))
+                    registro.get(
+                        "temperatura",
+                        registro.get("temp", registro.get("temperatura_c", None)),
+                    )
                 )
                 humedad = _parsear_numero(
-                    registro.get("humedad",
-                                 registro.get("humedad_relativa",
-                                              registro.get("hr", None)))
+                    registro.get(
+                        "humedad",
+                        registro.get("humedad_relativa", registro.get("hr", None)),
+                    )
                 )
 
-                records.append({
-                    "fecha": fecha_captura,
-                    "precipitacion_mm": precip,
-                    "temp_c": temp,
-                    "humedad_pct": humedad,
-                    "fuente": "avamet",
-                })
+                records.append(
+                    {
+                        "fecha": fecha_captura,
+                        "precipitacion_mm": precip,
+                        "temp_c": temp,
+                        "humedad_pct": humedad,
+                        "fuente": "avamet",
+                    }
+                )
 
             archivos_ok += 1
 
@@ -371,20 +370,17 @@ def cargar_avamet(logger: logging.Logger) -> pd.DataFrame:
                 # Extraer fecha del nombre del archivo
                 fecha_ref = _extraer_fecha_de_nombre(archivo.name)
                 if fecha_ref is None:
-                    logger.warning(
-                        f"  {archivo.name}: sin columna de fecha, saltando")
+                    logger.warning(f"  {archivo.name}: sin columna de fecha, saltando")
                     archivos_error += 1
                     continue
                 df_csv["_fecha_ref"] = fecha_ref
                 fecha_col = "_fecha_ref"
 
-            df_csv["fecha"] = pd.to_datetime(
-                df_csv[fecha_col], errors="coerce")
+            df_csv["fecha"] = pd.to_datetime(df_csv[fecha_col], errors="coerce")
 
             # Buscar columnas relevantes (tolerancia a variantes de nombre)
             precip_col = _buscar_columna(
-                df_csv, ["precipitacion", "precip",
-                         "lluvia", "rain", "mm", "prec"]
+                df_csv, ["precipitacion", "precip", "lluvia", "rain", "mm", "prec"]
             )
             temp_col = _buscar_columna(
                 df_csv, ["temperatura", "temp", "temp_c", "tmed"]
@@ -394,19 +390,21 @@ def cargar_avamet(logger: logging.Logger) -> pd.DataFrame:
             )
 
             for _, row in df_csv.iterrows():
-                records.append({
-                    "fecha": row["fecha"],
-                    "precipitacion_mm": _parsear_numero(
-                        row.get(precip_col) if precip_col else None
-                    ),
-                    "temp_c": _parsear_numero(
-                        row.get(temp_col) if temp_col else None
-                    ),
-                    "humedad_pct": _parsear_numero(
-                        row.get(hum_col) if hum_col else None
-                    ),
-                    "fuente": "avamet",
-                })
+                records.append(
+                    {
+                        "fecha": row["fecha"],
+                        "precipitacion_mm": _parsear_numero(
+                            row.get(precip_col) if precip_col else None
+                        ),
+                        "temp_c": _parsear_numero(
+                            row.get(temp_col) if temp_col else None
+                        ),
+                        "humedad_pct": _parsear_numero(
+                            row.get(hum_col) if hum_col else None
+                        ),
+                        "fuente": "avamet",
+                    }
+                )
 
             archivos_ok += 1
 
@@ -527,10 +525,8 @@ def cargar_openweather(logger: logging.Logger) -> pd.DataFrame:
 # FUNCIONES AUXILIARES DE CARGA
 # ==============================================================================
 
-def _extraer_weather_record(
-    entry: dict,
-    logger: logging.Logger
-) -> Optional[dict]:
+
+def _extraer_weather_record(entry: dict, logger: logging.Logger) -> Optional[dict]:
     """
     Extrae un registro meteorológico de un bloque de respuesta OWM.
 
@@ -590,10 +586,13 @@ def _extraer_fecha_de_nombre(nombre_archivo: str) -> Optional[pd.Timestamp]:
         pd.Timestamp o None si no se puede parsear
     """
     import re
+
     match = re.search(r"(\d{8})_(\d{6})", nombre_archivo)
     if match:
         try:
-            return pd.to_datetime(match.group(1) + match.group(2), format="%Y%m%d%H%M%S")
+            return pd.to_datetime(
+                match.group(1) + match.group(2), format="%Y%m%d%H%M%S"
+            )
         except Exception:
             pass
 
@@ -660,10 +659,9 @@ def _buscar_columna(df: pd.DataFrame, keywords: list) -> Optional[str]:
 # TRANSFORMACIONES
 # ==============================================================================
 
+
 def convertir_a_utc(
-    df: pd.DataFrame,
-    logger: logging.Logger,
-    nombre_fuente: str = ""
+    df: pd.DataFrame, logger: logging.Logger, nombre_fuente: str = ""
 ) -> pd.DataFrame:
     """
     Convierte la columna 'fecha' a UTC timezone-aware.
@@ -699,8 +697,7 @@ def convertir_a_utc(
     else:
         # Asegurar que es datetime
         if not pd.api.types.is_datetime64_any_dtype(df["fecha"]):
-            logger.warning(
-                f"{nombre_fuente}: 'fecha' no es datetime. Convirtiendo...")
+            logger.warning(f"{nombre_fuente}: 'fecha' no es datetime. Convirtiendo...")
             df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
 
         # Localizar a Europe/Madrid → UTC
@@ -708,9 +705,7 @@ def convertir_a_utc(
             df["fecha"] = (
                 df["fecha"]
                 .dt.tz_localize(
-                    TIMEZONE_LOCAL,
-                    ambiguous="NaT",
-                    nonexistent="shift_forward"
+                    TIMEZONE_LOCAL, ambiguous="NaT", nonexistent="shift_forward"
                 )
                 .dt.tz_convert("UTC")
             )
@@ -812,8 +807,7 @@ def extraer_hora(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
         return df
 
     df["hora"] = df["fecha"].dt.hour
-    logger.debug(
-        f"Columna 'hora' extraída. Distribución: {df['hora'].describe()}")
+    logger.debug(f"Columna 'hora' extraída. Distribución: {df['hora'].describe()}")
 
     return df
 
@@ -822,10 +816,8 @@ def extraer_hora(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
 # GUARDADO Y RESUMEN
 # ==============================================================================
 
-def guardar_resultados(
-    df: pd.DataFrame,
-    logger: logging.Logger
-) -> Optional[Path]:
+
+def guardar_resultados(df: pd.DataFrame, logger: logging.Logger) -> Optional[Path]:
     """
     Guarda el dataset limpio en CSV.
 
@@ -847,7 +839,8 @@ def guardar_resultados(
         df.to_csv(OUTPUT_CSV, index=False, encoding="utf-8")
         size = OUTPUT_CSV.stat().st_size
         size_str = (
-            f"{size / (1024*1024):.1f} MB" if size >= 1024*1024
+            f"{size / (1024*1024):.1f} MB"
+            if size >= 1024 * 1024
             else f"{size / 1024:.1f} KB"
         )
         logger.info(f"✔ CSV guardado: {OUTPUT_CSV.name} ({size_str})")
@@ -874,8 +867,7 @@ def imprimir_resumen(df: pd.DataFrame, logger: logging.Logger) -> None:
         return
 
     logger.info(f"  Total registros: {len(df):,}")
-    logger.info(
-        f"  Rango temporal:  {df['fecha'].min()} → {df['fecha'].max()}")
+    logger.info(f"  Rango temporal:  {df['fecha'].min()} → {df['fecha'].max()}")
     logger.info(f"  Fuentes:         {sorted(df['fuente'].unique())}")
 
     # Desglose por fuente
@@ -926,6 +918,7 @@ def imprimir_resumen(df: pd.DataFrame, logger: logging.Logger) -> None:
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """
@@ -1013,8 +1006,7 @@ def main():
         frames_normalizados.append(df_owm)
 
     if not frames_normalizados:
-        logger.error(
-            "Ninguna fuente produjo datos tras normalización temporal.")
+        logger.error("Ninguna fuente produjo datos tras normalización temporal.")
         return
 
     # ------------------------------------------------------------------
@@ -1032,8 +1024,7 @@ def main():
     for col in VARIABLES_CANONICAS:
         if col not in df_all.columns:
             df_all[col] = float("nan")
-            logger.debug(
-                f"Columna '{col}' añadida con NaN (no presente en datos)")
+            logger.debug(f"Columna '{col}' añadida con NaN (no presente en datos)")
 
     # ------------------------------------------------------------------
     # PASO 4: Validar rangos físicos
@@ -1065,16 +1056,19 @@ def main():
 
     # Seleccionar y ordenar columnas según el esquema definido
     columnas_finales = [
-        "fecha", "hora",
-        "precipitacion_mm", "temp_c", "humedad_pct",
-        "fuente", "calidad_dato"
+        "fecha",
+        "hora",
+        "precipitacion_mm",
+        "temp_c",
+        "humedad_pct",
+        "fuente",
+        "calidad_dato",
     ]
 
     # Verificar que todas las columnas existen
     for col in columnas_finales:
         if col not in df_all.columns:
-            logger.error(
-                f"Columna requerida '{col}' no encontrada. Abortando.")
+            logger.error(f"Columna requerida '{col}' no encontrada. Abortando.")
             return
 
     df_final = df_all[columnas_finales].copy()

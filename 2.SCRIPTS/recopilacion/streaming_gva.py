@@ -78,7 +78,7 @@ ESTACIONES_VALENCIA = {
 }
 
 # Configuración de peticiones HTTP
-REQUEST_TIMEOUT = 30        # Segundos máximos de espera por petición
+REQUEST_TIMEOUT = 30  # Segundos máximos de espera por petición
 REQUEST_HEADERS = {
     "User-Agent": "DataDetective/1.0 (Proyecto académico; Valencia)",
     "Accept": "application/json",
@@ -88,6 +88,7 @@ REQUEST_HEADERS = {
 # ==============================================================================
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
+
 
 def setup_logging() -> logging.Logger:
     """
@@ -132,10 +133,8 @@ def setup_logging() -> logging.Logger:
 # FUNCIONES DE CAPTURA
 # ==============================================================================
 
-def fetch_station_data(
-    station_code: str,
-    logger: logging.Logger
-) -> Optional[Any]:
+
+def fetch_station_data(station_code: str, logger: logging.Logger) -> Optional[Any]:
     """
     Realiza una petición GET a la API de GVA para obtener datos de una estación.
 
@@ -153,11 +152,7 @@ def fetch_station_data(
     logger.debug(f"Solicitando datos: {url}")
 
     try:
-        response = requests.get(
-            url,
-            headers=REQUEST_HEADERS,
-            timeout=REQUEST_TIMEOUT
-        )
+        response = requests.get(url, headers=REQUEST_HEADERS, timeout=REQUEST_TIMEOUT)
 
         # Verificar código HTTP
         if response.status_code == 200:
@@ -209,15 +204,11 @@ def fetch_station_data(
         return None
 
     except requests.exceptions.RequestException as e:
-        logger.error(
-            f"Estación {station_code}: error inesperado en petición: {e}"
-        )
+        logger.error(f"Estación {station_code}: error inesperado en petición: {e}")
         return None
 
 
-def capture_all_stations(
-    logger: logging.Logger
-) -> Dict[str, Any]:
+def capture_all_stations(logger: logging.Logger) -> Dict[str, Any]:
     """
     Captura datos de TODAS las estaciones configuradas.
 
@@ -241,8 +232,7 @@ def capture_all_stations(
     # Timestamp de captura (hora local de la máquina)
     capture_timestamp = datetime.now()
 
-    logger.info(
-        f"Iniciando captura de {len(ESTACIONES_VALENCIA)} estaciones...")
+    logger.info(f"Iniciando captura de {len(ESTACIONES_VALENCIA)} estaciones...")
 
     # Diccionario para almacenar datos de todas las estaciones
     captured_data = {
@@ -257,7 +247,7 @@ def capture_all_stations(
             "estaciones_exitosas": 0,
             "estaciones_fallidas": 0,
         },
-        "estaciones": {}
+        "estaciones": {},
     }
 
     exitosas = 0
@@ -272,7 +262,7 @@ def capture_all_stations(
             # Guardar datos RAW sin modificar, solo añadimos nombre
             captured_data["estaciones"][code] = {
                 "nombre": name,
-                "datos": data  # ← JSON completo tal como lo devuelve GVA
+                "datos": data,  # ← JSON completo tal como lo devuelve GVA
             }
             exitosas += 1
             logger.info(f"  ✔ {code}: captura exitosa")
@@ -280,7 +270,7 @@ def capture_all_stations(
             captured_data["estaciones"][code] = {
                 "nombre": name,
                 "datos": None,
-                "error": "No se pudieron obtener datos"
+                "error": "No se pudieron obtener datos",
             }
             fallidas += 1
             logger.warning(f"  ✘ {code}: captura fallida")
@@ -296,10 +286,8 @@ def capture_all_stations(
 # FUNCIONES DE GUARDADO
 # ==============================================================================
 
-def save_capture(
-    data: Dict[str, Any],
-    logger: logging.Logger
-) -> Optional[Path]:
+
+def save_capture(data: Dict[str, Any], logger: logging.Logger) -> Optional[Path]:
     """
     Guarda los datos capturados en un archivo JSON.
 
@@ -329,7 +317,9 @@ def save_capture(
 
         # Calcular tamaño del archivo
         file_size = output_path.stat().st_size
-        size_str = f"{file_size / 1024:.1f} KB" if file_size >= 1024 else f"{file_size} B"
+        size_str = (
+            f"{file_size / 1024:.1f} KB" if file_size >= 1024 else f"{file_size} B"
+        )
 
         logger.info(f"✔ Archivo guardado: {filename} ({size_str})")
         logger.debug(f"  Ruta completa: {output_path}")
@@ -347,6 +337,7 @@ def save_capture(
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """
@@ -406,10 +397,12 @@ def main():
     # Mensaje claro en consola
     if fallidas == 0:
         print(
-            f"\n✅ CAPTURA CORRECTA: {exitosas}/{total} estaciones → {output_path.name}")
+            f"\n✅ CAPTURA CORRECTA: {exitosas}/{total} estaciones → {output_path.name}"
+        )
     else:
         print(
-            f"\n⚠️  CAPTURA PARCIAL: {exitosas}/{total} estaciones → {output_path.name}")
+            f"\n⚠️  CAPTURA PARCIAL: {exitosas}/{total} estaciones → {output_path.name}"
+        )
 
 
 # ==============================================================================

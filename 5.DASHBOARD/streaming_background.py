@@ -34,15 +34,13 @@ logger = logging.getLogger("StreamingBG")
 INTERVALO_SEGUNDOS = 600  # 10 minutos
 
 # Ruta al directorio de scripts de streaming
-_SCRIPTS_DIR = (
-    Path(__file__).resolve().parent.parent / "2.SCRIPTS" / "recopilacion"
-)
+_SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "2.SCRIPTS" / "recopilacion"
 
 # Estado compartido entre el thread y el dashboard (thread-safe via GIL)
 estado_streaming = {
-    "ultima_ejecucion": None,       # datetime de la última ejecución completa
-    "resultado_ultimo_ciclo": None, # lista de dicts con resultado por módulo
-    "en_ejecucion": False,          # True mientras un ciclo está corriendo
+    "ultima_ejecucion": None,  # datetime de la última ejecución completa
+    "resultado_ultimo_ciclo": None,  # lista de dicts con resultado por módulo
+    "en_ejecucion": False,  # True mientras un ciclo está corriendo
     "ciclos_completados": 0,
 }
 
@@ -64,6 +62,7 @@ def _ejecutar_ciclo() -> None:
     try:
         # Importamos aquí para no fallar en el import global si falta algo
         import importlib
+
         if "streaming_master" in sys.modules:
             del sys.modules["streaming_master"]
 
@@ -82,7 +81,9 @@ def _ejecutar_ciclo() -> None:
     for i, module_info in enumerate(master.STREAMING_MODULES, 1):
         logger.info(
             "[StreamingBG] Módulo %d/%d: %s",
-            i, len(master.STREAMING_MODULES), module_info["name"],
+            i,
+            len(master.STREAMING_MODULES),
+            module_info["name"],
         )
         try:
             result = master.run_module(module_info, logger)
@@ -90,15 +91,18 @@ def _ejecutar_ciclo() -> None:
         except Exception as e:
             logger.error(
                 "[StreamingBG] Error ejecutando %s: %s",
-                module_info["name"], e,
+                module_info["name"],
+                e,
             )
-            resultados.append({
-                "modulo": module_info["module"],
-                "nombre": module_info["name"],
-                "fase": module_info["fase"],
-                "estado": "fallido",
-                "error": str(e),
-            })
+            resultados.append(
+                {
+                    "modulo": module_info["module"],
+                    "nombre": module_info["name"],
+                    "fase": module_info["fase"],
+                    "estado": "fallido",
+                    "error": str(e),
+                }
+            )
 
     estado_streaming["resultado_ultimo_ciclo"] = resultados
     estado_streaming["ultima_ejecucion"] = datetime.now()
@@ -108,14 +112,17 @@ def _ejecutar_ciclo() -> None:
     total = len(resultados)
     logger.info(
         "[StreamingBG] Ciclo #%d completado: %d/%d exitosos.",
-        estado_streaming["ciclos_completados"], exitosos, total,
+        estado_streaming["ciclos_completados"],
+        exitosos,
+        total,
     )
 
 
 def _loop_streaming() -> None:
     """Bucle infinito que ejecuta ciclos de streaming con pausa entre ellos."""
     logger.info(
-        "[StreamingBG] Thread iniciado (intervalo: %ds).", INTERVALO_SEGUNDOS,
+        "[StreamingBG] Thread iniciado (intervalo: %ds).",
+        INTERVALO_SEGUNDOS,
     )
     # Primera ejecución inmediata al arrancar
     while True:

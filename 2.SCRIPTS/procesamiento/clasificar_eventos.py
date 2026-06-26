@@ -54,7 +54,6 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 
-
 # ==============================================================================
 # CONFIGURACION
 # ==============================================================================
@@ -65,7 +64,7 @@ LOG_DIR = PROJECT_ROOT / "logs"
 
 INPUT_FILES = {
     "visitvalencia": EVENTOS_DIR / "visitvalencia.json",
-    "ayuntamiento":  EVENTOS_DIR / "ayuntamiento.json",
+    "ayuntamiento": EVENTOS_DIR / "ayuntamiento.json",
 }
 
 OUTPUT_FILE = EVENTOS_DIR / "eventos_clasificados.json"
@@ -81,134 +80,368 @@ OUTPUT_FILE = EVENTOS_DIR / "eventos_clasificados.json"
 
 REGLAS_SUBCATEGORIA = [
     # ── FESTIVO ──
-    ("festivo", "fallas", [
-        "fallas", "falla", "ninot", "mascletà", "mascletá",
-        "cremà", "cremá", "ofrenda", "plantà", "plantá",
-        "nit del foc", "despertà", "despertá",
-    ]),
-    ("festivo", "navidad", [
-        "navidad", "nadal", "nochevieja", "nit de cap d'any",
-        "reyes magos", "reis mags", "cabalgata de reyes",
-        "belen", "belén", "pessebre",
-    ]),
-    ("festivo", "semana_santa", [
-        "semana santa", "setmana santa", "procesión semana",
-        "procesion semana", "pascua", "pasqua",
-    ]),
-    ("festivo", "ano_nuevo", [
-        "año nuevo", "any nou", "fin de año", "fin de any",
-        "nochevieja", "nit de cap",
-    ]),
-    ("festivo", "fiesta_local", [
-        "9 d'octubre", "9 de octubre", "dia de la comunitat",
-        "san vicente", "sant vicent", "corpus", "gran fira",
-        "feria de julio", "fira de juliol", "san juan", "sant joan",
-    ]),
-
+    (
+        "festivo",
+        "fallas",
+        [
+            "fallas",
+            "falla",
+            "ninot",
+            "mascletà",
+            "mascletá",
+            "cremà",
+            "cremá",
+            "ofrenda",
+            "plantà",
+            "plantá",
+            "nit del foc",
+            "despertà",
+            "despertá",
+        ],
+    ),
+    (
+        "festivo",
+        "navidad",
+        [
+            "navidad",
+            "nadal",
+            "nochevieja",
+            "nit de cap d'any",
+            "reyes magos",
+            "reis mags",
+            "cabalgata de reyes",
+            "belen",
+            "belén",
+            "pessebre",
+        ],
+    ),
+    (
+        "festivo",
+        "semana_santa",
+        [
+            "semana santa",
+            "setmana santa",
+            "procesión semana",
+            "procesion semana",
+            "pascua",
+            "pasqua",
+        ],
+    ),
+    (
+        "festivo",
+        "ano_nuevo",
+        [
+            "año nuevo",
+            "any nou",
+            "fin de año",
+            "fin de any",
+            "nochevieja",
+            "nit de cap",
+        ],
+    ),
+    (
+        "festivo",
+        "fiesta_local",
+        [
+            "9 d'octubre",
+            "9 de octubre",
+            "dia de la comunitat",
+            "san vicente",
+            "sant vicent",
+            "corpus",
+            "gran fira",
+            "feria de julio",
+            "fira de juliol",
+            "san juan",
+            "sant joan",
+        ],
+    ),
     # ── DEPORTIVO ──
-    ("deportivo", "partido_futbol", [
-        "valencia cf", "valenciacf", "mestalla", "liga ",
-        "laliga", "copa del rey", "champions", "europa league",
-        "conference league",
-    ]),
-    ("deportivo", "maraton", [
-        "maratón", "maraton", "marathon", "media maratón",
-        "media maraton", "10k", "15k", "carrera popular",
-    ]),
-    ("deportivo", "ciclismo", [
-        "vuelta ciclista", "volta ciclista", "ciclismo",
-        "etapa ciclista",
-    ]),
-    ("deportivo", "otro_deporte", [
-        "triatlón", "triatlon", "regata", "vela",
-        "atletismo", "tenis", "open de tenis",
-        "baloncesto", "basket", "balonmano", "handball",
-    ]),
-
+    (
+        "deportivo",
+        "partido_futbol",
+        [
+            "valencia cf",
+            "valenciacf",
+            "mestalla",
+            "liga ",
+            "laliga",
+            "copa del rey",
+            "champions",
+            "europa league",
+            "conference league",
+        ],
+    ),
+    (
+        "deportivo",
+        "maraton",
+        [
+            "maratón",
+            "maraton",
+            "marathon",
+            "media maratón",
+            "media maraton",
+            "10k",
+            "15k",
+            "carrera popular",
+        ],
+    ),
+    (
+        "deportivo",
+        "ciclismo",
+        [
+            "vuelta ciclista",
+            "volta ciclista",
+            "ciclismo",
+            "etapa ciclista",
+        ],
+    ),
+    (
+        "deportivo",
+        "otro_deporte",
+        [
+            "triatlón",
+            "triatlon",
+            "regata",
+            "vela",
+            "atletismo",
+            "tenis",
+            "open de tenis",
+            "baloncesto",
+            "basket",
+            "balonmano",
+            "handball",
+        ],
+    ),
     # ── MUSICAL ──
-    ("musical", "concierto_masivo", [
-        "roig arena", "concierto", "concert", "gira ",
-        "live ", "en directo", "recital musical",
-    ]),
-    ("musical", "festival_musica", [
-        "festival", "fest ", "festivalpark",
-        "les arts ", "berklee", "jazz",
-    ]),
-    ("musical", "opera", [
-        "ópera", "opera", "palau de les arts",
-        "zarzuela", "lírica", "lirica",
-    ]),
-
+    (
+        "musical",
+        "concierto_masivo",
+        [
+            "roig arena",
+            "concierto",
+            "concert",
+            "gira ",
+            "live ",
+            "en directo",
+            "recital musical",
+        ],
+    ),
+    (
+        "musical",
+        "festival_musica",
+        [
+            "festival",
+            "fest ",
+            "festivalpark",
+            "les arts ",
+            "berklee",
+            "jazz",
+        ],
+    ),
+    (
+        "musical",
+        "opera",
+        [
+            "ópera",
+            "opera",
+            "palau de les arts",
+            "zarzuela",
+            "lírica",
+            "lirica",
+        ],
+    ),
     # ── CULTURAL ──
-    ("cultural", "exposicion", [
-        "exposición", "exposicion", "exposició", "exhibición",
-        "muestra", "mostra",
-    ]),
-    ("cultural", "teatro", [
-        "teatro", "teatre", "obra teatral", "comedia",
-        "drama ", "monólogo", "monologo", "improv",
-    ]),
-    ("cultural", "danza", [
-        "danza", "dansa", "ballet", "flamenco",
-        "coreografía", "coreografia",
-    ]),
-    ("cultural", "cine", [
-        "cine", "cinema", "película", "pelicula",
-        "documental", "cortometraje", "filmoteca",
-    ]),
-    ("cultural", "museo", [
-        "museo", "museu", "ivam", "muvim", "bombas gens",
-        "centre del carme", "galería", "galeria",
-    ]),
-    ("cultural", "literatura", [
-        "feria del libro", "fira del llibre", "presentación libro",
-        "presentacion libro", "firma de libros", "lectura",
-        "recital poético", "recital poetico", "poesía", "poesia",
-    ]),
-
+    (
+        "cultural",
+        "exposicion",
+        [
+            "exposición",
+            "exposicion",
+            "exposició",
+            "exhibición",
+            "muestra",
+            "mostra",
+        ],
+    ),
+    (
+        "cultural",
+        "teatro",
+        [
+            "teatro",
+            "teatre",
+            "obra teatral",
+            "comedia",
+            "drama ",
+            "monólogo",
+            "monologo",
+            "improv",
+        ],
+    ),
+    (
+        "cultural",
+        "danza",
+        [
+            "danza",
+            "dansa",
+            "ballet",
+            "flamenco",
+            "coreografía",
+            "coreografia",
+        ],
+    ),
+    (
+        "cultural",
+        "cine",
+        [
+            "cine",
+            "cinema",
+            "película",
+            "pelicula",
+            "documental",
+            "cortometraje",
+            "filmoteca",
+        ],
+    ),
+    (
+        "cultural",
+        "museo",
+        [
+            "museo",
+            "museu",
+            "ivam",
+            "muvim",
+            "bombas gens",
+            "centre del carme",
+            "galería",
+            "galeria",
+        ],
+    ),
+    (
+        "cultural",
+        "literatura",
+        [
+            "feria del libro",
+            "fira del llibre",
+            "presentación libro",
+            "presentacion libro",
+            "firma de libros",
+            "lectura",
+            "recital poético",
+            "recital poetico",
+            "poesía",
+            "poesia",
+        ],
+    ),
     # ── INSTITUCIONAL ──
-    ("institucional", "conferencia", [
-        "conferencia", "congreso", "simposio", "jornada técnica",
-        "jornada tecnica", "seminario", "foro ",
-    ]),
-    ("institucional", "taller", [
-        "taller", "workshop", "formación", "formacion",
-        "curso ", "masterclass", "hackathon",
-    ]),
-    ("institucional", "acto_oficial", [
-        "acto oficial", "acte oficial", "inauguración",
-        "inauguracion", "homenaje", "entrega de premios",
-        "pleno municipal",
-    ]),
-
+    (
+        "institucional",
+        "conferencia",
+        [
+            "conferencia",
+            "congreso",
+            "simposio",
+            "jornada técnica",
+            "jornada tecnica",
+            "seminario",
+            "foro ",
+        ],
+    ),
+    (
+        "institucional",
+        "taller",
+        [
+            "taller",
+            "workshop",
+            "formación",
+            "formacion",
+            "curso ",
+            "masterclass",
+            "hackathon",
+        ],
+    ),
+    (
+        "institucional",
+        "acto_oficial",
+        [
+            "acto oficial",
+            "acte oficial",
+            "inauguración",
+            "inauguracion",
+            "homenaje",
+            "entrega de premios",
+            "pleno municipal",
+        ],
+    ),
     # ── COMERCIAL ──
-    ("comercial", "feria_comercial", [
-        "feria", "fira", "salón del", "salon del",
-        "mercado", "mercat", "mercadillo",
-    ]),
-    ("comercial", "gastronomia", [
-        "gastronomía", "gastronomia", "tapa", "paella",
-        "gastro", "showcooking", "cata de",
-    ]),
-
+    (
+        "comercial",
+        "feria_comercial",
+        [
+            "feria",
+            "fira",
+            "salón del",
+            "salon del",
+            "mercado",
+            "mercat",
+            "mercadillo",
+        ],
+    ),
+    (
+        "comercial",
+        "gastronomia",
+        [
+            "gastronomía",
+            "gastronomia",
+            "tapa",
+            "paella",
+            "gastro",
+            "showcooking",
+            "cata de",
+        ],
+    ),
     # ── RELIGIOSO ──
-    ("religioso", "procesion", [
-        "procesión", "procesion", "processó", "romería",
-        "romeria", "peregrinación", "peregrinacion",
-        "virgen de los desamparados", "mare de déu",
-    ]),
-    ("religioso", "misa_especial", [
-        "misa solemne", "missa", "tedeum", "te deum",
-    ]),
+    (
+        "religioso",
+        "procesion",
+        [
+            "procesión",
+            "procesion",
+            "processó",
+            "romería",
+            "romeria",
+            "peregrinación",
+            "peregrinacion",
+            "virgen de los desamparados",
+            "mare de déu",
+        ],
+    ),
+    (
+        "religioso",
+        "misa_especial",
+        [
+            "misa solemne",
+            "missa",
+            "tedeum",
+            "te deum",
+        ],
+    ),
 ]
 
 # --- Grandes recintos que elevan impacto ---
 GRANDES_RECINTOS = [
-    "roig arena", "mestalla", "ciudad de las artes",
-    "ciutat de les arts", "palau de la música",
-    "palau de la musica", "plaza de toros",
-    "plaça de bous", "jardín del turia",
-    "marina real", "oceanogràfic", "oceanografic",
+    "roig arena",
+    "mestalla",
+    "ciudad de las artes",
+    "ciutat de les arts",
+    "palau de la música",
+    "palau de la musica",
+    "plaza de toros",
+    "plaça de bous",
+    "jardín del turia",
+    "marina real",
+    "oceanogràfic",
+    "oceanografic",
 ]
 
 # --- Mapeo impacto_esperado -> impacto_score ---
@@ -223,6 +456,7 @@ IMPACTO_A_SCORE = {
 # ==============================================================================
 # CONFIGURACION DE LOGGING
 # ==============================================================================
+
 
 def setup_logging() -> logging.Logger:
     """Configura logging dual: consola (INFO) + archivo (DEBUG)."""
@@ -251,6 +485,7 @@ def setup_logging() -> logging.Logger:
 # ==============================================================================
 # FUNCIONES DE CARGA
 # ==============================================================================
+
 
 def load_json_file(
     filepath: Path,
@@ -307,6 +542,7 @@ def extract_events_from_source(
 # FUNCIONES AUXILIARES
 # ==============================================================================
 
+
 def _text_contains_any(text: str, keywords: List[str]) -> bool:
     """Comprueba si un texto contiene alguna keyword (case-insensitive)."""
     text_lower = text.lower()
@@ -358,7 +594,9 @@ def _calcular_dias_evento(evento: Dict[str, Any]) -> Optional[int]:
 
     for fmt in formatos:
         try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str[:len("YYYY-MM-DD")], fmt[:len(fmt)])
+            fecha_inicio = datetime.strptime(
+                fecha_inicio_str[: len("YYYY-MM-DD")], fmt[: len(fmt)]
+            )
             break
         except ValueError:
             continue
@@ -374,7 +612,9 @@ def _calcular_dias_evento(evento: Dict[str, Any]) -> Optional[int]:
 
     for fmt in formatos:
         try:
-            fecha_fin = datetime.strptime(fecha_fin_str[:len("YYYY-MM-DD")], fmt[:len(fmt)])
+            fecha_fin = datetime.strptime(
+                fecha_fin_str[: len("YYYY-MM-DD")], fmt[: len(fmt)]
+            )
             break
         except ValueError:
             continue
@@ -397,6 +637,7 @@ def _calcular_dias_evento(evento: Dict[str, Any]) -> Optional[int]:
 # ==============================================================================
 # CLASIFICACION MULTIDIMENSIONAL
 # ==============================================================================
+
 
 def _determine_categoria_y_subcategoria(
     evento: Dict[str, Any],
@@ -539,6 +780,7 @@ def _determine_impacto(
 # FUNCION PRINCIPAL DE CLASIFICACION (por evento)
 # ==============================================================================
 
+
 def classify_event(
     evento: Dict[str, Any],
     logger: logging.Logger,
@@ -594,6 +836,7 @@ def classify_event(
 # CLASIFICACION MASIVA
 # ==============================================================================
 
+
 def classify_all_events(
     eventos: List[Dict[str, Any]],
     logger: logging.Logger,
@@ -635,6 +878,7 @@ def classify_all_events(
 # CONSTRUCCION DEL OUTPUT
 # ==============================================================================
 
+
 def build_output(
     eventos: List[Dict[str, Any]],
     eventos_por_fuente: Dict[str, int],
@@ -663,9 +907,7 @@ def build_output(
             "fase": "4.4 - Clasificacion de eventos (taxonomia multidimensional v2)",
             "timestamp_captura": datetime.now().isoformat(),
             "timestamp_utc": (
-                datetime.now(timezone.utc)
-                .isoformat()
-                .replace("+00:00", "Z")
+                datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             ),
             "descripcion": (
                 "Eventos unificados de 3 fuentes con clasificacion "
@@ -738,6 +980,7 @@ def save_output(
 # ==============================================================================
 # FUNCION PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """Flujo: carga -> unifica -> clasifica multidimensional -> guarda."""

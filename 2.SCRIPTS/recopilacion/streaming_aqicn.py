@@ -8,7 +8,7 @@ Fase 3.1: Captura de Datos en Tiempo Real - Calidad del Aire (AQICN alternativa)
 Descripción:
     Este script captura datos de contaminación en TIEMPO REAL desde la API de AQICN/WAQI,
     que agrega datos de las estaciones oficiales de GVA.
-    
+
     Razón del cambio: La API original de GVA (agroambient.gva.es) está inactiva.
     AQICN ofrece datos equivalentes en JSON.
 
@@ -31,7 +31,7 @@ Estaciones de Valencia configuradas (con UID de AQICN, verificadas 2026-04-09):
 Uso:
     1. Añade AQI_TOKEN en .env
     2. python streaming_gva.py
-    
+
 Salida:
     - 1.DATOS_EN_CRUDO/dinamicos/contaminacion/aqicn_YYYYMMDD_HHMMSS.json
     - Datos RAW sin transformar + metadatos de captura
@@ -68,12 +68,12 @@ AQI_TOKEN = os.getenv("AQI_TOKEN")
 # Estaciones con UID de AQICN (verificadas 2026-04-09)
 # UIDs negativos (sensor ciudadano) son válidos: la URL usa @-899581
 ESTACIONES_VALENCIA = {
-    "46250001":    {"name": "Avd. Francia, València",            "uid": 6639},
-    "46250030":    {"name": "Pista de Silla, València",          "uid": 6637},
-    "46250047":    {"name": "Politècnic, València",              "uid": 6640},
-    "46250050":    {"name": "Molí del Sol, València",            "uid": 6638},
-    "46250060":    {"name": "Quart de Poblet (metropolitana)",   "uid": 6644},
-    "torre_navis": {"name": "Torre Navis (sensor ciudadano)",    "uid": -899581},
+    "46250001": {"name": "Avd. Francia, València", "uid": 6639},
+    "46250030": {"name": "Pista de Silla, València", "uid": 6637},
+    "46250047": {"name": "Politècnic, València", "uid": 6640},
+    "46250050": {"name": "Molí del Sol, València", "uid": 6638},
+    "46250060": {"name": "Quart de Poblet (metropolitana)", "uid": 6644},
+    "torre_navis": {"name": "Torre Navis (sensor ciudadano)", "uid": -899581},
 }
 
 REQUEST_TIMEOUT = 30
@@ -111,30 +111,26 @@ def setup_logging() -> logging.Logger:
 
     return logger
 
+
 # ==============================================================================
 # FUNCIONES DE CAPTURA
 # ==============================================================================
 
 
 def fetch_station_data(
-    station_code: str,
-    uid: int,
-    logger: logging.Logger
+    station_code: str, uid: int, logger: logging.Logger
 ) -> Optional[Any]:
     if not AQI_TOKEN:
         logger.error(
-            "AQI_TOKEN no configurada en .env. Regístrate en https://aqicn.org/data-platform/token/")
+            "AQI_TOKEN no configurada en .env. Regístrate en https://aqicn.org/data-platform/token/"
+        )
         return None
 
     url = AQI_BASE_URL.format(uid=uid) + f"?token={AQI_TOKEN}"
     logger.debug(f"Solicitando datos: {url}")
 
     try:
-        response = requests.get(
-            url,
-            headers=REQUEST_HEADERS,
-            timeout=REQUEST_TIMEOUT
-        )
+        response = requests.get(url, headers=REQUEST_HEADERS, timeout=REQUEST_TIMEOUT)
 
         if response.status_code == 200:
             data = response.json()
@@ -143,11 +139,11 @@ def fetch_station_data(
                 return data["data"]  # Solo los datos útiles
             else:
                 logger.warning(
-                    f"Estación {station_code}: error en datos ({data.get('data')})")
+                    f"Estación {station_code}: error en datos ({data.get('data')})"
+                )
                 return None
         else:
-            logger.warning(
-                f"Estación {station_code}: HTTP {response.status_code}")
+            logger.warning(f"Estación {station_code}: HTTP {response.status_code}")
             return None
 
     except Exception as e:
@@ -155,27 +151,26 @@ def fetch_station_data(
         return None
 
 
-def capture_all_stations(
-    logger: logging.Logger
-) -> Dict[str, Any]:
+def capture_all_stations(logger: logging.Logger) -> Dict[str, Any]:
     capture_timestamp = datetime.now()
 
-    logger.info(
-        f"Iniciando captura de {len(ESTACIONES_VALENCIA)} estaciones...")
+    logger.info(f"Iniciando captura de {len(ESTACIONES_VALENCIA)} estaciones...")
 
     captured_data = {
         "_metadata": {
             "proyecto": "Data Detective Valencia",
             "fase": "3.1 - Streaming (AQICN alternativa)",
             "timestamp_captura": capture_timestamp.isoformat(),
-            "timestamp_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "timestamp_utc": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
             "fuente": "AQICN/WAQI (agrega datos GVA)",
             "url_base": AQI_BASE_URL,
             "estaciones_solicitadas": len(ESTACIONES_VALENCIA),
             "estaciones_exitosas": 0,
             "estaciones_fallidas": 0,
         },
-        "estaciones": {}
+        "estaciones": {},
     }
 
     exitosas = 0
@@ -192,7 +187,7 @@ def capture_all_stations(
             captured_data["estaciones"][code] = {
                 "nombre": name,
                 "datos": None,
-                "error": "UID no disponible"
+                "error": "UID no disponible",
             }
             fallidas += 1
             continue
@@ -200,17 +195,14 @@ def capture_all_stations(
         data = fetch_station_data(code, uid, logger)
 
         if data is not None:
-            captured_data["estaciones"][code] = {
-                "nombre": name,
-                "datos": data
-            }
+            captured_data["estaciones"][code] = {"nombre": name, "datos": data}
             exitosas += 1
             logger.info(f"  ✔ {code}: captura exitosa")
         else:
             captured_data["estaciones"][code] = {
                 "nombre": name,
                 "datos": None,
-                "error": "No se pudieron obtener datos"
+                "error": "No se pudieron obtener datos",
             }
             fallidas += 1
             logger.warning(f"  ✘ {code}: captura fallida")
@@ -220,15 +212,13 @@ def capture_all_stations(
 
     return captured_data
 
+
 # ==============================================================================
 # FUNCIONES DE GUARDADO
 # ==============================================================================
 
 
-def save_capture(
-    data: Dict[str, Any],
-    logger: logging.Logger
-) -> Optional[Path]:
+def save_capture(data: Dict[str, Any], logger: logging.Logger) -> Optional[Path]:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -240,7 +230,9 @@ def save_capture(
             json.dump(data, f, ensure_ascii=False, indent=2)
 
         file_size = output_path.stat().st_size
-        size_str = f"{file_size / 1024:.1f} KB" if file_size >= 1024 else f"{file_size} B"
+        size_str = (
+            f"{file_size / 1024:.1f} KB" if file_size >= 1024 else f"{file_size} B"
+        )
 
         logger.info(f"✔ Archivo guardado: {filename} ({size_str})")
         logger.debug(f"  Ruta completa: {output_path}")
@@ -250,6 +242,7 @@ def save_capture(
     except Exception as e:
         logger.error(f"Error guardando {filename}: {e}")
         return None
+
 
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
@@ -284,8 +277,7 @@ def main():
     total = meta["estaciones_solicitadas"]
 
     if exitosas == 0:
-        logger.error(
-            "No se pudieron capturar datos. Verifica token o conexión.")
+        logger.error("No se pudieron capturar datos. Verifica token o conexión.")
         print("\n❌ CAPTURA FALLIDA: sin datos.")
         return
 
@@ -309,10 +301,12 @@ def main():
 
     if fallidas == 0:
         print(
-            f"\n✅ CAPTURA CORRECTA: {exitosas}/{total} estaciones → {output_path.name}")
+            f"\n✅ CAPTURA CORRECTA: {exitosas}/{total} estaciones → {output_path.name}"
+        )
     else:
         print(
-            f"\n⚠️ CAPTURA PARCIAL: {exitosas}/{total} estaciones → {output_path.name}")
+            f"\n⚠️ CAPTURA PARCIAL: {exitosas}/{total} estaciones → {output_path.name}"
+        )
 
 
 if __name__ == "__main__":

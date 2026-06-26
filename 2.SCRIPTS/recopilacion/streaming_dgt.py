@@ -8,12 +8,12 @@ Fase 3.4: Captura de Datos en Tiempo Real - Tráfico (DGT · DATEX II v3.6)
 Descripción:
     Este script captura datos de incidencias de tráfico en TIEMPO REAL desde
     el NAP (National Access Point) de la DGT en formato DATEX II versión 3.6.
-    
+
     El XML contiene incidencias activas en TODA España (obras, cortes,
     accidentes, congestión, etc.) con coordenadas GPS, carretera, municipio,
     provincia y comunidad autónoma. El filtrado por Valencia se realizará
     en la Fase 5 (ETL).
-    
+
     NOTA SOBRE VELOCIDAD/INTENSIDAD:
     ─────────────────────────────────
     Este endpoint publica INCIDENCIAS (SituationPublication).
@@ -40,7 +40,7 @@ Namespaces DATEX II v3.6:
 
 Uso:
     python streaming_dgt.py
-    
+
 Salida:
     - 1.DATOS_EN_CRUDO/dinamicos/trafico/dgt_YYYYMMDD_HHMMSS.json
     - Datos parseados + metadatos de captura
@@ -71,14 +71,11 @@ OUTPUT_DIR = PROJECT_ROOT / "1.DATOS_EN_CRUDO" / "dinamicos" / "trafico"
 LOG_DIR = PROJECT_ROOT / "logs"
 
 # Endpoint NAP DGT (DATEX II v3.6 - Incidencias)
-DGT_URL = (
-    "https://nap.dgt.es/datex2/v3/dgt/"
-    "SituationPublication/datex2_v36.xml"
-)
+DGT_URL = "https://nap.dgt.es/datex2/v3/dgt/" "SituationPublication/datex2_v36.xml"
 
 # Namespaces DATEX II v3.6 (mapeados desde el XML real)
 NS = {
-    "d2":  "http://levelC/schema/3/d2Payload",
+    "d2": "http://levelC/schema/3/d2Payload",
     "sit": "http://levelC/schema/3/situation",
     "com": "http://levelC/schema/3/common",
     "loc": "http://levelC/schema/3/locationReferencing",
@@ -104,14 +101,15 @@ REQUEST_HEADERS = {
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
 
+
 def setup_logging() -> logging.Logger:
     """
     Configura el sistema de logging para el script.
-    
+
     Escribe en:
     - Consola: nivel INFO (mensajes de estado)
     - Archivo: nivel DEBUG (detalle completo para debug)
-    
+
     Returns:
         logging.Logger: Instancia del logger configurado
     """
@@ -145,16 +143,17 @@ def setup_logging() -> logging.Logger:
 # FUNCIONES DE DESCARGA
 # ==============================================================================
 
+
 def fetch_datex_xml(logger: logging.Logger) -> Optional[bytes]:
     """
     Descarga el XML DATEX II v3.6 desde el NAP de la DGT.
-    
+
     El archivo XML puede ser grande (varios MB) ya que contiene
     todas las incidencias activas en España.
-    
+
     Args:
         logger: Logger para registrar eventos
-    
+
     Returns:
         Contenido XML como bytes, o None si hay error
     """
@@ -163,9 +162,7 @@ def fetch_datex_xml(logger: logging.Logger) -> Optional[bytes]:
 
     try:
         response = requests.get(
-            DGT_URL,
-            headers=REQUEST_HEADERS,
-            timeout=REQUEST_TIMEOUT
+            DGT_URL, headers=REQUEST_HEADERS, timeout=REQUEST_TIMEOUT
         )
 
         if response.status_code == 200:
@@ -195,10 +192,7 @@ def fetch_datex_xml(logger: logging.Logger) -> Optional[bytes]:
             return None
 
         elif response.status_code == 429:
-            logger.error(
-                "Rate limit (HTTP 429). "
-                "Reducir frecuencia de peticiones."
-            )
+            logger.error("Rate limit (HTTP 429). " "Reducir frecuencia de peticiones.")
             return None
 
         elif response.status_code >= 500:
@@ -209,9 +203,7 @@ def fetch_datex_xml(logger: logging.Logger) -> Optional[bytes]:
             return None
 
         else:
-            logger.warning(
-                f"Respuesta inesperada (HTTP {response.status_code})"
-            )
+            logger.warning(f"Respuesta inesperada (HTTP {response.status_code})")
             return None
 
     except requests.exceptions.Timeout:
@@ -234,17 +226,18 @@ def fetch_datex_xml(logger: logging.Logger) -> Optional[bytes]:
 # FUNCIONES DE PARSING (lxml)
 # ==============================================================================
 
+
 def get_text(element: etree._Element, xpath: str) -> Optional[str]:
     """
     Extrae texto de un elemento XML usando XPath con namespaces.
-    
+
     Helper para simplificar la extracción de valores del XML DATEX II,
     evitando repetir try/except en cada campo.
-    
+
     Args:
         element: Elemento XML padre
         xpath: Expresión XPath relativa
-    
+
     Returns:
         Texto del elemento encontrado, o None
     """
@@ -257,13 +250,15 @@ def get_text(element: etree._Element, xpath: str) -> Optional[str]:
     return None
 
 
-def parse_location(location_el: etree._Element, logger: logging.Logger) -> Dict[str, Any]:
+def parse_location(
+    location_el: etree._Element, logger: logging.Logger
+) -> Dict[str, Any]:
     """
     Parsea el bloque de localización de una incidencia DATEX II.
-    
+
     Extrae carretera, coordenadas GPS, municipio, provincia y
     comunidad autónoma desde la estructura anidada de locationReference.
-    
+
     Estructura esperada:
     <sit:locationReference xsi:type="loc:SingleRoadLinearLocation">
       <loc:supplementaryPositionalDescription>
@@ -278,11 +273,11 @@ def parse_location(location_el: etree._Element, logger: logging.Logger) -> Dict[
           <loc:_tpegNonJunctionPointExtension>
             <loc:extendedTpegNonJunctionPoint>
               <lse:province>Valencia/València</lse:province>
-    
+
     Args:
         location_el: Elemento XML locationReference
         logger: Logger para registrar eventos
-    
+
     Returns:
         Diccionario con datos de localización extraídos
     """
@@ -291,7 +286,7 @@ def parse_location(location_el: etree._Element, logger: logging.Logger) -> Dict[
     # Carretera
     road_name = get_text(
         location_el,
-        ".//loc:supplementaryPositionalDescription/loc:roadInformation/loc:roadName"
+        ".//loc:supplementaryPositionalDescription/loc:roadInformation/loc:roadName",
     )
     if road_name:
         loc_data["carretera"] = road_name
@@ -299,17 +294,14 @@ def parse_location(location_el: etree._Element, logger: logging.Logger) -> Dict[
     # Carril / calzada
     lane_usage = get_text(
         location_el,
-        ".//loc:supplementaryPositionalDescription/loc:carriageway/loc:lane/loc:laneUsage"
+        ".//loc:supplementaryPositionalDescription/loc:carriageway/loc:lane/loc:laneUsage",
     )
     if lane_usage:
         loc_data["carril"] = lane_usage
 
     # Puntos geográficos (from / to)
     for point_name in ("from", "to"):
-        point_el = location_el.find(
-            f".//loc:tpegLinearLocation/loc:{point_name}",
-            NS
-        )
+        point_el = location_el.find(f".//loc:tpegLinearLocation/loc:{point_name}", NS)
         if point_el is None:
             continue
 
@@ -328,8 +320,7 @@ def parse_location(location_el: etree._Element, logger: logging.Logger) -> Dict[
 
         # Extensión española (municipio, provincia, comunidad, PK)
         ext_el = point_el.find(
-            ".//loc:_tpegNonJunctionPointExtension/loc:extendedTpegNonJunctionPoint",
-            NS
+            ".//loc:_tpegNonJunctionPointExtension/loc:extendedTpegNonJunctionPoint", NS
         )
         if ext_el is not None:
             comunidad = get_text(ext_el, "lse:autonomousCommunity")
@@ -356,8 +347,7 @@ def parse_location(location_el: etree._Element, logger: logging.Logger) -> Dict[
 
     # --- Fallback de coordenadas si tpegLinearLocation no las tenía ---
     tiene_coords = any(
-        "latitud" in loc_data.get(k, {})
-        for k in ("punto_from", "punto_to")
+        "latitud" in loc_data.get(k, {}) for k in ("punto_from", "punto_to")
     )
 
     if not tiene_coords:
@@ -385,12 +375,14 @@ def parse_location(location_el: etree._Element, logger: logging.Logger) -> Dict[
             lat_el = location_el.find(
                 ".//loc:alertCMethod2PairPointLinearReference"
                 "/loc:alertCLocation[1]"
-                "//loc:pointCoordinates/loc:latitude", NS
+                "//loc:pointCoordinates/loc:latitude",
+                NS,
             )
             lon_el = location_el.find(
                 ".//loc:alertCMethod2PairPointLinearReference"
                 "/loc:alertCLocation[1]"
-                "//loc:pointCoordinates/loc:longitude", NS
+                "//loc:pointCoordinates/loc:longitude",
+                NS,
             )
             if lat_el is not None and lon_el is not None:
                 lat_val = float(lat_el.text)
@@ -420,19 +412,18 @@ def parse_location(location_el: etree._Element, logger: logging.Logger) -> Dict[
 
 
 def parse_situation_record(
-    record_el: etree._Element,
-    logger: logging.Logger
+    record_el: etree._Element, logger: logging.Logger
 ) -> Dict[str, Any]:
     """
     Parsea un situationRecord individual del XML DATEX II.
-    
+
     Cada situationRecord representa una incidencia con su tipo,
     severidad, causa, localización y vigencia.
-    
+
     Args:
         record_el: Elemento XML situationRecord
         logger: Logger para registrar eventos
-    
+
     Returns:
         Diccionario con datos de la incidencia
     """
@@ -471,22 +462,18 @@ def parse_situation_record(
         record_data["fuente"] = source
 
     # Vigencia
-    validity_status = get_text(
-        record_el, "sit:validity/com:validityStatus"
-    )
+    validity_status = get_text(record_el, "sit:validity/com:validityStatus")
     if validity_status:
         record_data["estado_vigencia"] = validity_status
 
     start_time = get_text(
-        record_el,
-        "sit:validity/com:validityTimeSpecification/com:overallStartTime"
+        record_el, "sit:validity/com:validityTimeSpecification/com:overallStartTime"
     )
     if start_time:
         record_data["fecha_inicio"] = start_time
 
     end_time = get_text(
-        record_el,
-        "sit:validity/com:validityTimeSpecification/com:overallEndTime"
+        record_el, "sit:validity/com:validityTimeSpecification/com:overallEndTime"
     )
     if end_time:
         record_data["fecha_fin"] = end_time
@@ -541,13 +528,10 @@ def parse_situation_record(
     return record_data
 
 
-def parse_datex_xml(
-    xml_bytes: bytes,
-    logger: logging.Logger
-) -> Dict[str, Any]:
+def parse_datex_xml(xml_bytes: bytes, logger: logging.Logger) -> Dict[str, Any]:
     """
     Parsea el XML DATEX II v3.6 completo y extrae todas las incidencias.
-    
+
     Estructura del XML:
     <d2:payload>
       <com:publicationTime>...</com:publicationTime>
@@ -557,11 +541,11 @@ def parse_datex_xml(
       </sit:situation>
       ...
     </d2:payload>
-    
+
     Args:
         xml_bytes: XML como bytes
         logger: Logger para registrar eventos
-    
+
     Returns:
         Diccionario con:
         - publicacion: metadatos del feed
@@ -613,9 +597,7 @@ def parse_datex_xml(
     for sit_el in situations:
         sit_id = sit_el.get("id")
         overall_severity = get_text(sit_el, "sit:overallSeverity")
-        info_status = get_text(
-            sit_el, "sit:headerInformation/com:informationStatus"
-        )
+        info_status = get_text(sit_el, "sit:headerInformation/com:informationStatus")
 
         # Cada situación puede tener múltiples situationRecord
         records = sit_el.findall("sit:situationRecord", NS)
@@ -669,21 +651,20 @@ def parse_datex_xml(
 # FUNCIÓN DE CAPTURA PRINCIPAL
 # ==============================================================================
 
-def capture_dgt_data(
-    logger: logging.Logger
-) -> Dict[str, Any]:
+
+def capture_dgt_data(logger: logging.Logger) -> Dict[str, Any]:
     """
     Orquesta la captura completa de datos de tráfico de la DGT.
-    
+
     Flujo:
     1. Descarga XML DATEX II desde NAP
     2. Parsea con lxml
     3. Extrae incidencias, localización, severidad
     4. Construye JSON con metadatos
-    
+
     Args:
         logger: Logger para registrar eventos
-    
+
     Returns:
         Diccionario con datos capturados y metadatos
     """
@@ -694,7 +675,9 @@ def capture_dgt_data(
             "proyecto": "Data Detective Valencia",
             "fase": "3.4 - Streaming DGT (Tráfico DATEX II)",
             "timestamp_captura": capture_timestamp.isoformat(),
-            "timestamp_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "timestamp_utc": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
             "fuente": "DGT - NAP (National Access Point)",
             "url": DGT_URL,
             "formato_origen": "XML DATEX II v3.6",
@@ -737,8 +720,8 @@ def capture_dgt_data(
     captured_data["estadisticas"] = parsed["estadisticas"]
     captured_data["_metadata"]["estado_captura"] = "exitosa"
     captured_data["_metadata"]["total_incidencias"] = len(parsed["incidencias"])
-    captured_data["_metadata"]["timestamp_publicacion_dgt"] = (
-        parsed["publicacion"].get("timestamp_publicacion")
+    captured_data["_metadata"]["timestamp_publicacion_dgt"] = parsed["publicacion"].get(
+        "timestamp_publicacion"
     )
 
     return captured_data
@@ -748,19 +731,17 @@ def capture_dgt_data(
 # FUNCIONES DE GUARDADO
 # ==============================================================================
 
-def save_capture(
-    data: Dict[str, Any],
-    logger: logging.Logger
-) -> Optional[Path]:
+
+def save_capture(data: Dict[str, Any], logger: logging.Logger) -> Optional[Path]:
     """
     Guarda los datos capturados en un archivo JSON.
-    
+
     Formato nombre: dgt_YYYYMMDD_HHMMSS.json
-    
+
     Args:
         data: Diccionario con datos capturados
         logger: Logger para registrar eventos
-    
+
     Returns:
         Path al archivo guardado o None si hay error
     """
@@ -796,10 +777,11 @@ def save_capture(
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
 
+
 def main():
     """
     Función principal que orquesta la captura de tráfico DGT.
-    
+
     Flujo:
     1. Descarga XML DATEX II v3.6 del NAP
     2. Parsea incidencias con lxml
@@ -844,17 +826,13 @@ def main():
     if stats:
         logger.info("  --- Desglose por severidad ---")
         for sev, count in sorted(
-            stats.get("por_severidad", {}).items(),
-            key=lambda x: x[1],
-            reverse=True
+            stats.get("por_severidad", {}).items(), key=lambda x: x[1], reverse=True
         ):
             logger.info(f"    {sev}: {count}")
 
         logger.info("  --- Desglose por tipo de causa ---")
         for causa, count in sorted(
-            stats.get("por_tipo_causa", {}).items(),
-            key=lambda x: x[1],
-            reverse=True
+            stats.get("por_tipo_causa", {}).items(), key=lambda x: x[1], reverse=True
         )[:5]:
             logger.info(f"    {causa}: {count}")
 
@@ -862,11 +840,15 @@ def main():
 
     # Mensaje claro en consola
     if estado == "exitosa":
-        print(f"\n✅ CAPTURA CORRECTA: {total} incidencias (España) → {output_path.name}")
+        print(
+            f"\n✅ CAPTURA CORRECTA: {total} incidencias (España) → {output_path.name}"
+        )
     elif estado == "descarga_fallida":
         print("\n❌ CAPTURA FALLIDA: no se pudo descargar el XML del NAP DGT.")
     elif estado == "sin_incidencias":
-        print(f"\n⚠️  XML descargado pero sin incidencias parseables → {output_path.name}")
+        print(
+            f"\n⚠️  XML descargado pero sin incidencias parseables → {output_path.name}"
+        )
     else:
         print(f"\n⚠️  Estado: {estado} → {output_path.name}")
 

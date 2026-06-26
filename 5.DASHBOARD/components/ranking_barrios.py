@@ -43,6 +43,7 @@ _PESO_TRAFICO = 0.25
 # FUNCION AUXILIAR: PEOR VARIABLE
 # ==============================================================================
 
+
 def _peor_variable(df_barrio: pd.DataFrame) -> Optional[str]:
     """
     Identifica el contaminante con el ratio mas alto respecto a su umbral OMS.
@@ -80,6 +81,7 @@ def _peor_variable(df_barrio: pd.DataFrame) -> Optional[str]:
 # HELPERS: SCORES PARA FUSION URBANA
 # ==============================================================================
 
+
 def _score_contam_rt_barrio(
     contam_rt: Optional[dict],
     barrio: str,
@@ -101,26 +103,31 @@ def _score_contam_rt_barrio(
         return None
 
     estaciones_barrio = [
-        e for e in contam_rt.get("estaciones", [])
-        if e.get("barrio") == barrio
+        e for e in contam_rt.get("estaciones", []) if e.get("barrio") == barrio
     ]
     if not estaciones_barrio:
         return None
 
     key_map = {
-        "no2": "NO2", "o3": "O3", "pm10": "PM10",
-        "pm25": "PM2.5", "so2": "SO2", "co": "CO",
+        "no2": "NO2",
+        "o3": "O3",
+        "pm10": "PM10",
+        "pm25": "PM2.5",
+        "so2": "SO2",
+        "co": "CO",
     }
     registros = []
     for est in estaciones_barrio:
         for key_rt, variable in key_map.items():
             valor = est.get(key_rt)
             if valor is not None:
-                registros.append({
-                    "variable": variable,
-                    "valor": float(valor),
-                    "calidad_dato": "ok",
-                })
+                registros.append(
+                    {
+                        "variable": variable,
+                        "valor": float(valor),
+                        "calidad_dato": "ok",
+                    }
+                )
 
     if not registros:
         return None
@@ -194,8 +201,7 @@ def _score_trafico_citywide(trafico_rt: Optional[dict]) -> Optional[float]:
     incidencias = trafico_rt.get("incidencias", [])
     total = len(incidencias)
     graves = sum(
-        1 for inc in incidencias
-        if inc.get("severidad") in ("high", "highest")
+        1 for inc in incidencias if inc.get("severidad") in ("high", "highest")
     )
 
     if total == 0:
@@ -242,6 +248,7 @@ def _calcular_score_urbano_barrio(
 # CALCULO DEL RANKING
 # ==============================================================================
 
+
 def _calcular_filas_contaminacion(
     df_contaminacion: pd.DataFrame,
 ) -> List[Dict[str, Any]]:
@@ -259,23 +266,29 @@ def _calcular_filas_contaminacion(
 
     for barrio in barrios:
         df_b = df_contaminacion[df_contaminacion["barrio"] == barrio]
-        n_ok = int((df_b["calidad_dato"] == "ok").sum()) if "calidad_dato" in df_b.columns else len(df_b)
+        n_ok = (
+            int((df_b["calidad_dato"] == "ok").sum())
+            if "calidad_dato" in df_b.columns
+            else len(df_b)
+        )
 
         indice = calcular_indice_calidad(df_b, UMBRALES_OMS)
         if indice is None:
             logger.warning("[Ranking] Sin indice para barrio '%s'", barrio)
             continue
 
-        filas.append({
-            "barrio":        barrio,
-            "score":         indice["score"],
-            "nivel":         indice["nivel"],
-            "color":         indice["color"],
-            "emoji":         indice["emoji"],
-            "peor_variable": _peor_variable(df_b) or "-",
-            "n_registros":   n_ok,
-            "pocos_datos":   n_ok < MIN_REGISTROS,
-        })
+        filas.append(
+            {
+                "barrio": barrio,
+                "score": indice["score"],
+                "nivel": indice["nivel"],
+                "color": indice["color"],
+                "emoji": indice["emoji"],
+                "peor_variable": _peor_variable(df_b) or "-",
+                "n_registros": n_ok,
+                "pocos_datos": n_ok < MIN_REGISTROS,
+            }
+        )
 
     filas.sort(key=lambda x: x["score"], reverse=True)
     return filas
@@ -313,14 +326,20 @@ def _calcular_filas_fusion(
     filas = []
     for barrio in barrios:
         df_b = df_contaminacion[df_contaminacion["barrio"] == barrio]
-        n_ok = int((df_b["calidad_dato"] == "ok").sum()) if "calidad_dato" in df_b.columns else len(df_b)
+        n_ok = (
+            int((df_b["calidad_dato"] == "ok").sum())
+            if "calidad_dato" in df_b.columns
+            else len(df_b)
+        )
 
         indice_hist = calcular_indice_calidad(df_b, UMBRALES_OMS)
         if indice_hist is None:
             continue
 
         score_hist = indice_hist["score"]
-        score_urbano = _calcular_score_urbano_barrio(score_hist, score_meteo, score_trafico)
+        score_urbano = _calcular_score_urbano_barrio(
+            score_hist, score_meteo, score_trafico
+        )
         nivel, color, emoji = nivel_desde_score(score_urbano)
 
         # Delta RT: score RT del barrio vs score historico
@@ -337,23 +356,25 @@ def _calcular_filas_fusion(
         if score_trafico is not None:
             ejes_str += " + Tráfico"
 
-        filas.append({
-            "barrio":          barrio,
-            "score":           score_hist,          # score historico contam.
-            "score_urbano":    score_urbano,         # score fusionado (clave de orden)
-            "nivel":           nivel,
-            "color":           color,
-            "emoji":           emoji,
-            "score_meteo":     score_meteo,
-            "score_trafico":   score_trafico,
-            "delta_rt":        delta_rt,
-            "score_rt_barrio": score_rt_barrio,
-            "peor_variable":   _peor_variable(df_b) or "-",
-            "n_registros":     n_ok,
-            "pocos_datos":     n_ok < MIN_REGISTROS,
-            "n_incidencias":   n_incidencias,
-            "ejes_str":        ejes_str,
-        })
+        filas.append(
+            {
+                "barrio": barrio,
+                "score": score_hist,  # score historico contam.
+                "score_urbano": score_urbano,  # score fusionado (clave de orden)
+                "nivel": nivel,
+                "color": color,
+                "emoji": emoji,
+                "score_meteo": score_meteo,
+                "score_trafico": score_trafico,
+                "delta_rt": delta_rt,
+                "score_rt_barrio": score_rt_barrio,
+                "peor_variable": _peor_variable(df_b) or "-",
+                "n_registros": n_ok,
+                "pocos_datos": n_ok < MIN_REGISTROS,
+                "n_incidencias": n_incidencias,
+                "ejes_str": ejes_str,
+            }
+        )
 
     filas.sort(key=lambda x: x["score_urbano"], reverse=True)
     return filas
@@ -362,6 +383,7 @@ def _calcular_filas_fusion(
 # ==============================================================================
 # RENDERIZADO: MODO CONTAMINACION
 # ==============================================================================
+
 
 def _render_resumen_rapido(filas: List[Dict[str, Any]]) -> None:
     """
@@ -387,7 +409,7 @@ def _render_resumen_rapido(filas: List[Dict[str, Any]]) -> None:
             f'<span style="color:#888;"> | Peor: </span>'
             f'<span style="color:{peor_color};font-weight:600;">'
             f'{fila["peor_variable"]}</span>'
-            f'</div>'
+            f"</div>"
         )
 
     st.markdown(
@@ -409,14 +431,16 @@ def _render_tabla(filas: List[Dict[str, Any]]) -> None:
     for i, fila in enumerate(filas, start=1):
         pos_str = _MEDALLAS.get(i, str(i))
         aviso = " ⚠️" if fila["pocos_datos"] else ""
-        registros_tabla.append({
-            "Pos":               pos_str,
-            "Barrio":            fila["barrio"] + aviso,
-            "Score":             fila["score"],
-            "Nivel":             f'{fila["emoji"]} {fila["nivel"]}',
-            "Peor variable":     fila["peor_variable"],
-            "Registros validos": fila["n_registros"],
-        })
+        registros_tabla.append(
+            {
+                "Pos": pos_str,
+                "Barrio": fila["barrio"] + aviso,
+                "Score": fila["score"],
+                "Nivel": f'{fila["emoji"]} {fila["nivel"]}',
+                "Peor variable": fila["peor_variable"],
+                "Registros validos": fila["n_registros"],
+            }
+        )
 
     df_tabla = pd.DataFrame(registros_tabla)
     st.dataframe(
@@ -426,11 +450,18 @@ def _render_tabla(filas: List[Dict[str, Any]]) -> None:
             "Barrio": st.column_config.TextColumn("Barrio", width="medium"),
             "Score": st.column_config.ProgressColumn(
                 "Score calidad aire (0-10)",
-                min_value=0, max_value=10, format="%.2f", width="large",
+                min_value=0,
+                max_value=10,
+                format="%.2f",
+                width="large",
             ),
             "Nivel": st.column_config.TextColumn("Nivel", width="medium"),
-            "Peor variable": st.column_config.TextColumn("Peor contaminante", width="small"),
-            "Registros validos": st.column_config.NumberColumn("Registros", format="%d", width="small"),
+            "Peor variable": st.column_config.TextColumn(
+                "Peor contaminante", width="small"
+            ),
+            "Registros validos": st.column_config.NumberColumn(
+                "Registros", format="%d", width="small"
+            ),
         },
         hide_index=True,
         use_container_width=True,
@@ -441,6 +472,7 @@ def _render_tabla(filas: List[Dict[str, Any]]) -> None:
 # ==============================================================================
 # RENDERIZADO: MODO FUSION URBANA
 # ==============================================================================
+
 
 def _render_resumen_rapido_fusion(filas: List[Dict[str, Any]]) -> None:
     """
@@ -465,7 +497,7 @@ def _render_resumen_rapido_fusion(filas: List[Dict[str, Any]]) -> None:
             flecha = "↑" if delta_rt >= 0 else "↓"
             delta_badge = (
                 f'<span style="color:{delta_color};font-size:0.85rem;margin-left:6px;">'
-                f'RT {flecha}{abs(delta_rt):.1f}</span>'
+                f"RT {flecha}{abs(delta_rt):.1f}</span>"
             )
         else:
             delta_badge = ""
@@ -478,12 +510,12 @@ def _render_resumen_rapido_fusion(filas: List[Dict[str, Any]]) -> None:
             f'<span style="color:{color};font-weight:700;">'
             f'{score_urbano:.1f}/10 {fila["emoji"]} {fila["nivel"]}</span>'
             f'<span style="color:#555;font-size:0.8rem;margin-left:6px;">'
-            f'(Contam.: {score_hist:.1f})</span>'
-            f'{delta_badge}'
+            f"(Contam.: {score_hist:.1f})</span>"
+            f"{delta_badge}"
             f'<span style="color:#888;"> | Peor: </span>'
             f'<span style="color:{peor_color};font-weight:600;">'
             f'{fila["peor_variable"]}</span>'
-            f'</div>'
+            f"</div>"
         )
 
     st.markdown(
@@ -519,17 +551,19 @@ def _render_tabla_fusion(filas: List[Dict[str, Any]]) -> None:
         n_inc = fila.get("n_incidencias")
         inc_str = str(n_inc) if n_inc is not None else "—"
 
-        registros_tabla.append({
-            "Pos":             pos_str,
-            "Barrio":          fila["barrio"] + aviso,
-            "Score Urbano":    fila["score_urbano"],
-            "Score Contam.":   fila["score"],
-            "Nivel":           f'{fila["emoji"]} {fila["nivel"]}',
-            "Delta RT":        delta_str,
-            "Peor contam.":    fila["peor_variable"],
-            "Incid. tráfico":  inc_str,
-            "Registros":       fila["n_registros"],
-        })
+        registros_tabla.append(
+            {
+                "Pos": pos_str,
+                "Barrio": fila["barrio"] + aviso,
+                "Score Urbano": fila["score_urbano"],
+                "Score Contam.": fila["score"],
+                "Nivel": f'{fila["emoji"]} {fila["nivel"]}',
+                "Delta RT": delta_str,
+                "Peor contam.": fila["peor_variable"],
+                "Incid. tráfico": inc_str,
+                "Registros": fila["n_registros"],
+            }
+        )
 
     df_tabla = pd.DataFrame(registros_tabla)
     st.dataframe(
@@ -539,18 +573,24 @@ def _render_tabla_fusion(filas: List[Dict[str, Any]]) -> None:
             "Barrio": st.column_config.TextColumn("Barrio", width="medium"),
             "Score Urbano": st.column_config.ProgressColumn(
                 "Score Urbano (0-10)",
-                min_value=0, max_value=10, format="%.2f", width="large",
+                min_value=0,
+                max_value=10,
+                format="%.2f",
+                width="large",
             ),
             "Score Contam.": st.column_config.ProgressColumn(
                 "Contam. hist. (0-10)",
-                min_value=0, max_value=10, format="%.2f", width="medium",
+                min_value=0,
+                max_value=10,
+                format="%.2f",
+                width="medium",
             ),
             "Nivel": st.column_config.TextColumn("Nivel", width="medium"),
             "Delta RT": st.column_config.TextColumn(
                 "Δ RT vs hist.",
                 width="small",
                 help="Cambio del score de contaminación RT vs histórico. "
-                     "↑ = mejora en RT, ↓ = empeora.",
+                "↑ = mejora en RT, ↓ = empeora.",
             ),
             "Peor contam.": st.column_config.TextColumn("Peor contam.", width="small"),
             "Incid. tráfico": st.column_config.TextColumn(
@@ -558,7 +598,9 @@ def _render_tabla_fusion(filas: List[Dict[str, Any]]) -> None:
                 width="small",
                 help="Incidencias activas en Valencia (dato ciudad, no por barrio).",
             ),
-            "Registros": st.column_config.NumberColumn("Registros", format="%d", width="small"),
+            "Registros": st.column_config.NumberColumn(
+                "Registros", format="%d", width="small"
+            ),
         },
         hide_index=True,
         use_container_width=True,
@@ -584,19 +626,19 @@ def _render_leyenda_fusion(
         nivel_m, color_m, emoji_m = nivel_desde_score(score_meteo)
         partes.append(
             f'<span style="margin-right:16px;">'
-            f'🌤️ Meteo ciudad: '
+            f"🌤️ Meteo ciudad: "
             f'<b style="color:{color_m};">{score_meteo:.1f}/10 {emoji_m}</b>'
-            f'</span>'
+            f"</span>"
         )
     if score_trafico is not None:
         nivel_t, color_t, emoji_t = nivel_desde_score(score_trafico)
         inc_txt = f" ({n_incidencias} incid.)" if n_incidencias is not None else ""
         partes.append(
             f'<span style="margin-right:16px;">'
-            f'🚗 Tráfico ciudad: '
+            f"🚗 Tráfico ciudad: "
             f'<b style="color:{color_t};">{score_trafico:.1f}/10 {emoji_t}</b>'
-            f'{inc_txt}'
-            f'</span>'
+            f"{inc_txt}"
+            f"</span>"
         )
     if not partes:
         return
@@ -604,13 +646,13 @@ def _render_leyenda_fusion(
     st.markdown(
         '<div style="background:rgba(255,255,255,0.03);border-radius:8px;'
         'padding:8px 14px;margin-bottom:10px;font-size:0.85rem;">'
-        '<b>Contexto ciudad (mismo para todos los barrios):</b> '
+        "<b>Contexto ciudad (mismo para todos los barrios):</b> "
         + "".join(partes)
         + f'<span style="color:#666;font-size:0.75rem;">'
-        f' · Pesos: contam. {int(_PESO_CONTAM*100)}%'
-        + (f', meteo {int(_PESO_METEO*100)}%' if score_meteo is not None else '')
-        + (f', tráfico {int(_PESO_TRAFICO*100)}%' if score_trafico is not None else '')
-        + '</span></div>',
+        f" · Pesos: contam. {int(_PESO_CONTAM*100)}%"
+        + (f", meteo {int(_PESO_METEO*100)}%" if score_meteo is not None else "")
+        + (f", tráfico {int(_PESO_TRAFICO*100)}%" if score_trafico is not None else "")
+        + "</span></div>",
         unsafe_allow_html=True,
     )
 
@@ -618,6 +660,7 @@ def _render_leyenda_fusion(
 # ==============================================================================
 # FUNCION PRINCIPAL
 # ==============================================================================
+
 
 def render_ranking_barrios(
     df_contaminacion: pd.DataFrame,
@@ -706,8 +749,11 @@ def render_ranking_barrios(
 
         logger.info(
             "[Ranking] Solo contam. %d barrios. Mejor: %s (%.1f), Peor: %s (%.1f)",
-            len(filas), filas[0]["barrio"], filas[0]["score"],
-            filas[-1]["barrio"], filas[-1]["score"],
+            len(filas),
+            filas[0]["barrio"],
+            filas[0]["score"],
+            filas[-1]["barrio"],
+            filas[-1]["score"],
         )
 
         _render_resumen_rapido(filas)
@@ -716,7 +762,9 @@ def render_ranking_barrios(
 
     else:
         # --- MODO FUSION URBANA ---
-        filas = _calcular_filas_fusion(df_contaminacion, contam_rt, meteo_rt, trafico_rt)
+        filas = _calcular_filas_fusion(
+            df_contaminacion, contam_rt, meteo_rt, trafico_rt
+        )
         if not filas:
             st.warning("No se pudo calcular el índice urbano para ningún barrio.")
             return
@@ -729,8 +777,11 @@ def render_ranking_barrios(
 
         logger.info(
             "[Ranking] Fusion urbana %d barrios. Mejor: %s (%.1f), Peor: %s (%.1f)",
-            len(filas), filas[0]["barrio"], filas[0]["score_urbano"],
-            filas[-1]["barrio"], filas[-1]["score_urbano"],
+            len(filas),
+            filas[0]["barrio"],
+            filas[0]["score_urbano"],
+            filas[-1]["barrio"],
+            filas[-1]["score_urbano"],
         )
 
         _render_resumen_rapido_fusion(filas)

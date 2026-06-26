@@ -84,6 +84,7 @@ def _df_saneado(df: pd.DataFrame) -> pd.DataFrame:
 # CSV
 # ==============================================================================
 
+
 def dataframe_a_csv(
     df: pd.DataFrame,
     separador: str = ";",
@@ -123,6 +124,7 @@ def dataframe_a_csv(
 # ==============================================================================
 # EXCEL (XLSX)
 # ==============================================================================
+
 
 def dataframe_a_excel(
     df: pd.DataFrame,
@@ -164,6 +166,7 @@ def dataframe_a_excel(
 # ==============================================================================
 # JSON
 # ==============================================================================
+
 
 def dataframe_a_json(
     df: pd.DataFrame,
@@ -218,6 +221,7 @@ def dataframe_a_json(
 # ==============================================================================
 # XML
 # ==============================================================================
+
 
 def dataframe_a_xml(
     df: pd.DataFrame,
@@ -320,6 +324,7 @@ def _sanitizar_nombre_xml(nombre: str) -> str:
 # PDF
 # ==============================================================================
 
+
 def dataframe_a_pdf(
     df: pd.DataFrame,
     titulo: str = "Data Detective Valencia",
@@ -362,15 +367,15 @@ def dataframe_a_pdf(
     # comunes del castellano y simbolos tipograficos por equivalentes ASCII.
     def _sanitizar_texto_pdf(texto: str) -> str:
         reemplazos = {
-            "\u2014": "-",   # em dash
-            "\u2013": "-",   # en dash
-            "\u2018": "'",   # left single quote
-            "\u2019": "'",   # right single quote
-            "\u201c": '"',   # left double quote
-            "\u201d": '"',   # right double quote
-            "\u2026": "...", # ellipsis
-            "\u00b5": "u",   # µ (micro sign)
-            "\u00b3": "3",   # ³ (superscript 3)
+            "\u2014": "-",  # em dash
+            "\u2013": "-",  # en dash
+            "\u2018": "'",  # left single quote
+            "\u2019": "'",  # right single quote
+            "\u201c": '"',  # left double quote
+            "\u201d": '"',  # right double quote
+            "\u2026": "...",  # ellipsis
+            "\u00b5": "u",  # µ (micro sign)
+            "\u00b3": "3",  # ³ (superscript 3)
             "\u2192": "->",  # right arrow
             "\u2264": "<=",  # less-than or equal
             "\u2265": ">=",  # greater-than or equal
@@ -383,9 +388,7 @@ def dataframe_a_pdf(
     # Sanitizar columnas y datos
     columnas = [_sanitizar_texto_pdf(str(c)) for c in df_export.columns]
     for col in df_export.columns:
-        df_export[col] = df_export[col].apply(
-            lambda v: _sanitizar_texto_pdf(str(v))
-        )
+        df_export[col] = df_export[col].apply(lambda v: _sanitizar_texto_pdf(str(v)))
 
     n_cols = len(columnas)
 
@@ -396,18 +399,30 @@ def dataframe_a_pdf(
 
     # Cabecera
     pdf.set_font("Helvetica", "B", 14)
-    pdf.cell(0, 8, _sanitizar_texto_pdf(titulo), new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.cell(
+        0, 8, _sanitizar_texto_pdf(titulo), new_x="LMARGIN", new_y="NEXT", align="C"
+    )
 
     if subtitulo:
         pdf.set_font("Helvetica", "", 10)
-        pdf.cell(0, 6, _sanitizar_texto_pdf(subtitulo), new_x="LMARGIN", new_y="NEXT", align="C")
+        pdf.cell(
+            0,
+            6,
+            _sanitizar_texto_pdf(subtitulo),
+            new_x="LMARGIN",
+            new_y="NEXT",
+            align="C",
+        )
 
     pdf.set_font("Helvetica", "", 8)
     ts = datetime.now().strftime("%d/%m/%Y %H:%M")
     pdf.cell(
-        0, 5,
+        0,
+        5,
         f"Exportado: {ts}  |  Registros: {len(df):,}",
-        new_x="LMARGIN", new_y="NEXT", align="C",
+        new_x="LMARGIN",
+        new_y="NEXT",
+        align="C",
     )
     pdf.ln(4)
 
@@ -467,6 +482,7 @@ def dataframe_a_pdf(
 # ==============================================================================
 # FUNCION AUXILIAR: GENERAR NOMBRE DE ARCHIVO
 # ==============================================================================
+
 
 def generar_nombre_archivo(
     dataset: str,

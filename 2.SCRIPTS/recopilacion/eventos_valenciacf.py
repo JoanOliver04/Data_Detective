@@ -94,11 +94,12 @@ import sys
 if sys.platform == "win32":
     try:
         import ctypes
+
         # Capa 2: decirle a la consola de Windows que use UTF-8
         # Equivalente a ejecutar "chcp 65001" pero via Win32 API
         kernel32 = ctypes.windll.kernel32
         kernel32.SetConsoleOutputCP(65001)  # Output: lo que Python escribe
-        kernel32.SetConsoleCP(65001)        # Input: lo que el usuario escribe
+        kernel32.SetConsoleCP(65001)  # Input: lo que el usuario escribe
     except Exception:
         pass  # Si falla ctypes, continuamos igualmente
 
@@ -119,10 +120,12 @@ if sys.platform == "win32":
 # En Windows puede requerir: pip install tzdata
 try:
     from zoneinfo import ZoneInfo
+
     ZONEINFO_DISPONIBLE = True
 except ImportError:
     try:
         from backports.zoneinfo import ZoneInfo
+
         ZONEINFO_DISPONIBLE = True
     except ImportError:
         ZONEINFO_DISPONIBLE = False
@@ -131,6 +134,7 @@ except ImportError:
 # Instalar con: pip install icalevents
 try:
     from icalevents.icalevents import events as ical_events
+
     ICALEVENTS_DISPONIBLE = True
 except ImportError:
     ICALEVENTS_DISPONIBLE = False
@@ -187,6 +191,7 @@ REQUEST_HEADERS = {
 # CONFIGURACION DE LOGGING
 # ==============================================================================
 
+
 def setup_logging() -> logging.Logger:
     """
     Configura el sistema de logging para el script.
@@ -228,6 +233,7 @@ def setup_logging() -> logging.Logger:
 # ==============================================================================
 # FUNCIONES DE CONVERSION HORARIA
 # ==============================================================================
+
 
 def convert_utc_to_madrid(
     dt_utc: datetime,
@@ -276,6 +282,7 @@ def convert_utc_to_madrid(
 # FUNCIONES DE ANALISIS DE PARTIDOS
 # ==============================================================================
 
+
 def parse_match_summary(
     summary: str,
     logger: logging.Logger,
@@ -310,7 +317,7 @@ def parse_match_summary(
         paren_start = clean_summary.rfind("(")
         paren_end = clean_summary.rfind(")")
         if paren_start < paren_end:
-            resultado_raw = clean_summary[paren_start + 1:paren_end].strip()
+            resultado_raw = clean_summary[paren_start + 1 : paren_end].strip()
             clean_summary = clean_summary[:paren_start].strip()
 
     # Separar equipos por " - " o guion largo (en-dash, em-dash)
@@ -397,6 +404,7 @@ def detect_competition(
 # FUNCION DE CAPTURA PRINCIPAL (icalevents)
 # ==============================================================================
 
+
 def capture_via_icalevents(
     logger: logging.Logger,
 ) -> Tuple[Optional[List[Dict[str, Any]]], str]:
@@ -414,8 +422,7 @@ def capture_via_icalevents(
     """
     if not ICALEVENTS_DISPONIBLE:
         logger.warning(
-            "icalevents no esta instalado. "
-            "Instalar con: pip install icalevents"
+            "icalevents no esta instalado. " "Instalar con: pip install icalevents"
         )
         return None, "icalevents no disponible"
 
@@ -468,9 +475,7 @@ def capture_via_icalevents(
                 hora = ""
 
             # Analizar SUMMARY para rival y condicion
-            rival, local_visitante, resultado_raw = parse_match_summary(
-                summary, logger
-            )
+            rival, local_visitante, resultado_raw = parse_match_summary(summary, logger)
 
             # Detectar competicion
             competicion = detect_competition(summary, description, logger)
@@ -516,13 +521,16 @@ def capture_via_icalevents(
         return None, "icalevents error conexion"
 
     except Exception as e:
-        logger.error(f"  [ERROR] Error inesperado con icalevents: {type(e).__name__}: {e}")
+        logger.error(
+            f"  [ERROR] Error inesperado con icalevents: {type(e).__name__}: {e}"
+        )
         return None, f"icalevents error: {type(e).__name__}"
 
 
 # ==============================================================================
 # FUNCION DE CAPTURA FALLBACK (requests directo)
 # ==============================================================================
+
 
 def capture_via_requests_raw(
     logger: logging.Logger,
@@ -625,9 +633,7 @@ def capture_via_requests_raw(
                     pass  # Si no se puede verificar, incluir igualmente
 
             # Analizar SUMMARY
-            rival, local_visitante, resultado_raw = parse_match_summary(
-                summary, logger
-            )
+            rival, local_visitante, resultado_raw = parse_match_summary(summary, logger)
 
             # Detectar competicion
             competicion = detect_competition(summary, description, logger)
@@ -680,6 +686,7 @@ def capture_via_requests_raw(
 # FUNCION DE CAPTURA ORQUESTADORA
 # ==============================================================================
 
+
 def capture_valenciacf_matches(
     logger: logging.Logger,
 ) -> Dict[str, Any]:
@@ -707,7 +714,9 @@ def capture_valenciacf_matches(
             "proyecto": "Data Detective Valencia",
             "fase": "4.3 - Partidos Valencia CF",
             "timestamp_captura": capture_timestamp.isoformat(),
-            "timestamp_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "timestamp_utc": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
             "fuente": "fixtur.es - Calendario digital Valencia CF (.ics)",
             "url_feed": VALENCIACF_ICS_URL,
             "metodo": None,
@@ -751,12 +760,12 @@ def capture_valenciacf_matches(
         captured_data["_metadata"]["estado_fuente"] = "operativa"
 
         # Contar partidos en Mestalla (home)
-        en_mestalla = sum(
-            1 for p in partidos if p.get("local_visitante") == "home"
-        )
+        en_mestalla = sum(1 for p in partidos if p.get("local_visitante") == "home")
         captured_data["_metadata"]["partidos_en_mestalla"] = en_mestalla
 
-        logger.info(f"[OK] {len(partidos)} partidos capturados ({en_mestalla} en Mestalla)")
+        logger.info(
+            f"[OK] {len(partidos)} partidos capturados ({en_mestalla} en Mestalla)"
+        )
 
     elif partidos is not None and len(partidos) == 0:
         captured_data["partidos"] = []
@@ -783,6 +792,7 @@ def capture_valenciacf_matches(
 # ==============================================================================
 # FUNCIONES DE GUARDADO
 # ==============================================================================
+
 
 def save_capture(
     data: Dict[str, Any],
@@ -830,6 +840,7 @@ def save_capture(
 # FUNCION PRINCIPAL
 # ==============================================================================
 
+
 def main():
     """
     Funcion principal que orquesta la captura de partidos del Valencia CF.
@@ -860,8 +871,7 @@ def main():
         logger.info("Zona horaria: Europe/Madrid (UTC -> hora local)")
     else:
         logger.warning(
-            "zoneinfo no disponible. Horas en UTC. "
-            "En Windows: pip install tzdata"
+            "zoneinfo no disponible. Horas en UTC. " "En Windows: pip install tzdata"
         )
 
     # Capturar partidos
@@ -888,8 +898,10 @@ def main():
     logger.info(f"  Metodo:            {meta['metodo']}")
     logger.info(f"  Partidos totales:  {num_partidos}")
     logger.info(f"  En Mestalla:       {en_mestalla}")
-    logger.info(f"  Rango busqueda:    {meta['rango_busqueda']['fecha_inicio']} -> "
-                f"{meta['rango_busqueda']['fecha_fin']}")
+    logger.info(
+        f"  Rango busqueda:    {meta['rango_busqueda']['fecha_inicio']} -> "
+        f"{meta['rango_busqueda']['fecha_fin']}"
+    )
     logger.info(f"  Archivo:           {output_path.name}")
     logger.info(f"  Ubicacion:         {OUTPUT_DIR}")
     logger.info(f"  Timestamp:         {meta['timestamp_captura']}")
@@ -910,10 +922,7 @@ def main():
         partidos = captured_data.get("partidos", [])
         if partidos:
             # Filtrar proximos partidos (sin resultado aun)
-            proximos = [
-                p for p in partidos
-                if not p.get("resultado_raw")
-            ]
+            proximos = [p for p in partidos if not p.get("resultado_raw")]
             if proximos:
                 print(f"\nProximos partidos (hasta {min(5, len(proximos))}):")
                 print("-" * 60)
@@ -927,10 +936,7 @@ def main():
                     print(f"  ... y {len(proximos) - 5} partidos mas")
 
             # Mostrar ultimos resultados
-            resultados = [
-                p for p in partidos
-                if p.get("resultado_raw")
-            ]
+            resultados = [p for p in partidos if p.get("resultado_raw")]
             if resultados:
                 print(f"\nUltimos resultados (hasta {min(5, len(resultados))}):")
                 print("-" * 60)

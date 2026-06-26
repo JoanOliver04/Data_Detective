@@ -41,6 +41,7 @@ RATIO_CRITICO = 1.5
 # LOGICA DE CALCULO
 # ==============================================================================
 
+
 def _filtrar_periodo_reciente(df: pd.DataFrame) -> tuple[pd.DataFrame, str]:
     """
     Filtra el DataFrame a los ultimos VENTANA_DIAS dias de datos disponibles.
@@ -74,13 +75,14 @@ def _filtrar_periodo_reciente(df: pd.DataFrame) -> tuple[pd.DataFrame, str]:
 
     if df_filtrado.empty:
         # Fallback: usar todos los datos disponibles
-        logger.warning("[Alertas] Sin datos en los ultimos %d dias; usando todos.", VENTANA_DIAS)
+        logger.warning(
+            "[Alertas] Sin datos en los ultimos %d dias; usando todos.", VENTANA_DIAS
+        )
         return df, "todos los datos disponibles (sin datos recientes)"
 
     fecha_min_real = col[col >= fecha_min_ventana].min()
     descripcion = (
-        f"{fecha_min_real.strftime('%d/%m/%Y')} → "
-        f"{fecha_max.strftime('%d/%m/%Y')}"
+        f"{fecha_min_real.strftime('%d/%m/%Y')} → " f"{fecha_max.strftime('%d/%m/%Y')}"
     )
     return df_filtrado, descripcion
 
@@ -107,18 +109,17 @@ def _calcular_alertas(df_reciente: pd.DataFrame) -> List[Dict]:
 
     # Agrupar por barrio + variable, calcular media
     grupo = (
-        df_valido
-        .groupby(["barrio", "variable"], as_index=False)["valor"]
+        df_valido.groupby(["barrio", "variable"], as_index=False)["valor"]
         .mean()
         .rename(columns={"valor": "media"})
     )
 
     alertas = []
     for _, fila in grupo.iterrows():
-        barrio   = fila["barrio"]
+        barrio = fila["barrio"]
         variable = fila["variable"]
-        media    = float(fila["media"])
-        umbral   = UMBRALES_OMS.get(variable)
+        media = float(fila["media"])
+        umbral = UMBRALES_OMS.get(variable)
 
         if umbral is None or pd.isna(media):
             continue
@@ -127,14 +128,16 @@ def _calcular_alertas(df_reciente: pd.DataFrame) -> List[Dict]:
         if ratio <= 1.0:
             continue  # Dentro del umbral, sin alerta
 
-        alertas.append({
-            "barrio":   barrio,
-            "variable": variable,
-            "media":    round(media, 2),
-            "umbral":   umbral,
-            "ratio":    round(ratio, 3),
-            "critica":  ratio >= RATIO_CRITICO,
-        })
+        alertas.append(
+            {
+                "barrio": barrio,
+                "variable": variable,
+                "media": round(media, 2),
+                "umbral": umbral,
+                "ratio": round(ratio, 3),
+                "critica": ratio >= RATIO_CRITICO,
+            }
+        )
 
     # Ordenar: criticas primero, luego por ratio descendente
     alertas.sort(key=lambda a: (not a["critica"], -a["ratio"]))
@@ -148,7 +151,12 @@ def _calcular_alertas(df_reciente: pd.DataFrame) -> List[Dict]:
         nivel = "CRITICA" if a["critica"] else "AVISO"
         logger.warning(
             "[Alertas] %s | %s | %s: %.1f µg/m³ (OMS: %.1f, ratio: %.2fx)",
-            nivel, a["barrio"], a["variable"], a["media"], a["umbral"], a["ratio"],
+            nivel,
+            a["barrio"],
+            a["variable"],
+            a["media"],
+            a["umbral"],
+            a["ratio"],
         )
 
     return alertas
@@ -164,11 +172,11 @@ def _texto_alerta(alerta: Dict) -> str:
     Returns:
         String formateado para mostrar en st.warning / st.error.
     """
-    barrio   = alerta["barrio"]
+    barrio = alerta["barrio"]
     variable = alerta["variable"]
-    media    = alerta["media"]
-    umbral   = alerta["umbral"]
-    ratio    = alerta["ratio"]
+    media = alerta["media"]
+    umbral = alerta["umbral"]
+    ratio = alerta["ratio"]
 
     if alerta["critica"]:
         return (
@@ -187,12 +195,12 @@ def _texto_alerta(alerta: Dict) -> str:
 
 # Mapeo clave RT -> nombre de variable canonica
 _RT_KEY_MAP = {
-    "no2":  "NO2",
-    "o3":   "O3",
+    "no2": "NO2",
+    "o3": "O3",
     "pm10": "PM10",
     "pm25": "PM2.5",
-    "so2":  "SO2",
-    "co":   "CO",
+    "so2": "SO2",
+    "co": "CO",
 }
 
 # CSS de animacion pulse (se inyecta una sola vez si hay alertas criticas RT)
@@ -259,25 +267,29 @@ def _calcular_alertas_rt(contam_rt: dict) -> List[Dict]:
             if ratio <= 1.0:
                 continue
 
-            alertas.append({
-                "estacion_id": est.get("estacion_id", ""),
-                "nombre":      nombre,
-                "barrio":      barrio,
-                "variable":    variable,
-                "valor":       round(valor, 1),
-                "umbral":      umbral,
-                "ratio":       round(ratio, 3),
-                "exceso_pct":  round((ratio - 1.0) * 100, 1),
-                "critica":     ratio >= RATIO_CRITICO,
-                "timestamp":   timestamp,
-            })
+            alertas.append(
+                {
+                    "estacion_id": est.get("estacion_id", ""),
+                    "nombre": nombre,
+                    "barrio": barrio,
+                    "variable": variable,
+                    "valor": round(valor, 1),
+                    "umbral": umbral,
+                    "ratio": round(ratio, 3),
+                    "exceso_pct": round((ratio - 1.0) * 100, 1),
+                    "critica": ratio >= RATIO_CRITICO,
+                    "timestamp": timestamp,
+                }
+            )
 
     alertas.sort(key=lambda a: (not a["critica"], -a["ratio"]))
 
     n_criticas = sum(1 for a in alertas if a["critica"])
     logger.info(
         "[AlertasRT] %d alertas RT (%d criticas), %d estaciones evaluadas.",
-        len(alertas), n_criticas, len(estaciones),
+        len(alertas),
+        n_criticas,
+        len(estaciones),
     )
     return alertas
 
@@ -342,25 +354,26 @@ def _html_alerta_rt(alerta: Dict, persistente: bool) -> str:
     persistente_badge = (
         ' &nbsp;<span style="background:#8b0000;color:#fff;border-radius:4px;'
         'padding:1px 6px;font-size:0.78rem;font-weight:700;">⚡ PERSISTENTE</span>'
-        if persistente else ""
+        if persistente
+        else ""
     )
     ts_fmt = _fmt_timestamp_rt(alerta["timestamp"])
 
     return (
         f'<div class="{css_class}">'
         f'<span style="font-weight:700;">{nivel_txt}</span>{persistente_badge}'
-        f'<br>'
+        f"<br>"
         f'<b>{alerta["barrio"]}</b> — '
         f'<span style="color:{color_var};font-weight:700;">{alerta["variable"]}</span>'
         f': <b>{alerta["valor"]:.1f} µg/m³</b>'
         f' &nbsp;·&nbsp; OMS: {alerta["umbral"]:.0f} µg/m³'
         f' &nbsp;·&nbsp; <b>{alerta["exceso_pct"]:.0f}% por encima</b>'
         f' &nbsp;·&nbsp; {alerta["ratio"]:.2f}× el límite'
-        f'<br>'
+        f"<br>"
         f'<span style="color:#888;font-size:0.8rem;">'
         f'Estación: {alerta["nombre"]} &nbsp;·&nbsp; Medición: {ts_fmt}'
-        f'</span>'
-        f'</div>'
+        f"</span>"
+        f"</div>"
     )
 
 
@@ -429,13 +442,16 @@ def render_alertas_realtime(
 
     logger.info(
         "[AlertasRT] Panel renderizado: %d alertas, %d criticas, %d persistentes.",
-        len(alertas), n_criticas, n_persistentes,
+        len(alertas),
+        n_criticas,
+        n_persistentes,
     )
 
 
 # ==============================================================================
 # RENDERIZADO
 # ==============================================================================
+
 
 def render_alertas(df_contaminacion: Optional[pd.DataFrame]) -> None:
     """
@@ -468,10 +484,10 @@ def render_alertas(df_contaminacion: Optional[pd.DataFrame]) -> None:
     alertas = _calcular_alertas(df_reciente)
 
     # --- Cabecera del panel ---
-    n_barrios = df_reciente["barrio"].nunique() if "barrio" in df_reciente.columns else "?"
-    st.caption(
-        f"Evaluación sobre {n_barrios} barrios | Periodo: {descripcion_periodo}"
+    n_barrios = (
+        df_reciente["barrio"].nunique() if "barrio" in df_reciente.columns else "?"
     )
+    st.caption(f"Evaluación sobre {n_barrios} barrios | Periodo: {descripcion_periodo}")
 
     # --- Caso: sin alertas ---
     if not alertas:
@@ -482,7 +498,7 @@ def render_alertas(df_contaminacion: Optional[pd.DataFrame]) -> None:
         return
 
     # --- Separar alertas visibles del resto ---
-    visibles  = alertas[:MAX_ALERTAS_VISIBLES]
+    visibles = alertas[:MAX_ALERTAS_VISIBLES]
     restantes = alertas[MAX_ALERTAS_VISIBLES:]
 
     _render_lista_alertas(visibles)

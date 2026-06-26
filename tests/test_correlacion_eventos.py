@@ -24,6 +24,7 @@ _LOG = logging.getLogger("test")
 # Parsing de fechas
 # ---------------------------------------------------------------------------
 
+
 def test_parse_event_date_formatos():
     assert _parse_event_date("2026-03-15") == pd.Timestamp("2026-03-15")
     # dayfirst: 03/04/2026 -> 4 de marzo
@@ -47,6 +48,7 @@ def test_parse_event_date_quita_tz():
 # IDs de evento (deduplicacion)
 # ---------------------------------------------------------------------------
 
+
 def test_generate_event_id_determinista():
     ev = {"nombre": "Fallas", "fecha_inicio": "2026-03-01", "fuente": "visit"}
     id1 = _generate_event_id(ev)
@@ -65,11 +67,14 @@ def test_generate_event_id_distinto_por_fecha():
 # Conjunto de fechas cubiertas por eventos
 # ---------------------------------------------------------------------------
 
+
 def test_get_all_event_dates():
-    eventos = [{
-        "fecha_inicio": pd.Timestamp("2026-03-01"),
-        "fecha_fin": pd.Timestamp("2026-03-03"),
-    }]
+    eventos = [
+        {
+            "fecha_inicio": pd.Timestamp("2026-03-01"),
+            "fecha_fin": pd.Timestamp("2026-03-03"),
+        }
+    ]
     fechas = _get_all_event_dates(eventos)
     assert pd.Timestamp("2026-03-01").date() in fechas
     assert pd.Timestamp("2026-03-03").date() in fechas
@@ -80,6 +85,7 @@ def test_get_all_event_dates():
 # Mascara de baseline (control estacional + semanal + evento + lluvia)
 # ---------------------------------------------------------------------------
 
+
 def test_build_baseline_mask_criterios():
     # Evento: miercoles 2026-03-04 (marzo, weekday=2).
     evento = {
@@ -89,25 +95,31 @@ def test_build_baseline_mask_criterios():
     all_event_dates = {pd.Timestamp("2026-03-04").date()}
 
     # Serie de fechas candidatas: 4 miercoles de marzo + 1 de abril + 1 lunes.
-    fechas = pd.Series(pd.to_datetime([
-        "2026-03-04",  # el propio evento -> excluido
-        "2026-03-11",  # miercoles marzo -> valido
-        "2026-03-18",  # miercoles marzo -> valido (pero lluvia abajo)
-        "2026-04-01",  # miercoles pero ABRIL -> excluido (mes)
-        "2026-03-09",  # LUNES marzo -> excluido (weekday)
-    ]))
+    fechas = pd.Series(
+        pd.to_datetime(
+            [
+                "2026-03-04",  # el propio evento -> excluido
+                "2026-03-11",  # miercoles marzo -> valido
+                "2026-03-18",  # miercoles marzo -> valido (pero lluvia abajo)
+                "2026-04-01",  # miercoles pero ABRIL -> excluido (mes)
+                "2026-03-09",  # LUNES marzo -> excluido (weekday)
+            ]
+        )
+    )
 
     # Meteo: 2026-03-18 con lluvia > 5mm -> excluido.
-    meteo = pd.DataFrame({
-        "fecha": pd.to_datetime(["2026-03-11", "2026-03-18"]),
-        "precip_media": [0.0, 12.0],
-    })
+    meteo = pd.DataFrame(
+        {
+            "fecha": pd.to_datetime(["2026-03-11", "2026-03-18"]),
+            "precip_media": [0.0, 12.0],
+        }
+    )
 
     mask = _build_baseline_mask(fechas, evento, all_event_dates, meteo, _LOG)
     validas = set(fechas[mask].dt.date)
 
     assert pd.Timestamp("2026-03-11").date() in validas
-    assert pd.Timestamp("2026-03-04").date() not in validas   # evento
-    assert pd.Timestamp("2026-04-01").date() not in validas   # otro mes
-    assert pd.Timestamp("2026-03-09").date() not in validas   # otro weekday
-    assert pd.Timestamp("2026-03-18").date() not in validas   # lluvia >5mm
+    assert pd.Timestamp("2026-03-04").date() not in validas  # evento
+    assert pd.Timestamp("2026-04-01").date() not in validas  # otro mes
+    assert pd.Timestamp("2026-03-09").date() not in validas  # otro weekday
+    assert pd.Timestamp("2026-03-18").date() not in validas  # lluvia >5mm

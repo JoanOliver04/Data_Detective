@@ -32,7 +32,7 @@ def test_formato_concentracion():
 
 def test_color_impacto():
     assert color_impacto(None) == "#7f7f7f"
-    assert color_impacto(30) == "#d62728"     # > 20
-    assert color_impacto(10) == "#ff7f0e"     # > 5
-    assert color_impacto(0) == "#ffbb33"      # > -5
-    assert color_impacto(-20) == "#2ca02c"    # <= -5
+    assert color_impacto(30) == "#d62728"  # > 20
+    assert color_impacto(10) == "#ff7f0e"  # > 5
+    assert color_impacto(0) == "#ffbb33"  # > -5
+    assert color_impacto(-20) == "#2ca02c"  # <= -5

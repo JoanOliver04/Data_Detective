@@ -84,6 +84,7 @@ ESTACION_BARRIO_MAP = _dashboard_config.ESTACION_BARRIO_MAP
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
 
+
 def setup_logging() -> logging.Logger:
     """
     Configura logging dual (archivo + consola).
@@ -119,6 +120,7 @@ def setup_logging() -> logging.Logger:
 # CARGA DE DATOS
 # ==============================================================================
 
+
 def cargar_contaminacion(logger: logging.Logger) -> Optional[pd.DataFrame]:
     """
     Carga el Parquet normalizado de contaminación (Fase 5.1).
@@ -149,8 +151,7 @@ def cargar_contaminacion(logger: logging.Logger) -> Optional[pd.DataFrame]:
 
     logger.info(f"  → {len(df):,} registros cargados")
     logger.info(f"  → Columnas: {list(df.columns)}")
-    logger.info(
-        f"  → Rango: {df['fecha_utc'].min()} → {df['fecha_utc'].max()}")
+    logger.info(f"  → Rango: {df['fecha_utc'].min()} → {df['fecha_utc'].max()}")
 
     return df
 
@@ -179,18 +180,20 @@ def cargar_meteorologia(logger: logging.Logger) -> Optional[pd.DataFrame]:
 
         # Intentar convertir fecha a datetime de forma robusta
         # errors='coerce' convertirá valores inválidos a NaT (Not a Time)
-        df["fecha"] = pd.to_datetime(df["fecha"], errors='coerce', utc=True)
+        df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce", utc=True)
 
         # Verificar si hay fechas inválidas
         fechas_invalidas = df["fecha"].isna().sum()
         if fechas_invalidas > 0:
             logger.warning(
-                f"  {fechas_invalidas:,} fechas inválidas encontradas y convertidas a NaT")
+                f"  {fechas_invalidas:,} fechas inválidas encontradas y convertidas a NaT"
+            )
             # Opcional: mostrar algunos ejemplos de fechas inválidas
             muestra_invalidas = df[df["fecha"].isna()].head(3)
             if not muestra_invalidas.empty:
                 logger.debug(
-                    f"  Ejemplos de fechas inválidas: {muestra_invalidas.iloc[:, 0].tolist()}")
+                    f"  Ejemplos de fechas inválidas: {muestra_invalidas.iloc[:, 0].tolist()}"
+                )
 
     except Exception as e:
         logger.error(f"Error leyendo CSV: {e}")
@@ -206,14 +209,14 @@ def cargar_meteorologia(logger: logging.Logger) -> Optional[pd.DataFrame]:
 
     return df
 
+
 # ==============================================================================
 # TAREA 1: MEDIAS ANUALES DE CONTAMINACIÓN POR BARRIO
 # ==============================================================================
 
 
 def calcular_contaminacion_anual_barrio(
-    df: pd.DataFrame,
-    logger: logging.Logger
+    df: pd.DataFrame, logger: logging.Logger
 ) -> Optional[pd.DataFrame]:
     """
     Calcula medias anuales de contaminación por barrio y variable.
@@ -272,13 +275,9 @@ def calcular_contaminacion_anual_barrio(
     # Paso 4-5: Agrupar y calcular media
     # media_anual = sum(valor) / count(valor) → equivalente a .mean()
     # n_registros = count(valor) → para ponderar fiabilidad
-    df_stats = (
-        df_ok
-        .groupby(["año", "barrio", "variable"], as_index=False)
-        .agg(
-            media_anual=("valor", "mean"),
-            n_registros=("valor", "count"),
-        )
+    df_stats = df_ok.groupby(["año", "barrio", "variable"], as_index=False).agg(
+        media_anual=("valor", "mean"),
+        n_registros=("valor", "count"),
     )
 
     # Añadir unidad (siempre µg/m³ para contaminación)
@@ -288,13 +287,12 @@ def calcular_contaminacion_anual_barrio(
     df_stats["media_anual"] = df_stats["media_anual"].round(2)
 
     # Ordenar para legibilidad
-    df_stats = df_stats.sort_values(
-        ["año", "barrio", "variable"]
-    ).reset_index(drop=True)
+    df_stats = df_stats.sort_values(["año", "barrio", "variable"]).reset_index(
+        drop=True
+    )
 
     logger.info(f"  Resultado: {len(df_stats):,} filas")
-    logger.info(
-        f"  Años cubiertos: {df_stats['año'].min()} → {df_stats['año'].max()}")
+    logger.info(f"  Años cubiertos: {df_stats['año'].min()} → {df_stats['año'].max()}")
     logger.info(f"  Barrios: {sorted(df_stats['barrio'].unique())}")
     logger.info(f"  Variables: {sorted(df_stats['variable'].unique())}")
 
@@ -305,9 +303,9 @@ def calcular_contaminacion_anual_barrio(
 # TAREA 2: MEDIAS MENSUALES DE PRECIPITACIÓN
 # ==============================================================================
 
+
 def calcular_precipitacion_mensual(
-    df: pd.DataFrame,
-    logger: logging.Logger
+    df: pd.DataFrame, logger: logging.Logger
 ) -> Optional[pd.DataFrame]:
     """
     Calcula medias mensuales de precipitación.
@@ -339,7 +337,8 @@ def calcular_precipitacion_mensual(
     # Verificar que fecha es realmente datetime
     if not pd.api.types.is_datetime64_any_dtype(df_precip["fecha"]):
         logger.error(
-            "  La columna 'fecha' no es de tipo datetime después de la limpieza")
+            "  La columna 'fecha' no es de tipo datetime después de la limpieza"
+        )
         return None
 
     # Paso 3: Extraer año y mes
@@ -347,28 +346,26 @@ def calcular_precipitacion_mensual(
     df_precip["mes"] = df_precip["fecha"].dt.month
 
     # Paso 4-5: Agrupar y calcular
-    df_stats = (
-        df_precip
-        .groupby(["año", "mes"], as_index=False)
-        .agg(
-            precipitacion_media_mm=("precipitacion_mm", "mean"),
-            n_registros=("precipitacion_mm", "count"),
-        )
+    df_stats = df_precip.groupby(["año", "mes"], as_index=False).agg(
+        precipitacion_media_mm=("precipitacion_mm", "mean"),
+        n_registros=("precipitacion_mm", "count"),
     )
 
     # Redondear
-    df_stats["precipitacion_media_mm"] = df_stats["precipitacion_media_mm"].round(
-        2)
+    df_stats["precipitacion_media_mm"] = df_stats["precipitacion_media_mm"].round(2)
 
     # Ordenar
     df_stats = df_stats.sort_values(["año", "mes"]).reset_index(drop=True)
 
     logger.info(f"  Resultado: {len(df_stats):,} filas (meses únicos)")
     if not df_stats.empty:
-        logger.info(f"  Rango: {df_stats['año'].min()}/{df_stats['mes'].min():02d} "
-                    f"→ {df_stats['año'].max()}/{df_stats['mes'].max():02d}")
+        logger.info(
+            f"  Rango: {df_stats['año'].min()}/{df_stats['mes'].min():02d} "
+            f"→ {df_stats['año'].max()}/{df_stats['mes'].max():02d}"
+        )
 
     return df_stats
+
 
 # ==============================================================================
 # TAREA 3: TENDENCIAS HISTÓRICAS (1963-2026)
@@ -378,7 +375,7 @@ def calcular_precipitacion_mensual(
 def calcular_tendencias_historicas(
     df_contam: Optional[pd.DataFrame],
     df_meteo: Optional[pd.DataFrame],
-    logger: logging.Logger
+    logger: logging.Logger,
 ) -> Optional[pd.DataFrame]:
     """
     Calcula tendencias históricas anuales combinando contaminación y meteorología.
@@ -413,22 +410,16 @@ def calcular_tendencias_historicas(
 
         # Pivotar: una columna por variable (NO2, O3, PM10, etc.)
         # Para cada (año, variable): media de todos los valores válidos
-        contam_anual = (
-            df_ok
-            .groupby(["año", "variable"], as_index=False)
-            .agg(
-                media=("valor", "mean"),
-                n=("valor", "count"),
-            )
+        contam_anual = df_ok.groupby(["año", "variable"], as_index=False).agg(
+            media=("valor", "mean"),
+            n=("valor", "count"),
         )
 
         # Pivotar a formato ancho: año | NO2_media | NO2_n | O3_media | ...
         pivot_media = contam_anual.pivot(
             index="año", columns="variable", values="media"
         )
-        pivot_n = contam_anual.pivot(
-            index="año", columns="variable", values="n"
-        )
+        pivot_n = contam_anual.pivot(index="año", columns="variable", values="n")
 
         # Renombrar columnas: NO2 → NO2_ugm3, para claridad
         pivot_media.columns = [f"{col}_ugm3" for col in pivot_media.columns]
@@ -462,7 +453,8 @@ def calcular_tendencias_historicas(
             serie = df_ok.dropna(subset=[col]).groupby("año")[col]
             media = serie.mean().rename(nombre_salida)
             n = serie.count().rename(
-                f"{nombre_salida.replace('media_', '').replace('_media', '')}_n_registros")
+                f"{nombre_salida.replace('media_', '').replace('_media', '')}_n_registros"
+            )
 
             meteo_stats.extend([media, n])
 
@@ -485,8 +477,7 @@ def calcular_tendencias_historicas(
     df_tendencias = df_tendencias.sort_values("año").reset_index(drop=True)
 
     logger.info(f"  Resultado final: {len(df_tendencias)} años")
-    logger.info(
-        f"  Rango: {df_tendencias['año'].min()} → {df_tendencias['año'].max()}")
+    logger.info(f"  Rango: {df_tendencias['año'].min()} → {df_tendencias['año'].max()}")
     logger.info(f"  Columnas: {list(df_tendencias.columns)}")
 
     return df_tendencias
@@ -496,11 +487,9 @@ def calcular_tendencias_historicas(
 # GUARDADO
 # ==============================================================================
 
+
 def guardar_csv(
-    df: pd.DataFrame,
-    path: Path,
-    logger: logging.Logger,
-    descripcion: str
+    df: pd.DataFrame, path: Path, logger: logging.Logger, descripcion: str
 ) -> bool:
     """
     Guarda un DataFrame como CSV con encoding UTF-8.
@@ -528,11 +517,12 @@ def guardar_csv(
 # RESUMEN FINAL
 # ==============================================================================
 
+
 def imprimir_resumen(
     df_contam_barrio: Optional[pd.DataFrame],
     df_precip_mensual: Optional[pd.DataFrame],
     df_tendencias: Optional[pd.DataFrame],
-    logger: logging.Logger
+    logger: logging.Logger,
 ) -> None:
     """
     Imprime un resumen ejecutivo de todas las estadísticas calculadas.
@@ -547,12 +537,12 @@ def imprimir_resumen(
         logger.info("")
         logger.info("  📊 Contaminación media anual por barrio:")
         logger.info(f"     Filas: {len(df_contam_barrio):,}")
-        logger.info(f"     Años: {df_contam_barrio['año'].min()} → "
-                    f"{df_contam_barrio['año'].max()}")
         logger.info(
-            f"     Barrios: {sorted(df_contam_barrio['barrio'].unique())}")
-        logger.info(
-            f"     Variables: {sorted(df_contam_barrio['variable'].unique())}")
+            f"     Años: {df_contam_barrio['año'].min()} → "
+            f"{df_contam_barrio['año'].max()}"
+        )
+        logger.info(f"     Barrios: {sorted(df_contam_barrio['barrio'].unique())}")
+        logger.info(f"     Variables: {sorted(df_contam_barrio['variable'].unique())}")
 
         # Top 3 combinaciones con más registros
         top = df_contam_barrio.nlargest(3, "n_registros")
@@ -570,8 +560,10 @@ def imprimir_resumen(
         logger.info("")
         logger.info("  🌧️  Precipitación media mensual:")
         logger.info(f"     Filas: {len(df_precip_mensual):,}")
-        logger.info(f"     Rango: {df_precip_mensual['año'].min()}/{df_precip_mensual['mes'].min():02d} → "
-                    f"{df_precip_mensual['año'].max()}/{df_precip_mensual['mes'].max():02d}")
+        logger.info(
+            f"     Rango: {df_precip_mensual['año'].min()}/{df_precip_mensual['mes'].min():02d} → "
+            f"{df_precip_mensual['año'].max()}/{df_precip_mensual['mes'].max():02d}"
+        )
 
         # Mes más lluvioso global
         mes_max = df_precip_mensual.loc[
@@ -590,8 +582,10 @@ def imprimir_resumen(
         logger.info("")
         logger.info("  📈 Tendencias históricas:")
         logger.info(f"     Filas: {len(df_tendencias):,}")
-        logger.info(f"     Rango: {df_tendencias['año'].min()} → "
-                    f"{df_tendencias['año'].max()}")
+        logger.info(
+            f"     Rango: {df_tendencias['año'].min()} → "
+            f"{df_tendencias['año'].max()}"
+        )
         logger.info(f"     Columnas: {len(df_tendencias.columns)}")
     else:
         logger.warning("  📈 Tendencias históricas: NO GENERADO")
@@ -603,6 +597,7 @@ def imprimir_resumen(
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """
@@ -647,8 +642,7 @@ def main():
     df_contam_barrio = None
     if df_contam is not None:
         logger.info("")
-        df_contam_barrio = calcular_contaminacion_anual_barrio(
-            df_contam, logger)
+        df_contam_barrio = calcular_contaminacion_anual_barrio(df_contam, logger)
 
     # ------------------------------------------------------------------
     # PASO 3: Tarea 2 - Precipitación mensual
@@ -673,25 +667,25 @@ def main():
     guardados = 0
 
     if df_contam_barrio is not None:
-        if guardar_csv(df_contam_barrio, OUT_CONTAM_ANUAL, logger,
-                       "Contaminación anual por barrio"):
+        if guardar_csv(
+            df_contam_barrio, OUT_CONTAM_ANUAL, logger, "Contaminación anual por barrio"
+        ):
             guardados += 1
 
     if df_precip_mensual is not None:
-        if guardar_csv(df_precip_mensual, OUT_PRECIP_MENSUAL, logger,
-                       "Precipitación media mensual"):
+        if guardar_csv(
+            df_precip_mensual, OUT_PRECIP_MENSUAL, logger, "Precipitación media mensual"
+        ):
             guardados += 1
 
     if df_tendencias is not None:
-        if guardar_csv(df_tendencias, OUT_TENDENCIAS, logger,
-                       "Tendencias históricas"):
+        if guardar_csv(df_tendencias, OUT_TENDENCIAS, logger, "Tendencias históricas"):
             guardados += 1
 
     # ------------------------------------------------------------------
     # PASO 6: Resumen
     # ------------------------------------------------------------------
-    imprimir_resumen(df_contam_barrio, df_precip_mensual,
-                     df_tendencias, logger)
+    imprimir_resumen(df_contam_barrio, df_precip_mensual, df_tendencias, logger)
 
     # Mensaje final consola
     print(f"\n✅ ESTADÍSTICAS COMPLETADAS: {guardados}/3 ficheros generados")
@@ -705,7 +699,9 @@ def main():
     print("\nCommit sugerido:")
     print("   git add 2.SCRIPTS/procesamiento/calcular_estadisticas.py")
     print("   git add 3.DATOS_LIMPIOS/estadisticas/")
-    print('   git commit -m "feat: add Phase 5.4 aggregated statistics with weighted annual means"')
+    print(
+        '   git commit -m "feat: add Phase 5.4 aggregated statistics with weighted annual means"'
+    )
 
 
 # ==============================================================================

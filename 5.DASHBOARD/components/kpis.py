@@ -26,6 +26,7 @@ logger = logging.getLogger("KPIs")
 # FUNCION PRINCIPAL
 # ==============================================================================
 
+
 def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
     """
     Renderiza 4 KPIs para la variable de contaminacion seleccionada.
@@ -41,19 +42,19 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
         variable: Variable seleccionada (NO2, O3, PM10, PM2.5...).
     """
     if df is None or df.empty:
-        st.warning(
-            "No hay datos de contaminación para los filtros seleccionados.")
+        st.warning("No hay datos de contaminación para los filtros seleccionados.")
         return
 
     # Filtrar por variable y registros validos
-    mask = (df["variable"] == variable)
+    mask = df["variable"] == variable
     if "calidad_dato" in df.columns:
         mask = mask & (df["calidad_dato"] == "ok")
     df_var = df[mask].copy()
 
     if df_var.empty:
         st.warning(
-            f"No hay registros válidos de {variable} en el periodo seleccionado.")
+            f"No hay registros válidos de {variable} en el periodo seleccionado."
+        )
         return
 
     # --- Calculos ---
@@ -88,7 +89,7 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
         f'margin-bottom:1rem;">'
         f'<h4 style="margin:0;">Indicadores de {variable}</h4>'
         f'<small style="color:#888;">Registros con calidad validada</small>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
 
@@ -111,7 +112,8 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
             f"Media aritmética de {variable}. "
             f"Umbral OMS: {umbral_oms} \u00b5g/m\u00b3. "
             f"Umbral UE: {umbral_ue} \u00b5g/m\u00b3."
-            if umbral_oms else f"Media aritmética de {variable}."
+            if umbral_oms
+            else f"Media aritmética de {variable}."
         ),
     )
 
@@ -158,6 +160,7 @@ def render_kpis_contaminacion(df: pd.DataFrame, variable: str) -> None:
 # INDICE SINTETICO DE CALIDAD DEL AIRE
 # ==============================================================================
 
+
 def render_indice_calidad(df: pd.DataFrame) -> None:
     """
     Renderiza el indice sintetico de calidad del aire (0-10) como KPI principal.
@@ -180,19 +183,19 @@ def render_indice_calidad(df: pd.DataFrame) -> None:
         st.warning("Sin registros válidos para calcular el índice de calidad.")
         return
 
-    score  = indice["score"]
-    nivel  = indice["nivel"]
-    color  = indice["color"]
-    emoji  = indice["emoji"]
+    score = indice["score"]
+    nivel = indice["nivel"]
+    color = indice["color"]
+    emoji = indice["emoji"]
     detalle = indice["detalle_variables"]
 
     # --- Cabecera ---
     st.markdown(
         '<div class="section-header">'
-        '<h4>Índice de Calidad del Aire</h4>'
+        "<h4>Índice de Calidad del Aire</h4>"
         '<p style="color:#888;font-size:0.85rem;">'
-        'Score sintético 0-10 basado en umbrales OMS (10 = óptimo)'
-        '</p></div>',
+        "Score sintético 0-10 basado en umbrales OMS (10 = óptimo)"
+        "</p></div>",
         unsafe_allow_html=True,
     )
 
@@ -214,15 +217,15 @@ def render_indice_calidad(df: pd.DataFrame) -> None:
             f'<div style="padding-top:0.6rem;">'
             f'<span style="font-size:2rem;">{emoji}</span> '
             f'<span style="font-size:1.4rem;font-weight:700;color:{color};">'
-            f'{nivel}</span>'
-            f'</div>',
+            f"{nivel}</span>"
+            f"</div>",
             unsafe_allow_html=True,
         )
 
     with col_barra:
         st.markdown(
             '<p style="margin-bottom:0.3rem;color:#888;font-size:0.8rem;">'
-            'Nivel de calidad</p>',
+            "Nivel de calidad</p>",
             unsafe_allow_html=True,
         )
         # Barra de progreso: score/10
@@ -243,7 +246,7 @@ def render_indice_calidad(df: pd.DataFrame) -> None:
             var_score = datos["score"]
             var_ratio = datos["ratio"]
             var_media = datos["media"]
-            umbral    = UMBRALES_OMS.get(variable, "-")
+            umbral = UMBRALES_OMS.get(variable, "-")
             var_nivel, var_nivel_color, var_emoji = _nivel_variable(var_score)
 
             with col:
@@ -252,11 +255,11 @@ def render_indice_calidad(df: pd.DataFrame) -> None:
                     f'padding-left:8px;margin-bottom:0.5rem;">'
                     f'<b style="color:{var_color};">{variable}</b><br>'
                     f'<span style="font-size:1.3rem;font-weight:700;">'
-                    f'{var_score:.1f}</span>'
+                    f"{var_score:.1f}</span>"
                     f'<span style="color:#888;font-size:0.75rem;"> / 10</span><br>'
                     f'<span style="color:{var_nivel_color};font-size:0.8rem;">'
-                    f'{var_emoji} {var_nivel}</span>'
-                    f'</div>',
+                    f"{var_emoji} {var_nivel}</span>"
+                    f"</div>",
                     unsafe_allow_html=True,
                 )
                 st.caption(

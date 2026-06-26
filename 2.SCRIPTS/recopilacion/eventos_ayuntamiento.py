@@ -95,6 +95,7 @@ REQUEST_HEADERS = {
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
 
+
 def setup_logging() -> logging.Logger:
     """
     Configura el sistema de logging para el script.
@@ -136,6 +137,7 @@ def setup_logging() -> logging.Logger:
 # FUNCIONES DE SCRAPING ÉTICO
 # ==============================================================================
 
+
 def fetch_page(
     url: str,
     logger: logging.Logger,
@@ -173,15 +175,12 @@ def fetch_page(
             return response.text
 
         elif response.status_code == 403:
-            logger.warning(
-                "  ✗ HTTP 403: Acceso bloqueado por el servidor."
-            )
+            logger.warning("  ✗ HTTP 403: Acceso bloqueado por el servidor.")
             return None
 
         elif response.status_code == 404:
             logger.warning(
-                "  ✗ HTTP 404: Página no encontrada. "
-                "La URL puede haber cambiado."
+                "  ✗ HTTP 404: Página no encontrada. " "La URL puede haber cambiado."
             )
             return None
 
@@ -211,6 +210,7 @@ def fetch_page(
 # ==============================================================================
 # FUNCIONES DE PARSING
 # ==============================================================================
+
 
 def extract_event_name(
     article: BeautifulSoup,
@@ -320,7 +320,7 @@ def extract_event_dates(
         # Limpiar posible "Del " o "del " al inicio
         for prefix in ("del ", "desde "):
             if fecha_inicio.lower().startswith(prefix):
-                fecha_inicio = fecha_inicio[len(prefix):].strip()
+                fecha_inicio = fecha_inicio[len(prefix) :].strip()
     else:
         # Evento de un solo día
         fecha_inicio = date_text
@@ -409,7 +409,8 @@ def extract_event_url(
                 href
                 and not href.startswith("#")
                 and not href.startswith("javascript:")
-                and "valencia.es" in href or href.startswith("/")
+                and "valencia.es" in href
+                or href.startswith("/")
             ):
                 event_url = href
                 break
@@ -459,7 +460,9 @@ def parse_event_articles(
         # Fallback 1: clase que contenga "journal-content"
         articles = soup.find_all(
             "div",
-            class_=lambda c: c and "journal-content" in c if isinstance(c, str) else False,
+            class_=lambda c: (
+                c and "journal-content" in c if isinstance(c, str) else False
+            ),
         )
         logger.debug(f"  Fallback 'journal-content': {len(articles)} encontrados")
 
@@ -467,7 +470,9 @@ def parse_event_articles(
         if not articles:
             articles = soup.find_all(
                 "div",
-                class_=lambda c: c and "agenda" in c.lower() if isinstance(c, str) else False,
+                class_=lambda c: (
+                    c and "agenda" in c.lower() if isinstance(c, str) else False
+                ),
             )
             logger.debug(f"  Fallback 'agenda': {len(articles)} encontrados")
 
@@ -517,6 +522,7 @@ def parse_event_articles(
 # FUNCIÓN DE CAPTURA PRINCIPAL
 # ==============================================================================
 
+
 def capture_ayuntamiento_events(
     logger: logging.Logger,
 ) -> Dict[str, Any]:
@@ -543,7 +549,9 @@ def capture_ayuntamiento_events(
             "proyecto": "Data Detective Valencia",
             "fase": "4.2 - Eventos Agenda Ayuntamiento Valencia",
             "timestamp_captura": capture_timestamp.isoformat(),
-            "timestamp_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "timestamp_utc": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
             "fuente": "Ayuntamiento de Valencia - Agenda Cultural",
             "metodo": "Web scraping ético (BeautifulSoup4)",
             "url_consultada": AYUNTAMIENTO_AGENDA_URL,
@@ -599,6 +607,7 @@ def capture_ayuntamiento_events(
 # FUNCIONES DE GUARDADO
 # ==============================================================================
 
+
 def save_capture(
     data: Dict[str, Any],
     logger: logging.Logger,
@@ -645,6 +654,7 @@ def save_capture(
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """

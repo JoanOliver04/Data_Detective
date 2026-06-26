@@ -61,7 +61,6 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, List, Any
 
-
 # ==============================================================================
 # CONFIGURACIÓN
 # ==============================================================================
@@ -237,6 +236,7 @@ EXPECTED_OUTPUTS = [
 # CONFIGURACIÓN DE LOGGING CENTRALIZADO
 # ==============================================================================
 
+
 def setup_logging() -> logging.Logger:
     """
     Configura el sistema de logging centralizado del pipeline ETL.
@@ -279,6 +279,7 @@ def setup_logging() -> logging.Logger:
 # ==============================================================================
 # EJECUCIÓN DE MÓDULOS
 # ==============================================================================
+
 
 def run_module(
     module_info: Dict[str, str],
@@ -330,16 +331,13 @@ def run_module(
             del sys.modules[mod_name]
         module = importlib.import_module(mod_name)
     except ImportError as e:
-        logger.error(
-            f"[{mod_fase}] ERROR IMPORT: no se pudo cargar '{mod_name}': {e}"
-        )
+        logger.error(f"[{mod_fase}] ERROR IMPORT: no se pudo cargar '{mod_name}': {e}")
         result["estado"] = "import_error"
         result["error"] = f"ImportError: {e}"
         return result
     except Exception as e:
         logger.error(
-            f"[{mod_fase}] ERROR cargando '{mod_name}': "
-            f"{type(e).__name__}: {e}"
+            f"[{mod_fase}] ERROR cargando '{mod_name}': " f"{type(e).__name__}: {e}"
         )
         result["estado"] = "import_error"
         result["error"] = f"{type(e).__name__}: {e}"
@@ -366,9 +364,7 @@ def run_module(
         result["duracion_segundos"] = round(elapsed, 2)
         result["estado"] = "success"
 
-        logger.info(
-            f"[{mod_fase}] ✓ {mod_display} completado en {elapsed:.1f}s"
-        )
+        logger.info(f"[{mod_fase}] ✓ {mod_display} completado en {elapsed:.1f}s")
 
     except Exception as e:
         elapsed = time.time() - start_time
@@ -387,6 +383,7 @@ def run_module(
 # ==============================================================================
 # VALIDACIÓN DE INTEGRIDAD
 # ==============================================================================
+
 
 def validate_outputs(logger: logging.Logger) -> Dict[str, Any]:
     """
@@ -420,10 +417,10 @@ def validate_outputs(logger: logging.Logger) -> Dict[str, Any]:
     # solo quiere ejecutar los módulos sin validación
     try:
         import pandas as pd
+
         pandas_available = True
     except ImportError:
-        logger.warning(
-            "  pandas no disponible → validación limitada (solo existencia)")
+        logger.warning("  pandas no disponible → validación limitada (solo existencia)")
         pandas_available = False
 
     total_checks = len(EXPECTED_OUTPUTS)
@@ -493,9 +490,7 @@ def validate_outputs(logger: logging.Logger) -> Dict[str, Any]:
                     continue
 
             except Exception as e:
-                logger.warning(
-                    f"  ⚠ {file_path.name}: error al leer estructura: {e}"
-                )
+                logger.warning(f"  ⚠ {file_path.name}: error al leer estructura: {e}")
                 check_result["column_ok"] = False
                 warnings += 1
                 details.append(check_result)
@@ -507,8 +502,7 @@ def validate_outputs(logger: logging.Logger) -> Dict[str, Any]:
                 if fmt == "parquet":
                     n_rows = len(pd.read_parquet(file_path))
                 else:
-                    n_rows = sum(1 for _ in open(
-                        file_path, encoding="utf-8")) - 1
+                    n_rows = sum(1 for _ in open(file_path, encoding="utf-8")) - 1
 
                 if n_rows >= min_rows:
                     check_result["rows_ok"] = True
@@ -523,24 +517,19 @@ def validate_outputs(logger: logging.Logger) -> Dict[str, Any]:
                     continue
 
             except Exception as e:
-                logger.warning(
-                    f"  ⚠ {file_path.name}: error al contar filas: {e}"
-                )
+                logger.warning(f"  ⚠ {file_path.name}: error al contar filas: {e}")
 
         # ─── Todo OK ───
         check_result["status"] = "OK"
         passed += 1
         details.append(check_result)
 
-        logger.info(
-            f"  ✓ {file_path.name} ({size_kb:.1f} KB)"
-        )
+        logger.info(f"  ✓ {file_path.name} ({size_kb:.1f} KB)")
 
     # Resumen de validación
     logger.info("")
     logger.info(
-        f"  Validación: {passed}/{total_checks} archivos OK, "
-        f"{warnings} con alertas"
+        f"  Validación: {passed}/{total_checks} archivos OK, " f"{warnings} con alertas"
     )
 
     return {
@@ -554,6 +543,7 @@ def validate_outputs(logger: logging.Logger) -> Dict[str, Any]:
 # ==============================================================================
 # RESUMEN FINAL
 # ==============================================================================
+
 
 def print_summary(
     results: List[Dict[str, Any]],
@@ -621,14 +611,11 @@ def print_summary(
             status_label = "IMPORT_ERROR"
 
         time_str = f"{r['duracion_segundos']:.2f}"
-        lines.append(
-            f"{r['modulo']:<{col_width}} {status_label:<14} {time_str:>10}"
-        )
+        lines.append(f"{r['modulo']:<{col_width}} {status_label:<14} {time_str:>10}")
 
     lines.append(line_sep)
     lines.append(
-        f"Modules: {n_success} OK, {n_failed} failed, "
-        f"{n_import_err} import errors"
+        f"Modules: {n_success} OK, {n_failed} failed, " f"{n_import_err} import errors"
     )
     lines.append(f"Total time: {elapsed_total:.2f} seconds")
     lines.append(f"Integrity check: {integrity_status}")
@@ -642,6 +629,7 @@ def print_summary(
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """
@@ -664,8 +652,7 @@ def main():
 
     logger.info("=" * 70)
     logger.info("PIPELINE ETL MAESTRO - Procesamiento de Datos (Fase 5)")
-    logger.info(
-        f"Inicio (UTC): {timestamp_inicio.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"Inicio (UTC): {timestamp_inicio.strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info(f"Módulos a ejecutar: {len(ETL_MODULES)}")
     logger.info(f"Proyecto raíz: {PROJECT_ROOT}")
     logger.info("=" * 70)
@@ -708,10 +695,7 @@ def main():
     # ─── Exit code para Task Scheduler ───
     # Si todos los módulos fueron exitosos → exit 0
     # Si alguno falló → exit 1 (pero el pipeline NO se interrumpió)
-    n_failed = sum(
-        1 for r in results
-        if r["estado"] in ("failed", "import_error")
-    )
+    n_failed = sum(1 for r in results if r["estado"] in ("failed", "import_error"))
     if n_failed > 0:
         sys.exit(1)
 

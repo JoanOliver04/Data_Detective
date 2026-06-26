@@ -107,7 +107,10 @@ def pronosticar_contaminacion_manana(
         df_var_full = df[df["variable"] == variable].copy()
 
         resultado = _pronosticar_variable(
-            df_var_full, variable, mes_objetivo, dia_semana_objetivo,
+            df_var_full,
+            variable,
+            mes_objetivo,
+            dia_semana_objetivo,
             medias_rt.get(variable),
         )
         if resultado is not None:
@@ -119,7 +122,8 @@ def pronosticar_contaminacion_manana(
 
     logger.info(
         "[PronosticoEstadistico] Pronostico generado para %d variables: %s",
-        len(resultados), list(resultados.keys()),
+        len(resultados),
+        list(resultados.keys()),
     )
     return resultados
 
@@ -276,7 +280,10 @@ def _extraer_medias_rt(contam_rt: Optional[dict]) -> Dict[str, float]:
         return {}
 
     key_map = {
-        "no2": "NO2", "o3": "O3", "pm10": "PM10", "pm25": "PM2.5",
+        "no2": "NO2",
+        "o3": "O3",
+        "pm10": "PM10",
+        "pm25": "PM2.5",
     }
 
     medias: Dict[str, float] = {}
@@ -335,12 +342,14 @@ if __name__ == "__main__":
         registros = []
         for anio in range(2018, 2026):
             for i in range(20):
-                registros.append({
-                    "valor": 30.0 - (anio - 2018) * 1.5 + np.random.normal(0, 2),
-                    "anio": anio,
-                    "mes": 4,
-                    "dia_semana": 2,
-                })
+                registros.append(
+                    {
+                        "valor": 30.0 - (anio - 2018) * 1.5 + np.random.normal(0, 2),
+                        "anio": anio,
+                        "mes": 4,
+                        "dia_semana": 2,
+                    }
+                )
         df = pd.DataFrame(registros)
         tendencia, factor = _calcular_tendencia(df, "NO2", 4)
         assert factor < 1.0, f"Tendencia a la baja esperada, got factor={factor}"
@@ -369,21 +378,29 @@ if __name__ == "__main__":
         for anio in range(2020, 2026):
             for dia in range(1, 29):
                 dt = datetime(anio, 4, dia)
-                registros.append({
-                    "valor": 25.0 + np.random.normal(0, 5),
-                    "anio": anio,
-                    "mes": 4,
-                    "dia_semana": dt.weekday(),
-                    "fecha_utc": pd.Timestamp(dt, tz="UTC"),
-                })
+                registros.append(
+                    {
+                        "valor": 25.0 + np.random.normal(0, 5),
+                        "anio": anio,
+                        "mes": 4,
+                        "dia_semana": dt.weekday(),
+                        "fecha_utc": pd.Timestamp(dt, tz="UTC"),
+                    }
+                )
         df = pd.DataFrame(registros)
         df["variable"] = "NO2"
 
         resultado = _pronosticar_variable(df, "NO2", 4, 2, None)
         assert resultado is not None
-        assert 10 < resultado["prediccion"] < 50, f"Prediccion fuera de rango: {resultado['prediccion']}"
+        assert (
+            10 < resultado["prediccion"] < 50
+        ), f"Prediccion fuera de rango: {resultado['prediccion']}"
         assert resultado["confianza"] in ("Alta", "Media", "Baja")
-        assert resultado["rango_min"] <= resultado["prediccion"] <= resultado["rango_max"] + 5
+        assert (
+            resultado["rango_min"]
+            <= resultado["prediccion"]
+            <= resultado["rango_max"] + 5
+        )
         print("  [OK] test_pronosticar_variable_sintetico")
 
     def test_pronosticar_con_rt():
@@ -392,13 +409,15 @@ if __name__ == "__main__":
         for anio in range(2020, 2026):
             for dia in range(1, 29):
                 dt = datetime(anio, 4, dia)
-                registros.append({
-                    "valor": 20.0,
-                    "anio": anio,
-                    "mes": 4,
-                    "dia_semana": dt.weekday(),
-                    "fecha_utc": pd.Timestamp(dt, tz="UTC"),
-                })
+                registros.append(
+                    {
+                        "valor": 20.0,
+                        "anio": anio,
+                        "mes": 4,
+                        "dia_semana": dt.weekday(),
+                        "fecha_utc": pd.Timestamp(dt, tz="UTC"),
+                    }
+                )
         df = pd.DataFrame(registros)
         df["variable"] = "NO2"
 
@@ -412,14 +431,18 @@ if __name__ == "__main__":
 
     def test_datos_insuficientes():
         """Verifica fallback con pocos datos."""
-        df = pd.DataFrame({
-            "valor": [10.0, 15.0, 12.0],
-            "anio": [2024, 2024, 2024],
-            "mes": [4, 4, 5],
-            "dia_semana": [2, 3, 2],
-            "fecha_utc": pd.to_datetime(["2024-04-10", "2024-04-11", "2024-05-08"]).tz_localize("UTC"),
-            "variable": ["NO2"] * 3,
-        })
+        df = pd.DataFrame(
+            {
+                "valor": [10.0, 15.0, 12.0],
+                "anio": [2024, 2024, 2024],
+                "mes": [4, 4, 5],
+                "dia_semana": [2, 3, 2],
+                "fecha_utc": pd.to_datetime(
+                    ["2024-04-10", "2024-04-11", "2024-05-08"]
+                ).tz_localize("UTC"),
+                "variable": ["NO2"] * 3,
+            }
+        )
         resultado = _pronosticar_variable(df, "NO2", 4, 2, None)
         # Pocos datos pero al menos devuelve algo
         if resultado is not None:

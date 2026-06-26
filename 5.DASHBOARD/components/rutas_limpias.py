@@ -35,9 +35,9 @@ logger = logging.getLogger(__name__)
 _MAP_HEIGHT = 520
 
 # Colores AQI para tramos
-_AQI_BUENO = "#2ca02c"       # AQI < 50
-_AQI_MODERADO = "#f0c428"    # AQI 50-100
-_AQI_MALO = "#e74c3c"        # AQI > 100
+_AQI_BUENO = "#2ca02c"  # AQI < 50
+_AQI_MODERADO = "#f0c428"  # AQI 50-100
+_AQI_MALO = "#e74c3c"  # AQI > 100
 _COLOR_RUTA_DEFAULT = "#2ca02c"
 
 
@@ -56,36 +56,56 @@ RUTAS: Dict[str, dict] = {
         "distancia_km": 9.2,
         "tiempo_estimado_min": 120,
         "coordenadas": [
-            [39.4785, -0.4119],   # Bioparc / Cabecera oeste
-            [39.4793, -0.4040],   # Parc de Capçalera
-            [39.4800, -0.3967],   # Pont Nou d'Octubre
-            [39.4805, -0.3903],   # Pont de Campanar
-            [39.4808, -0.3838],   # Jardins de Monforte (altura)
-            [39.4797, -0.3782],   # Pont de les Arts / IVAM
-            [39.4788, -0.3756],   # Torres de Serranos (norte)
-            [39.4770, -0.3718],   # Pont de Fusta
-            [39.4752, -0.3690],   # Pont del Real
-            [39.4729, -0.3648],   # Palau de la Música
-            [39.4700, -0.3608],   # Pont de l'Àngel Custodi
-            [39.4670, -0.3572],   # Pont de l'Exposició / Pont de la Mar
-            [39.4639, -0.3540],   # Gulliver / Parc infantil
-            [39.4600, -0.3510],   # Pont de Monteolivete
-            [39.4570, -0.3485],   # L'Umbracle / Museu de les Ciències
-            [39.4545, -0.3470],   # L'Hemisfèric
-            [39.4529, -0.3456],   # Palau de les Arts Reina Sofía
-            [39.4520, -0.3430],   # L'Àgora / final CAC
+            [39.4785, -0.4119],  # Bioparc / Cabecera oeste
+            [39.4793, -0.4040],  # Parc de Capçalera
+            [39.4800, -0.3967],  # Pont Nou d'Octubre
+            [39.4805, -0.3903],  # Pont de Campanar
+            [39.4808, -0.3838],  # Jardins de Monforte (altura)
+            [39.4797, -0.3782],  # Pont de les Arts / IVAM
+            [39.4788, -0.3756],  # Torres de Serranos (norte)
+            [39.4770, -0.3718],  # Pont de Fusta
+            [39.4752, -0.3690],  # Pont del Real
+            [39.4729, -0.3648],  # Palau de la Música
+            [39.4700, -0.3608],  # Pont de l'Àngel Custodi
+            [39.4670, -0.3572],  # Pont de l'Exposició / Pont de la Mar
+            [39.4639, -0.3540],  # Gulliver / Parc infantil
+            [39.4600, -0.3510],  # Pont de Monteolivete
+            [39.4570, -0.3485],  # L'Umbracle / Museu de les Ciències
+            [39.4545, -0.3470],  # L'Hemisfèric
+            [39.4529, -0.3456],  # Palau de les Arts Reina Sofía
+            [39.4520, -0.3430],  # L'Àgora / final CAC
         ],
         "puntos_interes": [
-            {"nombre": "Bioparc", "lat": 39.4785, "lon": -0.4119,
-             "descripcion": "Zoo de inmersión — inicio de la ruta"},
-            {"nombre": "Torres de Serranos", "lat": 39.4788, "lon": -0.3756,
-             "descripcion": "Portal gótico del siglo XIV"},
-            {"nombre": "Palau de la Música", "lat": 39.4729, "lon": -0.3648,
-             "descripcion": "Auditorio al aire libre junto al río"},
-            {"nombre": "Gulliver", "lat": 39.4639, "lon": -0.3540,
-             "descripcion": "Parque infantil gigante — zona de descanso"},
-            {"nombre": "Ciudad de las Artes y las Ciencias", "lat": 39.4545, "lon": -0.3470,
-             "descripcion": "Complejo cultural de Calatrava — final de la ruta"},
+            {
+                "nombre": "Bioparc",
+                "lat": 39.4785,
+                "lon": -0.4119,
+                "descripcion": "Zoo de inmersión — inicio de la ruta",
+            },
+            {
+                "nombre": "Torres de Serranos",
+                "lat": 39.4788,
+                "lon": -0.3756,
+                "descripcion": "Portal gótico del siglo XIV",
+            },
+            {
+                "nombre": "Palau de la Música",
+                "lat": 39.4729,
+                "lon": -0.3648,
+                "descripcion": "Auditorio al aire libre junto al río",
+            },
+            {
+                "nombre": "Gulliver",
+                "lat": 39.4639,
+                "lon": -0.3540,
+                "descripcion": "Parque infantil gigante — zona de descanso",
+            },
+            {
+                "nombre": "Ciudad de las Artes y las Ciencias",
+                "lat": 39.4545,
+                "lon": -0.3470,
+                "descripcion": "Complejo cultural de Calatrava — final de la ruta",
+            },
         ],
     },
     "Ruta Jardins del Real / Vivers": {
@@ -98,26 +118,38 @@ RUTAS: Dict[str, dict] = {
         "distancia_km": 3.5,
         "tiempo_estimado_min": 50,
         "coordenadas": [
-            [39.4785, -0.3703],   # Entrada Viveros desde Pont de Fusta
-            [39.4793, -0.3685],   # Jardins del Real — zona norte
-            [39.4800, -0.3665],   # Estanque de Viveros
-            [39.4798, -0.3640],   # Rosaleda
-            [39.4788, -0.3628],   # Museo de Ciencias Naturales
-            [39.4775, -0.3640],   # Passeig de la Petxina (sur viveros)
-            [39.4760, -0.3668],   # Jardí Botànic — entrada este
-            [39.4750, -0.3698],   # Jardí Botànic — invernaderos
-            [39.4748, -0.3725],   # Gran Via Fernando el Católico
-            [39.4758, -0.3738],   # Pont del Real — lado sur
-            [39.4770, -0.3718],   # Pont del Real — lado norte
-            [39.4785, -0.3703],   # Cierre bucle en Viveros
+            [39.4785, -0.3703],  # Entrada Viveros desde Pont de Fusta
+            [39.4793, -0.3685],  # Jardins del Real — zona norte
+            [39.4800, -0.3665],  # Estanque de Viveros
+            [39.4798, -0.3640],  # Rosaleda
+            [39.4788, -0.3628],  # Museo de Ciencias Naturales
+            [39.4775, -0.3640],  # Passeig de la Petxina (sur viveros)
+            [39.4760, -0.3668],  # Jardí Botànic — entrada este
+            [39.4750, -0.3698],  # Jardí Botànic — invernaderos
+            [39.4748, -0.3725],  # Gran Via Fernando el Católico
+            [39.4758, -0.3738],  # Pont del Real — lado sur
+            [39.4770, -0.3718],  # Pont del Real — lado norte
+            [39.4785, -0.3703],  # Cierre bucle en Viveros
         ],
         "puntos_interes": [
-            {"nombre": "Jardins del Real (Viveros)", "lat": 39.4793, "lon": -0.3685,
-             "descripcion": "Parque histórico con árboles centenarios"},
-            {"nombre": "Jardí Botànic", "lat": 39.4750, "lon": -0.3698,
-             "descripcion": "Jardín botánico universitario (fundado 1567)"},
-            {"nombre": "Museu de Ciències Naturals", "lat": 39.4788, "lon": -0.3628,
-             "descripcion": "Museo de historia natural dentro de Viveros"},
+            {
+                "nombre": "Jardins del Real (Viveros)",
+                "lat": 39.4793,
+                "lon": -0.3685,
+                "descripcion": "Parque histórico con árboles centenarios",
+            },
+            {
+                "nombre": "Jardí Botànic",
+                "lat": 39.4750,
+                "lon": -0.3698,
+                "descripcion": "Jardín botánico universitario (fundado 1567)",
+            },
+            {
+                "nombre": "Museu de Ciències Naturals",
+                "lat": 39.4788,
+                "lon": -0.3628,
+                "descripcion": "Museo de historia natural dentro de Viveros",
+            },
         ],
     },
     "Ruta Albufera Norte — Pinedo / El Saler": {
@@ -130,25 +162,37 @@ RUTAS: Dict[str, dict] = {
         "distancia_km": 6.0,
         "tiempo_estimado_min": 80,
         "coordenadas": [
-            [39.4320, -0.3325],   # Playa de Pinedo — norte
-            [39.4280, -0.3310],   # Pinedo — zona central
-            [39.4230, -0.3290],   # Senda entre dunas
-            [39.4180, -0.3275],   # Platja del Saler — norte
-            [39.4130, -0.3268],   # Pasarela dunar
-            [39.4080, -0.3262],   # Playa del Saler — centro
-            [39.4030, -0.3260],   # Pinar del Saler
-            [39.3985, -0.3265],   # Devesa del Saler — entrada
-            [39.3940, -0.3275],   # Sendero pinada
-            [39.3895, -0.3290],   # Mirador Albufera — norte
-            [39.3850, -0.3310],   # Entrada Parc Natural
+            [39.4320, -0.3325],  # Playa de Pinedo — norte
+            [39.4280, -0.3310],  # Pinedo — zona central
+            [39.4230, -0.3290],  # Senda entre dunas
+            [39.4180, -0.3275],  # Platja del Saler — norte
+            [39.4130, -0.3268],  # Pasarela dunar
+            [39.4080, -0.3262],  # Playa del Saler — centro
+            [39.4030, -0.3260],  # Pinar del Saler
+            [39.3985, -0.3265],  # Devesa del Saler — entrada
+            [39.3940, -0.3275],  # Sendero pinada
+            [39.3895, -0.3290],  # Mirador Albufera — norte
+            [39.3850, -0.3310],  # Entrada Parc Natural
         ],
         "puntos_interes": [
-            {"nombre": "Playa de Pinedo", "lat": 39.4320, "lon": -0.3325,
-             "descripcion": "Playa familiar — inicio de ruta"},
-            {"nombre": "Devesa del Saler", "lat": 39.3985, "lon": -0.3265,
-             "descripcion": "Bosque dunar protegido de pinos y enebros"},
-            {"nombre": "Mirador Albufera Norte", "lat": 39.3895, "lon": -0.3290,
-             "descripcion": "Vistas al lago de l'Albufera"},
+            {
+                "nombre": "Playa de Pinedo",
+                "lat": 39.4320,
+                "lon": -0.3325,
+                "descripcion": "Playa familiar — inicio de ruta",
+            },
+            {
+                "nombre": "Devesa del Saler",
+                "lat": 39.3985,
+                "lon": -0.3265,
+                "descripcion": "Bosque dunar protegido de pinos y enebros",
+            },
+            {
+                "nombre": "Mirador Albufera Norte",
+                "lat": 39.3895,
+                "lon": -0.3290,
+                "descripcion": "Vistas al lago de l'Albufera",
+            },
         ],
     },
     "Ruta Cabanyal — Malvarrosa": {
@@ -160,26 +204,38 @@ RUTAS: Dict[str, dict] = {
         "distancia_km": 4.0,
         "tiempo_estimado_min": 55,
         "coordenadas": [
-            [39.4545, -0.3250],   # Marina Real Juan Carlos I
-            [39.4558, -0.3238],   # Platja de les Arenes — sur
-            [39.4580, -0.3230],   # Platja de les Arenes — centro
-            [39.4605, -0.3218],   # Passeig Marítim — Cabanyal
-            [39.4630, -0.3205],   # Platja del Cabanyal
-            [39.4660, -0.3192],   # Platja de la Malvarrosa — sur
-            [39.4690, -0.3180],   # Malvarrosa — centro
-            [39.4720, -0.3168],   # Malvarrosa — norte
-            [39.4750, -0.3155],   # Límite Alboraya
-            [39.4780, -0.3140],   # Platja de la Patacona — sur
-            [39.4810, -0.3128],   # Patacona — centro
-            [39.4835, -0.3118],   # Patacona — norte (final)
+            [39.4545, -0.3250],  # Marina Real Juan Carlos I
+            [39.4558, -0.3238],  # Platja de les Arenes — sur
+            [39.4580, -0.3230],  # Platja de les Arenes — centro
+            [39.4605, -0.3218],  # Passeig Marítim — Cabanyal
+            [39.4630, -0.3205],  # Platja del Cabanyal
+            [39.4660, -0.3192],  # Platja de la Malvarrosa — sur
+            [39.4690, -0.3180],  # Malvarrosa — centro
+            [39.4720, -0.3168],  # Malvarrosa — norte
+            [39.4750, -0.3155],  # Límite Alboraya
+            [39.4780, -0.3140],  # Platja de la Patacona — sur
+            [39.4810, -0.3128],  # Patacona — centro
+            [39.4835, -0.3118],  # Patacona — norte (final)
         ],
         "puntos_interes": [
-            {"nombre": "Marina Real Juan Carlos I", "lat": 39.4545, "lon": -0.3250,
-             "descripcion": "Puerto deportivo — inicio de la ruta"},
-            {"nombre": "Platja de la Malvarrosa", "lat": 39.4690, "lon": -0.3180,
-             "descripcion": "Playa principal del barrio marinero"},
-            {"nombre": "La Patacona", "lat": 39.4810, "lon": -0.3128,
-             "descripcion": "Playa de Alboraya — chiringuitos y vistas"},
+            {
+                "nombre": "Marina Real Juan Carlos I",
+                "lat": 39.4545,
+                "lon": -0.3250,
+                "descripcion": "Puerto deportivo — inicio de la ruta",
+            },
+            {
+                "nombre": "Platja de la Malvarrosa",
+                "lat": 39.4690,
+                "lon": -0.3180,
+                "descripcion": "Playa principal del barrio marinero",
+            },
+            {
+                "nombre": "La Patacona",
+                "lat": 39.4810,
+                "lon": -0.3128,
+                "descripcion": "Playa de Alboraya — chiringuitos y vistas",
+            },
         ],
     },
     "Ruta Benimaclet — Huerta Nord": {
@@ -192,31 +248,47 @@ RUTAS: Dict[str, dict] = {
         "distancia_km": 5.0,
         "tiempo_estimado_min": 70,
         "coordenadas": [
-            [39.4870, -0.3570],   # Plaça de Benimaclet
-            [39.4890, -0.3555],   # Carrer de Dolores Marqués
-            [39.4915, -0.3540],   # Entrada huerta — camino agrícola
-            [39.4945, -0.3528],   # Alquería del Moro
-            [39.4975, -0.3515],   # Cruce Camí de Vera
-            [39.5005, -0.3505],   # Campos de naranjos
-            [39.5035, -0.3490],   # Alquería de Barrinto
-            [39.5060, -0.3478],   # Acequia de Mestalla
-            [39.5085, -0.3468],   # Camí del Farinós
-            [39.5110, -0.3460],   # Ermita de Vera
-            [39.5135, -0.3470],   # Retorno — borde huerta
-            [39.5100, -0.3500],   # Camí de les Fonts
-            [39.5050, -0.3525],   # Vuelta por camino paralelo
-            [39.4980, -0.3545],   # Huertos urbanos Benimaclet
-            [39.4870, -0.3570],   # Cierre en Plaça de Benimaclet
+            [39.4870, -0.3570],  # Plaça de Benimaclet
+            [39.4890, -0.3555],  # Carrer de Dolores Marqués
+            [39.4915, -0.3540],  # Entrada huerta — camino agrícola
+            [39.4945, -0.3528],  # Alquería del Moro
+            [39.4975, -0.3515],  # Cruce Camí de Vera
+            [39.5005, -0.3505],  # Campos de naranjos
+            [39.5035, -0.3490],  # Alquería de Barrinto
+            [39.5060, -0.3478],  # Acequia de Mestalla
+            [39.5085, -0.3468],  # Camí del Farinós
+            [39.5110, -0.3460],  # Ermita de Vera
+            [39.5135, -0.3470],  # Retorno — borde huerta
+            [39.5100, -0.3500],  # Camí de les Fonts
+            [39.5050, -0.3525],  # Vuelta por camino paralelo
+            [39.4980, -0.3545],  # Huertos urbanos Benimaclet
+            [39.4870, -0.3570],  # Cierre en Plaça de Benimaclet
         ],
         "puntos_interes": [
-            {"nombre": "Plaça de Benimaclet", "lat": 39.4870, "lon": -0.3570,
-             "descripcion": "Centro del barrio — terrazas y vida local"},
-            {"nombre": "Alquería del Moro", "lat": 39.4945, "lon": -0.3528,
-             "descripcion": "Alquería histórica del siglo XV"},
-            {"nombre": "Acequia de Mestalla", "lat": 39.5060, "lon": -0.3478,
-             "descripcion": "Acequia medieval del sistema de riego de l'Horta"},
-            {"nombre": "Ermita de Vera", "lat": 39.5110, "lon": -0.3460,
-             "descripcion": "Ermita rural con vistas a la huerta"},
+            {
+                "nombre": "Plaça de Benimaclet",
+                "lat": 39.4870,
+                "lon": -0.3570,
+                "descripcion": "Centro del barrio — terrazas y vida local",
+            },
+            {
+                "nombre": "Alquería del Moro",
+                "lat": 39.4945,
+                "lon": -0.3528,
+                "descripcion": "Alquería histórica del siglo XV",
+            },
+            {
+                "nombre": "Acequia de Mestalla",
+                "lat": 39.5060,
+                "lon": -0.3478,
+                "descripcion": "Acequia medieval del sistema de riego de l'Horta",
+            },
+            {
+                "nombre": "Ermita de Vera",
+                "lat": 39.5110,
+                "lon": -0.3460,
+                "descripcion": "Ermita rural con vistas a la huerta",
+            },
         ],
     },
 }
@@ -226,14 +298,18 @@ RUTAS: Dict[str, dict] = {
 # CALCULO DE AQI POR TRAMO
 # ==============================================================================
 
+
 def _distancia_aprox(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Distancia aproximada en km entre dos puntos (formula Haversine simplificada)."""
     r = 6371.0
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
-    a = (math.sin(dlat / 2) ** 2
-         + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2))
-         * math.sin(dlon / 2) ** 2)
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dlon / 2) ** 2
+    )
     return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
@@ -329,6 +405,7 @@ def _preparar_estaciones_con_coords(contam_rt: Optional[dict]) -> list:
 # MAPA FOLIUM
 # ==============================================================================
 
+
 def _crear_mapa_ruta(
     ruta: dict,
     estaciones_rt: list,
@@ -420,13 +497,13 @@ def _crear_mapa_ruta(
     if estaciones_rt:
         legend_html = (
             '<div style="position:fixed;bottom:30px;left:30px;z-index:1000;'
-            'background:rgba(0,0,0,0.75);padding:10px 14px;border-radius:8px;'
+            "background:rgba(0,0,0,0.75);padding:10px 14px;border-radius:8px;"
             'font-size:12px;color:#fff;line-height:1.6;">'
-            '<b>Calidad del aire (AQI)</b><br>'
+            "<b>Calidad del aire (AQI)</b><br>"
             f'<span style="color:{_AQI_BUENO};">━━</span> Buena (&lt;50)<br>'
             f'<span style="color:{_AQI_MODERADO};">━━</span> Moderada (50-100)<br>'
             f'<span style="color:{_AQI_MALO};">━━</span> Mala (&gt;100)'
-            '</div>'
+            "</div>"
         )
         m.get_root().html.add_child(folium.Element(legend_html))
 
@@ -436,6 +513,7 @@ def _crear_mapa_ruta(
 # ==============================================================================
 # FUNCION PRINCIPAL
 # ==============================================================================
+
 
 def render_mapa_rutas_limpias(contam_rt: Optional[dict] = None) -> None:
     """
@@ -450,10 +528,10 @@ def render_mapa_rutas_limpias(contam_rt: Optional[dict] = None) -> None:
     """
     st.markdown(
         '<div class="section-header">'
-        '<h3>🌿 Rutas Pulmón Limpio</h3>'
-        '<p>Recorridos por las zonas verdes y de menor contaminación de Valencia. '
-        'Ideales para deporte al aire libre y paseo.</p>'
-        '</div>',
+        "<h3>🌿 Rutas Pulmón Limpio</h3>"
+        "<p>Recorridos por las zonas verdes y de menor contaminación de Valencia. "
+        "Ideales para deporte al aire libre y paseo.</p>"
+        "</div>",
         unsafe_allow_html=True,
     )
 
@@ -525,10 +603,10 @@ def render_mapa_rutas_limpias(contam_rt: Optional[dict] = None) -> None:
     # Descripcion de la ruta
     st.markdown(
         f'<div style="background:rgba(44,160,44,0.06);border-left:4px solid #2ca02c;'
-        f'padding:10px 14px;border-radius:6px;margin:8px 0 12px 0;'
+        f"padding:10px 14px;border-radius:6px;margin:8px 0 12px 0;"
         f'font-size:0.92rem;">'
         f'{ruta["descripcion"]}'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
 
@@ -541,8 +619,6 @@ def render_mapa_rutas_limpias(contam_rt: Optional[dict] = None) -> None:
     if pois:
         with st.expander(f"📍 Puntos de interés ({len(pois)})"):
             for poi in pois:
-                st.markdown(
-                    f"**{poi['nombre']}** — {poi['descripcion']}"
-                )
+                st.markdown(f"**{poi['nombre']}** — {poi['descripcion']}")
 
     logger.info("[RutasLimpias] Ruta '%s' renderizada.", seleccion)

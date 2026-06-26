@@ -10,15 +10,17 @@ import pytest
 from utils.formatters import escape_html
 
 
-@pytest.mark.parametrize("entrada,esperado", [
-    ("<script>alert(1)</script>",
-     "&lt;script&gt;alert(1)&lt;/script&gt;"),
-    ('a"b', "a&quot;b"),
-    ("a'b", "a&#x27;b"),
-    ("A & B", "A &amp; B"),
-    ("V-30", "V-30"),            # carretera normal, sin cambios
-    ("Despejado", "Despejado"),  # descripcion normal
-])
+@pytest.mark.parametrize(
+    "entrada,esperado",
+    [
+        ("<script>alert(1)</script>", "&lt;script&gt;alert(1)&lt;/script&gt;"),
+        ('a"b', "a&quot;b"),
+        ("a'b", "a&#x27;b"),
+        ("A & B", "A &amp; B"),
+        ("V-30", "V-30"),  # carretera normal, sin cambios
+        ("Despejado", "Despejado"),  # descripcion normal
+    ],
+)
 def test_escape_html(entrada, esperado):
     assert escape_html(entrada) == esperado
 
@@ -34,5 +36,5 @@ def test_escape_html_neutraliza_onerror():
     payload = '<img src=x onerror="alert(document.cookie)">'
     out = escape_html(payload)
     assert "<img" not in out
-    assert "onerror" in out          # el texto permanece, pero escapado
+    assert "onerror" in out  # el texto permanece, pero escapado
     assert "&lt;img" in out

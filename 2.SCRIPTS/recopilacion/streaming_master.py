@@ -20,7 +20,7 @@ Descripción:
     7. eventos_visitvalencia.py           → Eventos agenda Visit Valencia
     8. eventos_ayuntamiento.py            → Eventos agenda Ayuntamiento Valencia
     9. eventos_valenciacf.py              → Partidos Valencia CF (iCalendar)
-    
+
     Cada script se ejecuta de forma independiente. Si uno falla,
     los siguientes se ejecutan igualmente. Se aplican reintentos
     automáticos con espera progresiva ante errores de red.
@@ -134,10 +134,10 @@ NETWORK_ERROR_KEYWORDS = [
     "unreachable",
     "reset by peer",
     "broken pipe",
-    "429",        # Rate limit
-    "503",        # Service unavailable
-    "502",        # Bad gateway
-    "504",        # Gateway timeout
+    "429",  # Rate limit
+    "503",  # Service unavailable
+    "502",  # Bad gateway
+    "504",  # Gateway timeout
 ]
 
 
@@ -145,16 +145,17 @@ NETWORK_ERROR_KEYWORDS = [
 # CONFIGURACIÓN DE LOGGING CENTRALIZADO
 # ==============================================================================
 
+
 def setup_logging() -> logging.Logger:
     """
     Configura el sistema de logging centralizado del orquestador.
-    
+
     Log único para todas las ejecuciones del master en:
     logs/streaming.log
-    
+
     También muestra mensajes INFO en consola para seguimiento
     manual o desde Task Scheduler.
-    
+
     Returns:
         logging.Logger: Logger centralizado del orquestador
     """
@@ -188,16 +189,17 @@ def setup_logging() -> logging.Logger:
 # FUNCIONES DE EJECUCIÓN
 # ==============================================================================
 
+
 def is_network_error(error: Exception) -> bool:
     """
     Determina si un error es de red y justifica un reintento.
-    
+
     Analiza el tipo de excepción y el mensaje de error para
     identificar problemas transitorios de conectividad.
-    
+
     Args:
         error: La excepción capturada
-    
+
     Returns:
         True si es un error de red que podría resolverse reintentando
     """
@@ -216,23 +218,20 @@ def is_network_error(error: Exception) -> bool:
     return False
 
 
-def run_module(
-    module_info: Dict[str, str],
-    logger: logging.Logger
-) -> Dict[str, Any]:
+def run_module(module_info: Dict[str, str], logger: logging.Logger) -> Dict[str, Any]:
     """
     Ejecuta un módulo de streaming con reintentos ante errores de red.
-    
+
     Flujo:
     1. Importa el módulo dinámicamente con importlib
     2. Ejecuta su función main()
     3. Si falla por red → reintenta hasta MAX_RETRIES con backoff
     4. Si falla por otro motivo → registra error y continúa
-    
+
     Args:
         module_info: Diccionario con module, name, fase
         logger: Logger centralizado
-    
+
     Returns:
         Diccionario con resultado de la ejecución:
         - modulo, nombre, fase
@@ -264,16 +263,13 @@ def run_module(
             del sys.modules[mod_name]
         module = importlib.import_module(mod_name)
     except ImportError as e:
-        logger.error(
-            f"[{mod_fase}] ERROR IMPORT: no se pudo cargar '{mod_name}': {e}"
-        )
+        logger.error(f"[{mod_fase}] ERROR IMPORT: no se pudo cargar '{mod_name}': {e}")
         result["estado"] = "error_import"
         result["error"] = f"ImportError: {e}"
         return result
     except Exception as e:
         logger.error(
-            f"[{mod_fase}] ERROR cargando '{mod_name}': "
-            f"{type(e).__name__}: {e}"
+            f"[{mod_fase}] ERROR cargando '{mod_name}': " f"{type(e).__name__}: {e}"
         )
         result["estado"] = "error_import"
         result["error"] = f"{type(e).__name__}: {e}"
@@ -306,9 +302,7 @@ def run_module(
             result["duracion_segundos"] = round(elapsed, 2)
             result["estado"] = "exitoso"
 
-            logger.info(
-                f"[{mod_fase}] ✔ {mod_display} completado en {elapsed:.1f}s"
-            )
+            logger.info(f"[{mod_fase}] ✔ {mod_display} completado en {elapsed:.1f}s")
             return result
 
         except Exception as e:
@@ -348,10 +342,11 @@ def run_module(
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
 
+
 def main():
     """
     Función principal del orquestador de streaming.
-    
+
     Ejecuta secuencialmente los 9 módulos de captura, registra
     resultados y genera un resumen final con el estado de cada uno.
     """

@@ -164,6 +164,7 @@ COLUMNAS_CANONICAS = [
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
 
+
 def setup_logging() -> logging.Logger:
     """
     Configura logging dual (archivo + consola) siguiendo el patrón del proyecto.
@@ -199,6 +200,7 @@ def setup_logging() -> logging.Logger:
 # CARGA DE DATOS
 # ==============================================================================
 
+
 def cargar_dgt(logger: logging.Logger) -> List[dict]:
     """
     Carga todos los JSON capturados por streaming_dgt.py (Fase 3.4).
@@ -231,8 +233,7 @@ def cargar_dgt(logger: logging.Logger) -> List[dict]:
             # Extraer metadata para timestamp de referencia
             metadata = captura.get("_metadata", {})
             timestamp_captura = metadata.get(
-                "timestamp_utc",
-                metadata.get("timestamp_captura", None)
+                "timestamp_utc", metadata.get("timestamp_captura", None)
             )
 
             # Extraer lista de incidencias
@@ -251,9 +252,7 @@ def cargar_dgt(logger: logging.Logger) -> List[dict]:
                     all_records.append(record)
 
             archivos_ok += 1
-            logger.debug(
-                f"  → {archivo.name}: {len(incidencias)} incidencias"
-            )
+            logger.debug(f"  → {archivo.name}: {len(incidencias)} incidencias")
 
         except json.JSONDecodeError as e:
             logger.error(f"  ✘ JSON inválido: {archivo.name} → {e}")
@@ -276,6 +275,7 @@ def cargar_dgt(logger: logging.Logger) -> List[dict]:
 # TRANSFORMACIONES
 # ==============================================================================
 
+
 def extraer_fecha(record: dict) -> Optional[str]:
     """
     Extrae el timestamp más relevante de una incidencia DGT.
@@ -295,8 +295,12 @@ def extraer_fecha(record: dict) -> Optional[str]:
     Returns:
         String ISO 8601 con timestamp, o None si no hay ninguno
     """
-    for campo in ("fecha_creacion", "fecha_version", "fecha_inicio",
-                  "_timestamp_captura"):
+    for campo in (
+        "fecha_creacion",
+        "fecha_version",
+        "fecha_inicio",
+        "_timestamp_captura",
+    ):
         valor = record.get(campo)
         if valor and isinstance(valor, str) and valor.strip():
             return valor.strip()
@@ -427,8 +431,7 @@ def es_comunidad_valenciana(record: dict) -> bool:
     # Si tenemos localización pero ningún campo coincide → no es CV
     # Solo rechazar si al menos un punto tiene comunidad o provincia definida
     tiene_geo = any(
-        loc.get(pk, {}).get("comunidad_autonoma") or
-        loc.get(pk, {}).get("provincia")
+        loc.get(pk, {}).get("comunidad_autonoma") or loc.get(pk, {}).get("provincia")
         for pk in ("punto_from", "punto_to")
     )
 
@@ -440,10 +443,7 @@ def es_comunidad_valenciana(record: dict) -> bool:
     return True
 
 
-def records_a_dataframe(
-    records: List[dict],
-    logger: logging.Logger
-) -> pd.DataFrame:
+def records_a_dataframe(records: List[dict], logger: logging.Logger) -> pd.DataFrame:
     """
     Transforma la lista de diccionarios de incidencias en un DataFrame
     tabular con el esquema canónico.
@@ -501,15 +501,17 @@ def records_a_dataframe(
         tipo_datex = record.get("tipo_datex", "")
         calidad = "ok" if tipo_datex else "missing"
 
-        rows.append({
-            "fecha": fecha,
-            "ubicacion": ubicacion,
-            "intensidad": float("nan"),
-            "velocidad": float("nan"),
-            "incidencias": incidencias,
-            "fuente": "dgt",
-            "calidad_dato": calidad,
-        })
+        rows.append(
+            {
+                "fecha": fecha,
+                "ubicacion": ubicacion,
+                "intensidad": float("nan"),
+                "velocidad": float("nan"),
+                "incidencias": incidencias,
+                "fuente": "dgt",
+                "calidad_dato": calidad,
+            }
+        )
 
     if fechas_invalidas > 0:
         logger.warning(
@@ -522,8 +524,7 @@ def records_a_dataframe(
 
 
 def filtrar_comunidad_valenciana(
-    records: List[dict],
-    logger: logging.Logger
+    records: List[dict], logger: logging.Logger
 ) -> List[dict]:
     """
     Filtra las incidencias para conservar solo las de la Comunidad Valenciana.
@@ -563,10 +564,7 @@ def extraer_hora(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     return df
 
 
-def eliminar_duplicados(
-    df: pd.DataFrame,
-    logger: logging.Logger
-) -> pd.DataFrame:
+def eliminar_duplicados(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     """
     Elimina filas duplicadas exactas.
 
@@ -611,10 +609,8 @@ def eliminar_duplicados(
 # GUARDADO Y RESUMEN
 # ==============================================================================
 
-def guardar_resultados(
-    df: pd.DataFrame,
-    logger: logging.Logger
-) -> Optional[Path]:
+
+def guardar_resultados(df: pd.DataFrame, logger: logging.Logger) -> Optional[Path]:
     """
     Guarda el dataset limpio en CSV (UTF-8, sin índice).
 
@@ -631,7 +627,8 @@ def guardar_resultados(
         df.to_csv(OUTPUT_CSV, index=False, encoding="utf-8")
         size = OUTPUT_CSV.stat().st_size
         size_str = (
-            f"{size / (1024*1024):.1f} MB" if size >= 1024 * 1024
+            f"{size / (1024*1024):.1f} MB"
+            if size >= 1024 * 1024
             else f"{size / 1024:.1f} KB"
         )
         logger.info(f"✔ CSV guardado: {OUTPUT_CSV.name} ({size_str})")
@@ -658,8 +655,7 @@ def imprimir_resumen(df: pd.DataFrame, logger: logging.Logger) -> None:
         return
 
     logger.info(f"  Total registros:     {len(df):,}")
-    logger.info(
-        f"  Rango temporal:      {df['fecha'].min()} → {df['fecha'].max()}")
+    logger.info(f"  Rango temporal:      {df['fecha'].min()} → {df['fecha'].max()}")
     logger.info(f"  Ubicaciones únicas:  {df['ubicacion'].nunique()}")
 
     # Desglose por calidad
@@ -713,12 +709,8 @@ def imprimir_resumen(df: pd.DataFrame, logger: logging.Logger) -> None:
 
     # Nota sobre intensidad/velocidad
     logger.info("")
-    logger.info(
-        "  NOTA: Las columnas 'intensidad' y 'velocidad' contienen NaN."
-    )
-    logger.info(
-        "  El endpoint SituationPublication de DGT solo reporta incidencias."
-    )
+    logger.info("  NOTA: Las columnas 'intensidad' y 'velocidad' contienen NaN.")
+    logger.info("  El endpoint SituationPublication de DGT solo reporta incidencias.")
     logger.info(
         "  Los datos de flujo requieren TrafficStatus o MeasuredDataPublication."
     )
@@ -729,6 +721,7 @@ def imprimir_resumen(df: pd.DataFrame, logger: logging.Logger) -> None:
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """
@@ -763,8 +756,7 @@ def main():
     all_records = cargar_dgt(logger)
 
     if not all_records:
-        logger.error(
-            "No se encontraron incidencias en ningún archivo. Abortando.")
+        logger.error("No se encontraron incidencias en ningún archivo. Abortando.")
         print("\n❌ ERROR: Sin datos de entrada. Verifica las rutas.")
         return
 
@@ -849,8 +841,7 @@ def main():
         df = df[COLUMNAS_CANONICAS].copy()
 
         # Asegurar tipos
-        df["hora"] = pd.to_numeric(
-            df["hora"], errors="coerce").fillna(0).astype(int)
+        df["hora"] = pd.to_numeric(df["hora"], errors="coerce").fillna(0).astype(int)
         df["intensidad"] = df["intensidad"].astype(float)
         df["velocidad"] = df["velocidad"].astype(float)
         df["fuente"] = df["fuente"].astype(str)

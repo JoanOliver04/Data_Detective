@@ -19,16 +19,26 @@ import streamlit as st
 
 from config import (
     PROJECT_ROOT,
-    CONTAMINACION_PARQUET, METEOROLOGIA_CSV, TRAFICO_CSV,
-    IMPACTO_EVENTOS_CSV, CONTAM_ANUAL_BARRIO_CSV,
-    PRECIP_MENSUAL_CSV, TENDENCIAS_CSV,
-    METEO_DINAMICA_DIR, FORECAST_GLOB_PATTERN,
-    CONTAM_DINAMICA_DIR, AQICN_GLOB_PATTERN,
-    TRAFICO_DINAMICO_DIR, DGT_GLOB_PATTERN,
-    TRAFICO_VLCI_DIR, VLCI_TRAFICO_GLOB,
+    CONTAMINACION_PARQUET,
+    METEOROLOGIA_CSV,
+    TRAFICO_CSV,
+    IMPACTO_EVENTOS_CSV,
+    CONTAM_ANUAL_BARRIO_CSV,
+    PRECIP_MENSUAL_CSV,
+    TENDENCIAS_CSV,
+    METEO_DINAMICA_DIR,
+    FORECAST_GLOB_PATTERN,
+    CONTAM_DINAMICA_DIR,
+    AQICN_GLOB_PATTERN,
+    TRAFICO_DINAMICO_DIR,
+    DGT_GLOB_PATTERN,
+    TRAFICO_VLCI_DIR,
+    VLCI_TRAFICO_GLOB,
     ESTACION_BARRIO_MAP,
-    ESQUEMA_CONTAMINACION, ESQUEMA_METEOROLOGIA,
-    ESQUEMA_TRAFICO, ESQUEMA_IMPACTO_EVENTOS,
+    ESQUEMA_CONTAMINACION,
+    ESQUEMA_METEOROLOGIA,
+    ESQUEMA_TRAFICO,
+    ESQUEMA_IMPACTO_EVENTOS,
     ESQUEMA_CONTAM_ANUAL,
 )
 
@@ -91,6 +101,7 @@ def _safe_to_datetime(df, col):
 # CARGA DE DATOS PRINCIPALES
 # ==============================================================================
 
+
 @st.cache_data(ttl=3600, show_spinner="Cargando datos de contaminación...")
 def cargar_contaminacion():
     nombre = "Contaminacion"
@@ -107,7 +118,8 @@ def cargar_contaminacion():
     df["barrio"] = df["estacion_id"].map(ESTACION_BARRIO_MAP)
     df["anio"] = df["fecha_utc"].dt.year
     logger.info(
-        f"[{nombre}] {len(df):,} registros | {df['anio'].min()}-{df['anio'].max()}")
+        f"[{nombre}] {len(df):,} registros | {df['anio'].min()}-{df['anio'].max()}"
+    )
     return df
 
 
@@ -165,14 +177,14 @@ def cargar_impacto_eventos():
     for col in ["fecha_inicio", "fecha_fin"]:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], utc=True, errors="coerce")
-    logger.info(
-        f"[{nombre}] {len(df):,} filas | {df['evento_id'].nunique()} eventos")
+    logger.info(f"[{nombre}] {len(df):,} filas | {df['evento_id'].nunique()} eventos")
     return df
 
 
 # ==============================================================================
 # CARGA DE ESTADISTICAS AGREGADAS (Fase 5.4)
 # ==============================================================================
+
 
 @st.cache_data(ttl=3600, show_spinner="Cargando estadísticas anuales...")
 def cargar_contam_anual_barrio():
@@ -225,6 +237,7 @@ def cargar_tendencias():
 # CARGA DE PRONOSTICO (dato dinamico mas reciente)
 # ==============================================================================
 
+
 @st.cache_data(ttl=300, show_spinner="Cargando pronóstico 72h...")
 def cargar_pronostico_72h():
     nombre = "Pronostico 72h"
@@ -266,13 +279,15 @@ def cargar_pronostico_72h():
             continue
         main = entry.get("main", {})
         rain = entry.get("rain", {})
-        records.append({
-            "datetime": fecha,
-            "temp_c": main.get("temp"),
-            "humidity_pct": main.get("humidity"),
-            "rain_mm": rain.get("3h", 0.0),
-            "precip_probability_pct": round(entry.get("pop", 0) * 100, 1),
-        })
+        records.append(
+            {
+                "datetime": fecha,
+                "temp_c": main.get("temp"),
+                "humidity_pct": main.get("humidity"),
+                "rain_mm": rain.get("3h", 0.0),
+                "precip_probability_pct": round(entry.get("pop", 0) * 100, 1),
+            }
+        )
     if not records:
         return None
 
@@ -289,6 +304,7 @@ def cargar_pronostico_72h():
 # ==============================================================================
 # CARGA DE DATOS EN TIEMPO REAL (JSONs de streaming)
 # ==============================================================================
+
 
 def _cargar_ultimo_json(directorio: Path, patron: str, nombre: str) -> Optional[dict]:
     """Lee el JSON mas reciente que coincida con el patron glob."""
@@ -345,21 +361,23 @@ def cargar_contaminacion_realtime() -> Optional[dict]:
     for est_id, est_data in estaciones_raw.items():
         datos = est_data.get("datos", {})
         iaqi = datos.get("iaqi", {})
-        estaciones.append({
-            "estacion_id": est_id,
-            "nombre": est_data.get("nombre", est_id),
-            "barrio": ESTACION_BARRIO_MAP.get(est_id, "Desconocido"),
-            "aqi": _to_num(datos.get("aqi"), int),
-            "dominante": datos.get("dominentpol", ""),
-            "no2":     _to_num(iaqi.get("no2",  {}).get("v")),
-            "o3":      _to_num(iaqi.get("o3",   {}).get("v")),
-            "pm10":    _to_num(iaqi.get("pm10", {}).get("v")),
-            "pm25":    _to_num(iaqi.get("pm25", {}).get("v")),
-            "so2":     _to_num(iaqi.get("so2",  {}).get("v")),
-            "co":      _to_num(iaqi.get("co",   {}).get("v")),
-            "temp":    _to_num(iaqi.get("t",    {}).get("v")),
-            "humedad": _to_num(iaqi.get("h",    {}).get("v")),
-        })
+        estaciones.append(
+            {
+                "estacion_id": est_id,
+                "nombre": est_data.get("nombre", est_id),
+                "barrio": ESTACION_BARRIO_MAP.get(est_id, "Desconocido"),
+                "aqi": _to_num(datos.get("aqi"), int),
+                "dominante": datos.get("dominentpol", ""),
+                "no2": _to_num(iaqi.get("no2", {}).get("v")),
+                "o3": _to_num(iaqi.get("o3", {}).get("v")),
+                "pm10": _to_num(iaqi.get("pm10", {}).get("v")),
+                "pm25": _to_num(iaqi.get("pm25", {}).get("v")),
+                "so2": _to_num(iaqi.get("so2", {}).get("v")),
+                "co": _to_num(iaqi.get("co", {}).get("v")),
+                "temp": _to_num(iaqi.get("t", {}).get("v")),
+                "humedad": _to_num(iaqi.get("h", {}).get("v")),
+            }
+        )
 
     result = {
         "timestamp": metadata.get("timestamp_captura", ""),
@@ -517,9 +535,7 @@ def cargar_trafico_realtime() -> Optional[dict]:
     primer_match = valencia_incs[0] if valencia_incs else None
     if primer_match:
         primer_ca = primer_match.get("provincia", "?")
-        logger.debug(
-            f"[{nombre}] 1er match Valencia → provincia={primer_ca!r}"
-        )
+        logger.debug(f"[{nombre}] 1er match Valencia → provincia={primer_ca!r}")
     logger.info(
         f"[{nombre}] Revisadas {len(incidencias_raw)} incidencias totales; "
         f"{len(valencia_incs)} coinciden con Valencia (Comunitat Valenciana) "
@@ -548,7 +564,8 @@ def cargar_espiras_realtime() -> Optional[dict]:
     sensores_raw = data.get("sensores", [])
 
     sensores = [
-        s for s in sensores_raw
+        s
+        for s in sensores_raw
         if s.get("lat") and s.get("lon") and s.get("ih") is not None
     ]
 
@@ -569,6 +586,7 @@ def cargar_espiras_realtime() -> Optional[dict]:
 # LECTURA DE HTML PRE-GENERADOS
 # ==============================================================================
 
+
 @st.cache_data(ttl=7200, show_spinner=False)
 def leer_html_visualizacion(ruta_str):
     path = Path(ruta_str)
@@ -585,6 +603,7 @@ def leer_html_visualizacion(ruta_str):
 # ==============================================================================
 # DIAGNOSTICO
 # ==============================================================================
+
 
 def diagnostico_datos():
     datasets = {

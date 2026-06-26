@@ -37,6 +37,7 @@ logger = logging.getLogger("Realtime")
 # UTILIDADES
 # ==============================================================================
 
+
 def _calcular_frescura(timestamp_str: str) -> str:
     """
     Calcula cuanto tiempo hace desde el timestamp dado.
@@ -128,6 +129,7 @@ def _severidad_color(severidad: str) -> str:
 # COLUMNA: CALIDAD DEL AIRE
 # ==============================================================================
 
+
 def _render_calidad_aire(contam_rt: Optional[dict]) -> None:
     """Renderiza la columna de calidad del aire en tiempo real."""
     st.markdown(
@@ -187,6 +189,7 @@ def _render_calidad_aire(contam_rt: Optional[dict]) -> None:
 # ==============================================================================
 # COLUMNA: METEOROLOGIA
 # ==============================================================================
+
 
 def _render_meteorologia(meteo_rt: Optional[dict]) -> None:
     """Renderiza la columna de meteorologia en tiempo real."""
@@ -253,6 +256,7 @@ def _render_meteorologia(meteo_rt: Optional[dict]) -> None:
 # COLUMNA: TRAFICO
 # ==============================================================================
 
+
 def _render_trafico(trafico_rt: Optional[dict]) -> None:
     """Renderiza la columna de trafico en tiempo real."""
     st.markdown(
@@ -287,8 +291,10 @@ def _render_trafico(trafico_rt: Optional[dict]) -> None:
             sev_counts[sev] = sev_counts.get(sev, 0) + 1
 
         sev_labels = {
-            "low": "Baja", "medium": "Media",
-            "high": "Alta", "highest": "Muy alta",
+            "low": "Baja",
+            "medium": "Media",
+            "high": "Alta",
+            "highest": "Muy alta",
         }
         partes = []
         for sev in ["highest", "high", "medium", "low"]:
@@ -316,7 +322,8 @@ def _render_trafico(trafico_rt: Optional[dict]) -> None:
             lineas = [f"{escape_html(c)}: {n}" for c, n in top]
             st.markdown(
                 "<small><b>Carreteras afectadas:</b><br>"
-                + "<br>".join(lineas) + "</small>",
+                + "<br>".join(lineas)
+                + "</small>",
                 unsafe_allow_html=True,
             )
     else:
@@ -328,6 +335,7 @@ def _render_trafico(trafico_rt: Optional[dict]) -> None:
 # ==============================================================================
 # INDICADOR DE AUTO-ACTUALIZACION
 # ==============================================================================
+
 
 def _render_estado_streaming() -> None:
     """Muestra una línea con el estado del thread de streaming en background."""
@@ -347,7 +355,9 @@ def _render_estado_streaming() -> None:
         partes.append(f"🔄 Última captura automática: {frescura}")
 
     if ciclos > 0:
-        partes.append(f"({ciclos} ciclo{'s' if ciclos != 1 else ''} completado{'s' if ciclos != 1 else ''})")
+        partes.append(
+            f"({ciclos} ciclo{'s' if ciclos != 1 else ''} completado{'s' if ciclos != 1 else ''})"
+        )
 
     # Mostrar resultados del último ciclo
     resultados = estado_streaming.get("resultado_ultimo_ciclo")
@@ -365,6 +375,7 @@ def _render_estado_streaming() -> None:
 # ==============================================================================
 # COMPONENTE PRINCIPAL
 # ==============================================================================
+
 
 def _render_indice_urbano(
     contam_rt: Optional[dict],
@@ -407,9 +418,7 @@ def _render_indice_urbano(
             s = ejes[eje_key]["score"]
             partes_ejes.append(f"{ico} {label}: <b>{s:.1f}</b>")
         else:
-            partes_ejes.append(
-                f"{ico} {label}: <span style='color:#666;'>—</span>"
-            )
+            partes_ejes.append(f"{ico} {label}: <span style='color:#666;'>—</span>")
     desglose_html = " &nbsp;·&nbsp; ".join(partes_ejes)
 
     # Porcentaje para la barra (0-100)

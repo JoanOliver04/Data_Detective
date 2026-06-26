@@ -21,21 +21,24 @@ from utils.exportador import (
     dataframe_a_xml,
 )
 
-
 # ---------------------------------------------------------------------------
 # Sanitizacion de celdas
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("entrada,esperado", [
-    ("=SUM(A1:A2)", "'=SUM(A1:A2)"),
-    ("+1+1", "'+1+1"),
-    ("-cmd|' /C calc'!A0", "'-cmd|' /C calc'!A0"),
-    ("@SUM(1)", "'@SUM(1)"),
-    ("\tTAB", "'\tTAB"),
-    ("texto normal", "texto normal"),
-    ("", ""),
-    ("NO2", "NO2"),
-])
+
+@pytest.mark.parametrize(
+    "entrada,esperado",
+    [
+        ("=SUM(A1:A2)", "'=SUM(A1:A2)"),
+        ("+1+1", "'+1+1"),
+        ("-cmd|' /C calc'!A0", "'-cmd|' /C calc'!A0"),
+        ("@SUM(1)", "'@SUM(1)"),
+        ("\tTAB", "'\tTAB"),
+        ("texto normal", "texto normal"),
+        ("", ""),
+        ("NO2", "NO2"),
+    ],
+)
 def test_sanitizar_celda_inyeccion(entrada, esperado):
     assert _sanitizar_celda_inyeccion(entrada) == esperado
 
@@ -50,6 +53,7 @@ def test_sanitizar_no_toca_numeros():
 # ---------------------------------------------------------------------------
 # CSV
 # ---------------------------------------------------------------------------
+
 
 def test_csv_protege_inyeccion_por_defecto():
     df = pd.DataFrame({"texto": ["=HYPERLINK('http://x')"], "valor": [10]})
@@ -86,6 +90,7 @@ def test_csv_numeros_no_se_degradan():
 # Excel
 # ---------------------------------------------------------------------------
 
+
 def test_excel_genera_zip_valido():
     df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
     raw = dataframe_a_excel(df)
@@ -105,10 +110,12 @@ def test_excel_sanea_formula():
 
 
 def test_excel_datetime_tz_naive():
-    df = pd.DataFrame({
-        "fecha": pd.to_datetime(["2026-01-01 10:00"], utc=True),
-        "v": [1],
-    })
+    df = pd.DataFrame(
+        {
+            "fecha": pd.to_datetime(["2026-01-01 10:00"], utc=True),
+            "v": [1],
+        }
+    )
     # No debe lanzar por timezone-aware datetimes.
     raw = dataframe_a_excel(df)
     assert raw[:2] == b"PK"
@@ -117,6 +124,7 @@ def test_excel_datetime_tz_naive():
 # ---------------------------------------------------------------------------
 # XML (regresion: sigue funcionando)
 # ---------------------------------------------------------------------------
+
 
 def test_xml_basico():
     df = pd.DataFrame({"PM2.5": [12.0], "fecha utc": ["2026-01-01"]})

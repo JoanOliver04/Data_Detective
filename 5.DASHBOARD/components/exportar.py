@@ -72,8 +72,7 @@ DATASET_INFO: Dict[str, Dict[str, str]] = {
         "origen": "estatico",
         "fuentes": "DGT (Direccion General de Trafico)",
         "descripcion": (
-            "Incidencias de trafico en la red viaria de la "
-            "Comunidad Valenciana."
+            "Incidencias de trafico en la red viaria de la " "Comunidad Valenciana."
         ),
     },
     "eventos": {
@@ -133,12 +132,12 @@ def _badge_origen(origen: str) -> str:
     estilos = {
         "estatico": ("background:#1f4e79", "ESTATICO"),
         "dinamico": ("background:#1a7431", "DINAMICO"),
-        "mixto":    ("background:#7d5a00", "MIXTO"),
+        "mixto": ("background:#7d5a00", "MIXTO"),
     }
     style, texto = estilos.get(origen, ("background:#555", origen.upper()))
     return (
         f'<span style="{style};color:#fff;padding:2px 8px;'
-        f'border-radius:4px;font-size:0.7rem;font-weight:600;'
+        f"border-radius:4px;font-size:0.7rem;font-weight:600;"
         f'letter-spacing:0.5px;">{texto}</span>'
     )
 
@@ -154,22 +153,23 @@ def _badge_formato(formato: str) -> str:
         String HTML con el badge del formato.
     """
     colores = {
-        "CSV":  "#2e7d32",
+        "CSV": "#2e7d32",
         "JSON": "#1565c0",
-        "XML":  "#6a1b9a",
-        "PDF":  "#c62828",
+        "XML": "#6a1b9a",
+        "PDF": "#c62828",
     }
     color = colores.get(formato.upper(), "#555")
     return (
         f'<span style="background:{color};color:#fff;padding:1px 6px;'
         f'border-radius:3px;font-size:0.65rem;font-weight:600;">'
-        f'{formato.upper()}</span>'
+        f"{formato.upper()}</span>"
     )
 
 
 # ==============================================================================
 # COMPONENTE PRINCIPAL
 # ==============================================================================
+
 
 def render_panel_exportacion(
     df: Optional[pd.DataFrame],
@@ -194,12 +194,15 @@ def render_panel_exportacion(
         metadata_extra: Metadatos adicionales para incluir en JSON/XML.
     """
     # Obtener info del dataset o usar defaults
-    info = DATASET_INFO.get(nombre_dataset, {
-        "label": nombre_dataset.replace("_", " ").title(),
-        "origen": "estatico",
-        "fuentes": "No especificada",
-        "descripcion": "",
-    })
+    info = DATASET_INFO.get(
+        nombre_dataset,
+        {
+            "label": nombre_dataset.replace("_", " ").title(),
+            "origen": "estatico",
+            "fuentes": "No especificada",
+            "descripcion": "",
+        },
+    )
 
     origen = info["origen"]
     badge = _badge_origen(origen)
@@ -223,7 +226,8 @@ def render_panel_exportacion(
         # --- Guard clause: sin datos ---
         if df is None or df.empty:
             st.warning(
-                "No hay datos disponibles para exportar con los filtros actuales.")
+                "No hay datos disponibles para exportar con los filtros actuales."
+            )
             return
 
         # --- Info del dataset ---
@@ -360,6 +364,7 @@ def render_panel_exportacion(
 # COMPONENTE MULTI-DATASET (para exportar varios datasets a la vez)
 # ==============================================================================
 
+
 def render_exportacion_multiple(
     datasets: Dict[str, Optional[pd.DataFrame]],
 ) -> None:
@@ -374,10 +379,7 @@ def render_exportacion_multiple(
                   Las claves deben coincidir con DATASET_INFO.
     """
     # Filtrar datasets disponibles (no None, no vacios)
-    disponibles = {
-        k: v for k, v in datasets.items()
-        if v is not None and not v.empty
-    }
+    disponibles = {k: v for k, v in datasets.items() if v is not None and not v.empty}
 
     if not disponibles:
         st.warning("No hay datasets disponibles para exportar.")

@@ -8,11 +8,11 @@ Fase 3.2: Captura de Datos en Tiempo Real - Meteorología (OpenWeatherMap)
 Descripción:
     Este script captura datos meteorológicos en TIEMPO REAL desde la API
     de OpenWeatherMap para la ciudad de Valencia (España).
-    
+
     Realiza DOS peticiones por ejecución:
     1) /weather  → Condiciones meteorológicas actuales
     2) /forecast → Pronóstico cada 3 horas (próximos 5 días)
-    
+
     Los datos se guardan en JSON SIN TRANSFORMAR (raw), exactamente como
     los devuelve la API, añadiendo únicamente metadatos de captura.
 
@@ -36,7 +36,7 @@ Parámetros comunes:
 Uso:
     1. Añade OPENWEATHER_API_KEY en .env
     2. python streaming_openweather.py
-    
+
 Salida:
     - 1.DATOS_EN_CRUDO/dinamicos/meteorologia/openweather_YYYYMMDD_HHMMSS.json
     - Datos RAW sin transformar + metadatos de captura
@@ -82,8 +82,8 @@ VALENCIA_LON = -0.3763
 OWM_COMMON_PARAMS = {
     "lat": VALENCIA_LAT,
     "lon": VALENCIA_LON,
-    "units": "metric",   # °C, m/s, mm
-    "lang": "es",        # Descripciones en español
+    "units": "metric",  # °C, m/s, mm
+    "lang": "es",  # Descripciones en español
 }
 
 # Endpoints a consultar (nombre interno → ruta de la API)
@@ -104,14 +104,15 @@ REQUEST_HEADERS = {
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
 
+
 def setup_logging() -> logging.Logger:
     """
     Configura el sistema de logging para el script.
-    
+
     Escribe en:
     - Consola: nivel INFO (mensajes de estado)
     - Archivo: nivel DEBUG (detalle completo para debug)
-    
+
     Returns:
         logging.Logger: Instancia del logger configurado
     """
@@ -145,42 +146,38 @@ def setup_logging() -> logging.Logger:
 # FUNCIONES DE CAPTURA
 # ==============================================================================
 
+
 def fetch_endpoint(
-    endpoint_name: str,
-    endpoint_path: str,
-    logger: logging.Logger
+    endpoint_name: str, endpoint_path: str, logger: logging.Logger
 ) -> Optional[Any]:
     """
     Realiza una petición GET a un endpoint de OpenWeatherMap.
-    
+
     Construye la URL completa con los parámetros comunes (coordenadas,
     unidades, idioma) y la API Key desde .env.
-    
+
     Args:
         endpoint_name: Nombre descriptivo del endpoint ("actual", "pronostico")
         endpoint_path: Ruta del endpoint ("/weather", "/forecast")
         logger: Logger para registrar eventos
-    
+
     Returns:
         Datos JSON de la respuesta (dict) o None si hay error
     """
     url = f"{OWM_BASE_URL}{endpoint_path}"
-    
+
     # Construir parámetros: comunes + API key
     params = {**OWM_COMMON_PARAMS, "appid": OWM_API_KEY}
-    
+
     logger.debug(f"Solicitando {endpoint_name}: {url}")
 
     try:
         response = requests.get(
-            url,
-            params=params,
-            headers=REQUEST_HEADERS,
-            timeout=REQUEST_TIMEOUT
+            url, params=params, headers=REQUEST_HEADERS, timeout=REQUEST_TIMEOUT
         )
 
         # --- Manejo de códigos HTTP específicos ---
-        
+
         if response.status_code == 200:
             data = response.json()
             logger.debug(f"Endpoint '{endpoint_name}': respuesta OK")
@@ -244,24 +241,20 @@ def fetch_endpoint(
         return None
 
     except requests.exceptions.RequestException as e:
-        logger.error(
-            f"Endpoint '{endpoint_name}': error inesperado: {e}"
-        )
+        logger.error(f"Endpoint '{endpoint_name}': error inesperado: {e}")
         return None
 
 
-def capture_all_endpoints(
-    logger: logging.Logger
-) -> Dict[str, Any]:
+def capture_all_endpoints(logger: logging.Logger) -> Dict[str, Any]:
     """
     Captura datos de TODOS los endpoints configurados.
-    
+
     Consulta /weather (actual) y /forecast (pronóstico 5 días),
     guardando ambas respuestas RAW en un único JSON con metadatos.
-    
+
     Args:
         logger: Logger para registrar eventos
-    
+
     Returns:
         Diccionario con estructura:
         {
@@ -281,18 +274,17 @@ def capture_all_endpoints(
             "proyecto": "Data Detective Valencia",
             "fase": "3.2 - Streaming OpenWeatherMap",
             "timestamp_captura": capture_timestamp.isoformat(),
-            "timestamp_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "timestamp_utc": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
             "fuente": "OpenWeatherMap API (plan gratuito)",
             "url_base": OWM_BASE_URL,
             "coordenadas": {
                 "lat": VALENCIA_LAT,
                 "lon": VALENCIA_LON,
-                "ciudad": "Valencia, España"
+                "ciudad": "Valencia, España",
             },
-            "parametros": {
-                "units": "metric",
-                "lang": "es"
-            },
+            "parametros": {"units": "metric", "lang": "es"},
             "endpoints_solicitados": len(ENDPOINTS),
             "endpoints_exitosos": 0,
             "endpoints_fallidos": 0,
@@ -328,22 +320,20 @@ def capture_all_endpoints(
 # FUNCIONES DE GUARDADO
 # ==============================================================================
 
-def save_capture(
-    data: Dict[str, Any],
-    logger: logging.Logger
-) -> Optional[Path]:
+
+def save_capture(data: Dict[str, Any], logger: logging.Logger) -> Optional[Path]:
     """
     Guarda los datos capturados en un archivo JSON.
-    
+
     El archivo se nombra con el timestamp de captura para mantener
     un histórico incremental de capturas dinámicas.
-    
+
     Formato nombre: openweather_YYYYMMDD_HHMMSS.json
-    
+
     Args:
         data: Diccionario con datos capturados
         logger: Logger para registrar eventos
-    
+
     Returns:
         Path al archivo guardado o None si hay error
     """
@@ -358,7 +348,9 @@ def save_capture(
             json.dump(data, f, ensure_ascii=False, indent=2)
 
         file_size = output_path.stat().st_size
-        size_str = f"{file_size / 1024:.1f} KB" if file_size >= 1024 else f"{file_size} B"
+        size_str = (
+            f"{file_size / 1024:.1f} KB" if file_size >= 1024 else f"{file_size} B"
+        )
 
         logger.info(f"✔ Archivo guardado: {filename} ({size_str})")
         logger.debug(f"  Ruta completa: {output_path}")
@@ -374,10 +366,11 @@ def save_capture(
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
 
+
 def main():
     """
     Función principal que orquesta la captura meteorológica.
-    
+
     Flujo:
     1. Verifica que la API Key esté configurada
     2. Captura /weather y /forecast
@@ -462,9 +455,13 @@ def main():
 
     # Mensaje claro en consola
     if fallidos == 0:
-        print(f"\n✅ CAPTURA CORRECTA: {exitosos}/{total} endpoints → {output_path.name}")
+        print(
+            f"\n✅ CAPTURA CORRECTA: {exitosos}/{total} endpoints → {output_path.name}"
+        )
     else:
-        print(f"\n⚠️  CAPTURA PARCIAL: {exitosos}/{total} endpoints → {output_path.name}")
+        print(
+            f"\n⚠️  CAPTURA PARCIAL: {exitosos}/{total} endpoints → {output_path.name}"
+        )
 
 
 # ==============================================================================

@@ -21,8 +21,10 @@ import streamlit as st
 
 from theme import get_theme
 from config import (
-    UMBRALES_OMS, UMBRALES_UE,
-    VARIABLE_COLORS, COLORS,
+    UMBRALES_OMS,
+    UMBRALES_UE,
+    VARIABLE_COLORS,
+    COLORS,
 )
 
 logger = logging.getLogger("Trends")
@@ -34,6 +36,7 @@ MAX_METRICAS_POR_FILA = 4
 # ==============================================================================
 # 1. SERIE TEMPORAL INTERACTIVA
 # ==============================================================================
+
 
 def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
     """
@@ -54,7 +57,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
         return
 
     # Filtrar por variable y calidad
-    mask = (df["variable"] == variable)
+    mask = df["variable"] == variable
     if "calidad_dato" in df.columns:
         mask = mask & (df["calidad_dato"] == "ok")
     df_var = df[mask].copy()
@@ -71,8 +74,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
     if rango_anios > 5:
         # Granularidad ANUAL
         serie = (
-            df_var
-            .groupby("anio", as_index=False)["valor"]
+            df_var.groupby("anio", as_index=False)["valor"]
             .mean()
             .rename(columns={"anio": "periodo", "valor": "media"})
         )
@@ -83,19 +85,14 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
         # Granularidad MENSUAL
         if "fecha_utc" in df_var.columns:
             df_var["mes"] = df_var["fecha_utc"].dt.to_period("M")
-            serie = (
-                df_var
-                .groupby("mes", as_index=False)["valor"]
-                .mean()
-            )
+            serie = df_var.groupby("mes", as_index=False)["valor"].mean()
             serie["periodo"] = serie["mes"].dt.to_timestamp()
             serie = serie.rename(columns={"valor": "media"})
             serie = serie.drop(columns=["mes"])
         else:
             # Fallback: por anio aunque rango sea corto
             serie = (
-                df_var
-                .groupby("anio", as_index=False)["valor"]
+                df_var.groupby("anio", as_index=False)["valor"]
                 .mean()
                 .rename(columns={"anio": "periodo", "valor": "media"})
             )
@@ -115,15 +112,17 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
     fig = go.Figure()
 
     # Linea principal
-    fig.add_trace(go.Scatter(
-        x=serie["periodo"],
-        y=serie["media"],
-        mode="lines+markers",
-        name=f"{variable} ({titulo_granularidad})",
-        line=dict(color=color_var, width=2.5),
-        marker=dict(size=5, color=color_var),
-        hovertemplate=hover_template,
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=serie["periodo"],
+            y=serie["media"],
+            mode="lines+markers",
+            name=f"{variable} ({titulo_granularidad})",
+            line=dict(color=color_var, width=2.5),
+            marker=dict(size=5, color=color_var),
+            hovertemplate=hover_template,
+        )
+    )
 
     # Linea umbral OMS
     if umbral_oms is not None:
@@ -182,6 +181,7 @@ def render_grafico_contaminacion(df: pd.DataFrame, variable: str) -> None:
 # 2. TENDENCIA ANUAL CON CAMBIO PORCENTUAL (layout responsive)
 # ==============================================================================
 
+
 def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
     """
     Muestra la media anual de la variable en toda la ciudad,
@@ -203,7 +203,7 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
         st.info("Sin datos para calcular tendencia anual.")
         return
 
-    mask = (df["variable"] == variable)
+    mask = df["variable"] == variable
     if "calidad_dato" in df.columns:
         mask = mask & (df["calidad_dato"] == "ok")
     df_var = df[mask].copy()
@@ -212,10 +212,8 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
         return
 
     # Agrupar por anio
-    tendencia = (
-        df_var
-        .groupby("anio", as_index=False)
-        .agg(media=("valor", "mean"), registros=("valor", "count"))
+    tendencia = df_var.groupby("anio", as_index=False).agg(
+        media=("valor", "mean"), registros=("valor", "count")
     )
 
     tendencia = tendencia.sort_values("anio")
@@ -228,10 +226,10 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
     # --- Header ---
     st.markdown(
         '<div class="section-header">'
-        '<h4>Tendencia anual</h4>'
+        "<h4>Tendencia anual</h4>"
         '<p style="color:#888;font-size:0.85rem;">'
-        'Media anual de toda la ciudad con cambio respecto al año anterior'
-        '</p></div>',
+        "Media anual de toda la ciudad con cambio respecto al año anterior"
+        "</p></div>",
         unsafe_allow_html=True,
     )
 
@@ -272,4 +270,5 @@ def render_tendencia_anual(df: pd.DataFrame, variable: str) -> None:
             )
 
     logger.info(
-        f"[Tendencia] {variable}: {len(tendencia)} anios, {n_filas} filas de metricas")
+        f"[Tendencia] {variable}: {len(tendencia)} anios, {n_filas} filas de metricas"
+    )

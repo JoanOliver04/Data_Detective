@@ -23,22 +23,22 @@ logger = logging.getLogger(__name__)
 
 # Pesos de cada variable en el indice global (deben sumar 1.0)
 PESOS_DEFAULT: Dict[str, float] = {
-    "NO2":  0.30,
+    "NO2": 0.30,
     "PM2.5": 0.30,
     "PM10": 0.15,
-    "O3":   0.15,
-    "SO2":  0.05,
-    "CO":   0.05,
+    "O3": 0.15,
+    "SO2": 0.05,
+    "CO": 0.05,
 }
 
 # Niveles por rango de score
 _NIVELES = [
-    (9.0, "Excelente",  "#2ca02c", "🟢"),
-    (7.0, "Bueno",      "#27ae60", "🟢"),
-    (5.0, "Aceptable",  "#f39c12", "🟡"),
+    (9.0, "Excelente", "#2ca02c", "🟢"),
+    (7.0, "Bueno", "#27ae60", "🟢"),
+    (5.0, "Aceptable", "#f39c12", "🟡"),
     (3.0, "Deficiente", "#e67e22", "🟠"),
-    (1.0, "Malo",       "#e74c3c", "🔴"),
-    (0.0, "Peligroso",  "#8b0000", "⛔"),
+    (1.0, "Malo", "#e74c3c", "🔴"),
+    (0.0, "Peligroso", "#8b0000", "⛔"),
 ]
 
 
@@ -110,10 +110,10 @@ def calcular_indice_calidad(
         ratio = media / umbral if umbral else 0.0
         score_var = max(0.0, 10.0 - ratio * 5.0)
         detalle[variable] = {
-            "media":  round(media, 2),
-            "ratio":  round(ratio, 3),
-            "score":  round(score_var, 2),
-            "peso":   pesos_activos[variable],
+            "media": round(media, 2),
+            "ratio": round(ratio, 3),
+            "score": round(score_var, 2),
+            "peso": pesos_activos[variable],
         }
 
     if not detalle:
@@ -125,10 +125,9 @@ def calcular_indice_calidad(
     if peso_total == 0:
         return None
 
-    score_global = sum(
-        detalle[v]["score"] * detalle[v]["peso"]
-        for v in detalle
-    ) / peso_total
+    score_global = (
+        sum(detalle[v]["score"] * detalle[v]["peso"] for v in detalle) / peso_total
+    )
 
     score_global = round(min(10.0, max(0.0, score_global)), 2)
     nivel, color, emoji = nivel_desde_score(score_global)
@@ -139,9 +138,9 @@ def calcular_indice_calidad(
     )
 
     return {
-        "score":              score_global,
-        "nivel":              nivel,
-        "color":              color,
-        "emoji":              emoji,
-        "detalle_variables":  detalle,
+        "score": score_global,
+        "nivel": nivel,
+        "color": color,
+        "emoji": emoji,
+        "detalle_variables": detalle,
     }

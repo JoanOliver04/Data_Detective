@@ -60,9 +60,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 OUTPUT_DIR = PROJECT_ROOT / "1.DATOS_EN_CRUDO" / "dinamicos" / "trafico_vlci"
 LOG_DIR = PROJECT_ROOT / "logs"
 
-ESPIRAS_URL = (
-    "https://geoportal.valencia.es/apps/OpenData/Trafico/tra_espiras_p.json"
-)
+ESPIRAS_URL = "https://geoportal.valencia.es/apps/OpenData/Trafico/tra_espiras_p.json"
 
 REQUEST_TIMEOUT = 30
 REQUEST_HEADERS = {
@@ -78,6 +76,7 @@ REQUEST_HEADERS = {
 # ==============================================================================
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
+
 
 def setup_logging() -> logging.Logger:
     """Configura logging a archivo y consola."""
@@ -108,6 +107,7 @@ def setup_logging() -> logging.Logger:
 # ==============================================================================
 # FUNCIONES DE CAPTURA
 # ==============================================================================
+
 
 def fetch_espiras(logger: logging.Logger) -> Optional[Dict[str, Any]]:
     """
@@ -185,15 +185,17 @@ def extract_sensors(
         if ih_num <= 0:
             continue
 
-        sensores.append({
-            "idpm": props.get("idpm"),
-            "ih": ih_num,
-            "angulo": props.get("angulo"),
-            "fecha_actualizacion": props.get("fecha_actualizacion"),
-            "hora_actualizacion": props.get("hora_actualizacion"),
-            "lat": lat,
-            "lon": lon,
-        })
+        sensores.append(
+            {
+                "idpm": props.get("idpm"),
+                "ih": ih_num,
+                "angulo": props.get("angulo"),
+                "fecha_actualizacion": props.get("fecha_actualizacion"),
+                "hora_actualizacion": props.get("hora_actualizacion"),
+                "lat": lat,
+                "lon": lon,
+            }
+        )
 
     return sensores
 
@@ -274,6 +276,7 @@ def save_capture(
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
 
+
 def main():
     """Captura datos de tráfico de espiras del portal VLCi de Valencia."""
     logger = setup_logging()
@@ -311,7 +314,9 @@ def main():
     logger.info(f"  Sensores totales:  {meta['total_sensores']}")
     logger.info(f"  Sensores activos:  {meta['sensores_activos']} (ih > 0)")
     logger.info(f"  Intensidad media:  {meta['ih_media']} veh/h")
-    logger.info(f"  Intensidad máxima: {meta['ih_max']} veh/h (sensor {meta['sensor_max_id']})")
+    logger.info(
+        f"  Intensidad máxima: {meta['ih_max']} veh/h (sensor {meta['sensor_max_id']})"
+    )
     logger.info(f"  Archivo: {output_path.name}")
     logger.info(f"  Directorio: {OUTPUT_DIR}")
     logger.info(f"  Timestamp: {meta['timestamp_captura']}")

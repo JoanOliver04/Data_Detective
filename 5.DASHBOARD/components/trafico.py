@@ -28,26 +28,37 @@ import streamlit as st
 
 from theme import get_theme
 from config import (
-    TAB_NAMES, DESCRIPCION_TABS, MAPA_TRAFICO_HTML,
+    TAB_NAMES,
+    DESCRIPCION_TABS,
+    MAPA_TRAFICO_HTML,
 )
 from data_loader import leer_html_visualizacion
 
 logger = logging.getLogger("Trafico")
 
 # Colores de la seccion
-COLOR_TRAFICO = "#ff7f0e"           # Naranja principal
-COLOR_TRAFICO_LIGHT = "#ffbb78"     # Naranja claro (barras)
+COLOR_TRAFICO = "#ff7f0e"  # Naranja principal
+COLOR_TRAFICO_LIGHT = "#ffbb78"  # Naranja claro (barras)
 
 # Orden correcto de dias (lunes a domingo) con nombres en ingles
 # tal como genera pandas con dt.day_name()
 DIAS_ORDEN = [
-    "Monday", "Tuesday", "Wednesday", "Thursday",
-    "Friday", "Saturday", "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
 ]
 DIAS_NOMBRE_ES = {
-    "Monday": "Lunes", "Tuesday": "Martes", "Wednesday": "Miércoles",
-    "Thursday": "Jueves", "Friday": "Viernes",
-    "Saturday": "Sábado", "Sunday": "Domingo",
+    "Monday": "Lunes",
+    "Tuesday": "Martes",
+    "Wednesday": "Miércoles",
+    "Thursday": "Jueves",
+    "Friday": "Viernes",
+    "Saturday": "Sábado",
+    "Sunday": "Domingo",
 }
 
 # Colores, iconos y etiquetas para tipos de incidencia DGT
@@ -59,13 +70,18 @@ _COLOR_TIPO = {
     "obstruction": "#ff7f0e",
 }
 _COLOR_SEVERIDAD = {
-    "highest": "#d62728", "high": "#ff4444",
-    "medium": "#ff7f0e", "low": "#ffdd57", "desconocida": "#aec7e8",
+    "highest": "#d62728",
+    "high": "#ff4444",
+    "medium": "#ff7f0e",
+    "low": "#ffdd57",
+    "desconocida": "#aec7e8",
 }
 _ICONO_TIPO = {
-    "roadMaintenance": "\U0001f6a7", "vehicleObstruction": "\U0001f697",
+    "roadMaintenance": "\U0001f6a7",
+    "vehicleObstruction": "\U0001f697",
     "environmentalObstruction": "\U0001f33f",
-    "infrastructureDamageObstruction": "\u26a0\ufe0f", "obstruction": "\U0001f6ab",
+    "infrastructureDamageObstruction": "\u26a0\ufe0f",
+    "obstruction": "\U0001f6ab",
 }
 _LABEL_TIPO = {
     "roadMaintenance": "Obras/mantenimiento",
@@ -81,24 +97,24 @@ MAP_HEIGHT = 580
 # --------------------------------------------------------------------------
 # Espiras: umbrales de congestion (vehiculos/hora por punto sensor)
 # --------------------------------------------------------------------------
-_IH_LIBRE = 200       # < 200 veh/h → libre (verde)
-_IH_FLUIDO = 500      # 200-500     → fluido (lima)
-_IH_DENSO = 900       # 500-900     → denso (naranja)
-_IH_SATURADO = 1400   # 900-1400    → saturado (rojo)
-                       # > 1400      → congestionado (rojo oscuro)
+_IH_LIBRE = 200  # < 200 veh/h → libre (verde)
+_IH_FLUIDO = 500  # 200-500     → fluido (lima)
+_IH_DENSO = 900  # 500-900     → denso (naranja)
+_IH_SATURADO = 1400  # 900-1400    → saturado (rojo)
+# > 1400      → congestionado (rojo oscuro)
 
 
 def _color_espira(ih: float) -> str:
     """Returns hex color based on vehicles/hour."""
     if ih < _IH_LIBRE:
-        return "#2ca02c"    # green
+        return "#2ca02c"  # green
     if ih < _IH_FLUIDO:
-        return "#98df8a"    # lime
+        return "#98df8a"  # lime
     if ih < _IH_DENSO:
-        return "#ff7f0e"    # orange
+        return "#ff7f0e"  # orange
     if ih < _IH_SATURADO:
-        return "#d62728"    # red
-    return "#8B0000"        # dark red
+        return "#d62728"  # red
+    return "#8B0000"  # dark red
 
 
 def _label_congestion(ih: float) -> str:
@@ -117,6 +133,7 @@ def _label_congestion(ih: float) -> str:
 # ==============================================================================
 # 1. KPIs
 # ==============================================================================
+
 
 def render_kpis_trafico(
     df: pd.DataFrame,
@@ -166,7 +183,7 @@ def render_kpis_trafico(
         f'margin-bottom:1rem;">'
         f'<h4 style="margin:0;">Indicadores de tráfico</h4>'
         f'<small style="color:#888;">Incidencias en la red viaria</small>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
 
@@ -232,6 +249,7 @@ def render_kpis_trafico(
 # 2. GRAFICO TEMPORAL ADAPTATIVO
 # ==============================================================================
 
+
 def render_grafico_trafico(df: pd.DataFrame) -> None:
     """
     Grafico de incidencias mensuales del año más reciente con datos.
@@ -254,17 +272,25 @@ def render_grafico_trafico(df: pd.DataFrame) -> None:
 
 
 _MESES_ES = {
-    1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
-    7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic",
+    1: "Ene",
+    2: "Feb",
+    3: "Mar",
+    4: "Abr",
+    5: "May",
+    6: "Jun",
+    7: "Jul",
+    8: "Ago",
+    9: "Sep",
+    10: "Oct",
+    11: "Nov",
+    12: "Dic",
 }
 
 
 def _grafico_trafico_mensual(df: pd.DataFrame, anio: int) -> None:
     """Barras de incidencias por mes para un año concreto."""
     conteo = (
-        df.groupby("mes", as_index=False)
-        .size()
-        .rename(columns={"size": "incidencias"})
+        df.groupby("mes", as_index=False).size().rename(columns={"size": "incidencias"})
     )
 
     # Rango completo 1-12 para que los meses sin datos aparezcan como 0
@@ -275,20 +301,20 @@ def _grafico_trafico_mensual(df: pd.DataFrame, anio: int) -> None:
 
     pico_idx = serie["incidencias"].idxmax()
     colores = [
-        COLOR_TRAFICO if i == pico_idx else COLOR_TRAFICO_LIGHT
-        for i in serie.index
+        COLOR_TRAFICO if i == pico_idx else COLOR_TRAFICO_LIGHT for i in serie.index
     ]
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=serie["mes_nombre"],
-        y=serie["incidencias"],
-        marker_color=colores,
-        hovertemplate=(
-            f"<b>%{{x}} {anio}</b><br>"
-            "Incidencias: %{y:,}<extra></extra>"
-        ),
-    ))
+    fig.add_trace(
+        go.Bar(
+            x=serie["mes_nombre"],
+            y=serie["incidencias"],
+            marker_color=colores,
+            hovertemplate=(
+                f"<b>%{{x}} {anio}</b><br>" "Incidencias: %{y:,}<extra></extra>"
+            ),
+        )
+    )
 
     fig.update_layout(
         title=dict(
@@ -310,8 +336,7 @@ def _grafico_trafico_mensual(df: pd.DataFrame, anio: int) -> None:
     mes_pico = _MESES_ES[int(serie.loc[pico_idx, "mes"])]
     pico = int(serie.loc[pico_idx, "incidencias"])
     st.caption(
-        f"Total {anio}: {total:,} incidencias · "
-        f"Mes pico: {mes_pico} ({pico:,})"
+        f"Total {anio}: {total:,} incidencias · " f"Mes pico: {mes_pico} ({pico:,})"
     )
 
     meses_con_datos = int((serie["incidencias"] > 0).sum())
@@ -321,6 +346,7 @@ def _grafico_trafico_mensual(df: pd.DataFrame, anio: int) -> None:
 # ==============================================================================
 # 3. DISTRIBUCION SEMANAL
 # ==============================================================================
+
 
 def render_distribucion_semana(df: pd.DataFrame) -> None:
     """
@@ -344,9 +370,7 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
     # Calcular semanas totales en el dataset para obtener media
     if "fecha" in df.columns:
         try:
-            n_semanas = max(
-                (df["fecha"].max() - df["fecha"].min()).days / 7, 1
-            )
+            n_semanas = max((df["fecha"].max() - df["fecha"].min()).days / 7, 1)
         except Exception:
             n_semanas = 1
     else:
@@ -356,12 +380,14 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
     datos_semana = []
     for dia_en in DIAS_ORDEN:
         total_dia = conteo.get(dia_en, 0)
-        datos_semana.append({
-            "dia_en": dia_en,
-            "dia": DIAS_NOMBRE_ES.get(dia_en, dia_en),
-            "total": int(total_dia),
-            "media_semanal": round(total_dia / n_semanas, 1),
-        })
+        datos_semana.append(
+            {
+                "dia_en": dia_en,
+                "dia": DIAS_NOMBRE_ES.get(dia_en, dia_en),
+                "total": int(total_dia),
+                "media_semanal": round(total_dia / n_semanas, 1),
+            }
+        )
 
     df_semana = pd.DataFrame(datos_semana)
 
@@ -370,22 +396,27 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
 
     fig = go.Figure()
 
-    fig.add_trace(go.Bar(
-        y=df_semana["dia"],
-        x=df_semana["media_semanal"],
-        orientation="h",
-        marker_color=[
-            COLOR_TRAFICO if dia in ("Viernes", "Sábado", "Domingo")
-            else COLOR_TRAFICO_LIGHT
-            for dia in df_semana["dia"]
-        ],
-        opacity=0.85,
-        hovertemplate=(
-            "<b>%{y}</b><br>"
-            "Media semanal: %{x:.1f} incidencias<br>"
-            "<extra></extra>"
-        ),
-    ))
+    fig.add_trace(
+        go.Bar(
+            y=df_semana["dia"],
+            x=df_semana["media_semanal"],
+            orientation="h",
+            marker_color=[
+                (
+                    COLOR_TRAFICO
+                    if dia in ("Viernes", "Sábado", "Domingo")
+                    else COLOR_TRAFICO_LIGHT
+                )
+                for dia in df_semana["dia"]
+            ],
+            opacity=0.85,
+            hovertemplate=(
+                "<b>%{y}</b><br>"
+                "Media semanal: %{x:.1f} incidencias<br>"
+                "<extra></extra>"
+            ),
+        )
+    )
 
     fig.update_layout(
         title=dict(
@@ -419,6 +450,7 @@ def render_distribucion_semana(df: pd.DataFrame) -> None:
 # 4. MAPA COMBINADO: Espiras VLCi + Incidencias DGT
 # ==============================================================================
 
+
 def _render_mapa_combinado(
     trafico_rt: Optional[dict],
     espiras_rt: Optional[dict],
@@ -436,9 +468,7 @@ def _render_mapa_combinado(
         import folium
         from folium.plugins import MarkerCluster
     except ImportError:
-        st.warning(
-            "Folium no está instalado. Ejecuta: `pip install folium`"
-        )
+        st.warning("Folium no está instalado. Ejecuta: `pip install folium`")
         return
 
     mapa = folium.Map(
@@ -449,10 +479,12 @@ def _render_mapa_combinado(
     )
 
     folium.TileLayer(
-        "CartoDB dark_matter", name="\U0001f311 Oscuro",
+        "CartoDB dark_matter",
+        name="\U0001f311 Oscuro",
     ).add_to(mapa)
     folium.TileLayer(
-        "CartoDB positron", name="\u2600\ufe0f Claro",
+        "CartoDB positron",
+        name="\u2600\ufe0f Claro",
     ).add_to(mapa)
 
     # ------------------------------------------------------------------
@@ -464,7 +496,8 @@ def _render_mapa_combinado(
 
     if sensores:
         fg_espiras = folium.FeatureGroup(
-            name="\U0001f6a6 Flujo vehicular (espiras)", show=True,
+            name="\U0001f6a6 Flujo vehicular (espiras)",
+            show=True,
         )
 
         for s in sensores:
@@ -476,14 +509,14 @@ def _render_mapa_combinado(
             popup_html = (
                 '<table style="font-size:12px;min-width:180px;">'
                 f'<tr><td><b>ID Sensor</b></td><td>{s.get("idpm", "—")}</td></tr>'
-                f'<tr><td><b>Intensidad</b></td><td>{ih:.0f} veh/h</td></tr>'
-                f'<tr><td><b>Estado</b></td>'
+                f"<tr><td><b>Intensidad</b></td><td>{ih:.0f} veh/h</td></tr>"
+                f"<tr><td><b>Estado</b></td>"
                 f'<td style="color:{color};font-weight:bold;">{label}</td></tr>'
                 f'<tr><td><b>Dirección</b></td><td>{s.get("angulo", "—")}°</td></tr>'
-                f'<tr><td><b>Actualizado</b></td>'
+                f"<tr><td><b>Actualizado</b></td>"
                 f'<td>{s.get("fecha_actualizacion", "—")} '
                 f'{s.get("hora_actualizacion", "")}</td></tr>'
-                '</table>'
+                "</table>"
             )
 
             folium.CircleMarker(
@@ -507,13 +540,15 @@ def _render_mapa_combinado(
     if trafico_rt is not None:
         incs_raw = trafico_rt.get("incidencias", [])
         incs_geo = [
-            inc for inc in incs_raw
+            inc
+            for inc in incs_raw
             if inc.get("lat") is not None and inc.get("lon") is not None
         ]
 
     if incs_geo:
         fg_dgt = folium.FeatureGroup(
-            name="\u26a0\ufe0f Incidencias DGT", show=True,
+            name="\u26a0\ufe0f Incidencias DGT",
+            show=True,
         )
 
         cluster = MarkerCluster(
@@ -538,13 +573,13 @@ def _render_mapa_combinado(
 
             popup_html = (
                 '<table style="font-size:12px;min-width:180px;">'
-                f'<tr><td><b>Carretera</b></td><td>{carretera}</td></tr>'
-                f'<tr><td><b>Municipio</b></td><td>{municipio}</td></tr>'
-                f'<tr><td><b>Severidad</b></td>'
+                f"<tr><td><b>Carretera</b></td><td>{carretera}</td></tr>"
+                f"<tr><td><b>Municipio</b></td><td>{municipio}</td></tr>"
+                f"<tr><td><b>Severidad</b></td>"
                 f'<td style="color:{sev_color};font-weight:bold;">'
-                f'{severidad}</td></tr>'
-                f'<tr><td><b>Tipo</b></td><td>{label}</td></tr>'
-                '</table>'
+                f"{severidad}</td></tr>"
+                f"<tr><td><b>Tipo</b></td><td>{label}</td></tr>"
+                "</table>"
             )
 
             folium.CircleMarker(
@@ -567,7 +602,7 @@ def _render_mapa_combinado(
     espira_items = "".join(
         f'<div style="margin:2px 0;">'
         f'<span style="display:inline-block;width:10px;height:10px;'
-        f'background:{c};border-radius:50%;margin-right:5px;'
+        f"background:{c};border-radius:50%;margin-right:5px;"
         f'vertical-align:middle;"></span>'
         f'<span style="vertical-align:middle;">{lbl}</span></div>'
         for lbl, c in [
@@ -583,7 +618,7 @@ def _render_mapa_combinado(
     dgt_items = "".join(
         f'<div style="margin:2px 0;">'
         f'<span style="display:inline-block;width:10px;height:10px;'
-        f'background:{c};border-radius:50%;margin-right:5px;'
+        f"background:{c};border-radius:50%;margin-right:5px;"
         f'vertical-align:middle;"></span>'
         f'<span style="vertical-align:middle;">'
         f'{_ICONO_TIPO.get(t, "")} {_LABEL_TIPO.get(t, t)}</span></div>'
@@ -592,17 +627,17 @@ def _render_mapa_combinado(
 
     legend_html = (
         '<div style="position:fixed;bottom:30px;left:30px;z-index:9999;'
-        'background:rgba(30,30,30,0.88);color:#eee;padding:10px 14px;'
-        'border-radius:8px;font-size:11px;max-width:480px;'
+        "background:rgba(30,30,30,0.88);color:#eee;padding:10px 14px;"
+        "border-radius:8px;font-size:11px;max-width:480px;"
         'box-shadow:0 2px 8px rgba(0,0,0,0.4);">'
         '<div style="display:flex;gap:20px;">'
         '<div style="min-width:160px;">'
         '<b style="font-size:12px;">Flujo vehicular</b>'
-        f'{espira_items}</div>'
+        f"{espira_items}</div>"
         '<div style="min-width:170px;">'
         '<b style="font-size:12px;">Incidencias DGT</b>'
-        f'{dgt_items}</div>'
-        '</div></div>'
+        f"{dgt_items}</div>"
+        "</div></div>"
     )
     mapa.get_root().html.add_child(folium.Element(legend_html))
 
@@ -615,6 +650,7 @@ def _render_mapa_combinado(
     # Approach 1: st.components.v1.html (most reliable for Folium)
     try:
         import streamlit.components.v1 as components
+
         components.html(map_html, height=600, scrolling=False)
         rendered = True
     except Exception:
@@ -631,6 +667,7 @@ def _render_mapa_combinado(
     # Approach 3: base64 iframe fallback
     if not rendered:
         import base64
+
         b64 = base64.b64encode(map_html.encode()).decode()
         st.markdown(
             f'<iframe src="data:text/html;base64,{b64}" '
@@ -641,7 +678,8 @@ def _render_mapa_combinado(
 
     if not rendered:
         incs_con_coords = [
-            inc for inc in (trafico_rt or {}).get("incidencias", [])
+            inc
+            for inc in (trafico_rt or {}).get("incidencias", [])
             if inc.get("lat") is not None and inc.get("lon") is not None
         ]
         st.info(
@@ -689,13 +727,9 @@ def _render_mapa_combinado(
 
     with col_dgt:
         if incs_geo:
-            total_espana = (trafico_rt or {}).get(
-                "total_incidencias", len(incs_geo)
-            )
+            total_espana = (trafico_rt or {}).get("total_incidencias", len(incs_geo))
             timestamp = (trafico_rt or {}).get("timestamp", "\u2014")
-            conteo_tipo = Counter(
-                inc.get("causa", "obstruction") for inc in incs_geo
-            )
+            conteo_tipo = Counter(inc.get("causa", "obstruction") for inc in incs_geo)
             top3 = conteo_tipo.most_common(3)
             top3_text = " · ".join(
                 f"{_ICONO_TIPO.get(t, '')} {_LABEL_TIPO.get(t, t)}: **{n}**"
@@ -736,24 +770,20 @@ def render_mapa_trafico(
     """
     st.markdown(
         '<div class="section-header">'
-        '<h4>Mapa de tr\u00e1fico en tiempo real</h4>'
+        "<h4>Mapa de tr\u00e1fico en tiempo real</h4>"
         '<p style="color:#888;font-size:0.85rem;">'
-        'Flujo vehicular (espiras municipales) + incidencias DGT'
-        '</p></div>',
+        "Flujo vehicular (espiras municipales) + incidencias DGT"
+        "</p></div>",
         unsafe_allow_html=True,
     )
 
     # Prioridad 1: mapa combinado RT si hay algun dato
-    has_espiras = (
-        espiras_rt is not None
-        and espiras_rt.get("sensores_activos")
-    )
+    has_espiras = espiras_rt is not None and espiras_rt.get("sensores_activos")
     has_dgt = False
     if trafico_rt is not None:
         incs = trafico_rt.get("incidencias", [])
         has_dgt = any(
-            inc.get("lat") is not None and inc.get("lon") is not None
-            for inc in incs
+            inc.get("lat") is not None and inc.get("lon") is not None for inc in incs
         )
 
     if has_espiras or has_dgt:
@@ -770,9 +800,11 @@ def render_mapa_trafico(
             )
             try:
                 import streamlit.components.v1 as components
+
                 components.html(html_content, height=600, scrolling=False)
             except Exception:
                 import base64
+
                 b64 = base64.b64encode(html_content.encode()).decode()
                 st.markdown(
                     f'<iframe src="data:text/html;base64,{b64}" '
@@ -794,6 +826,7 @@ def render_mapa_trafico(
 # ==============================================================================
 # 5. FUNCION ORQUESTADORA
 # ==============================================================================
+
 
 def render_tab_trafico(datos: dict) -> None:
     """

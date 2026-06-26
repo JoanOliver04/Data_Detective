@@ -31,13 +31,15 @@ def _df_sintetico(valor_base=25.0, ruido=5.0, anios=range(2020, 2026), mes=4):
     for anio in anios:
         for dia in range(1, 29):
             dt = datetime(anio, mes, dia)
-            registros.append({
-                "valor": valor_base + np.random.normal(0, ruido),
-                "anio": anio,
-                "mes": mes,
-                "dia_semana": dt.weekday(),
-                "fecha_utc": pd.Timestamp(dt, tz="UTC"),
-            })
+            registros.append(
+                {
+                    "valor": valor_base + np.random.normal(0, ruido),
+                    "anio": anio,
+                    "mes": mes,
+                    "dia_semana": dt.weekday(),
+                    "fecha_utc": pd.Timestamp(dt, tz="UTC"),
+                }
+            )
     df = pd.DataFrame(registros)
     df["variable"] = "NO2"
     return df
@@ -47,10 +49,14 @@ def test_calcular_tendencia_a_la_baja():
     registros = []
     for anio in range(2018, 2026):
         for _ in range(20):
-            registros.append({
-                "valor": 30.0 - (anio - 2018) * 1.5 + np.random.normal(0, 2),
-                "anio": anio, "mes": 4, "dia_semana": 2,
-            })
+            registros.append(
+                {
+                    "valor": 30.0 - (anio - 2018) * 1.5 + np.random.normal(0, 2),
+                    "anio": anio,
+                    "mes": 4,
+                    "dia_semana": 2,
+                }
+            )
     df = pd.DataFrame(registros)
     tendencia, factor = _calcular_tendencia(df, "NO2", 4)
     assert factor < 1.0
@@ -64,10 +70,12 @@ def test_calcular_tendencia_insuficiente():
 
 
 def test_extraer_medias_rt():
-    rt = {"estaciones": [
-        {"no2": 20.0, "o3": 40.0, "pm10": None, "pm25": 10.0},
-        {"no2": 30.0, "o3": 50.0, "pm10": 25.0, "pm25": 15.0},
-    ]}
+    rt = {
+        "estaciones": [
+            {"no2": 20.0, "o3": 40.0, "pm10": None, "pm25": 10.0},
+            {"no2": 30.0, "o3": 50.0, "pm10": 25.0, "pm25": 15.0},
+        ]
+    }
     medias = _extraer_medias_rt(rt)
     assert medias["NO2"] == 25.0
     assert medias["O3"] == 45.0
@@ -119,11 +127,15 @@ def test_pronosticar_variable_fallback_mensual():
     registros = []
     for dia in range(1, 25):  # abril 2025, varios dias
         dt = datetime(2025, 4, dia)
-        registros.append({
-            "valor": 20.0, "anio": 2025, "mes": 4,
-            "dia_semana": dt.weekday(),
-            "fecha_utc": pd.Timestamp(dt, tz="UTC"),
-        })
+        registros.append(
+            {
+                "valor": 20.0,
+                "anio": 2025,
+                "mes": 4,
+                "dia_semana": dt.weekday(),
+                "fecha_utc": pd.Timestamp(dt, tz="UTC"),
+            }
+        )
     df = pd.DataFrame(registros)
     df["variable"] = "NO2"
     # weekday objetivo 6 (domingo): pocos en el mes -> usa fallback mensual.
@@ -134,10 +146,15 @@ def test_pronosticar_variable_fallback_mensual():
 
 
 def test_pronosticar_variable_sin_datos_mes():
-    df = pd.DataFrame({
-        "valor": [10.0], "anio": [2025], "mes": [1], "dia_semana": [2],
-        "fecha_utc": pd.to_datetime(["2025-01-08"]).tz_localize("UTC"),
-        "variable": ["NO2"],
-    })
+    df = pd.DataFrame(
+        {
+            "valor": [10.0],
+            "anio": [2025],
+            "mes": [1],
+            "dia_semana": [2],
+            "fecha_utc": pd.to_datetime(["2025-01-08"]).tz_localize("UTC"),
+            "variable": ["NO2"],
+        }
+    )
     # Mes objetivo 7 sin datos -> None.
     assert _pronosticar_variable(df, "NO2", 7, 2, None) is None

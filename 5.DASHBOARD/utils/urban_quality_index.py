@@ -34,12 +34,12 @@ PESO_TRAFICO: float = 0.25
 # ============================================================================
 
 _NIVELES_URBANO: List[Tuple[float, str, str, str]] = [
-    (8.5, "Excelente",  "#2ca02c", "🟢"),
-    (7.0, "Bueno",      "#27ae60", "🟢"),
-    (5.0, "Aceptable",  "#f39c12", "🟡"),
+    (8.5, "Excelente", "#2ca02c", "🟢"),
+    (7.0, "Bueno", "#27ae60", "🟢"),
+    (5.0, "Aceptable", "#f39c12", "🟡"),
     (3.0, "Deficiente", "#e67e22", "🟠"),
-    (1.0, "Malo",       "#e74c3c", "🔴"),
-    (0.0, "Crítico",    "#8b0000", "⛔"),
+    (1.0, "Malo", "#e74c3c", "🔴"),
+    (0.0, "Crítico", "#8b0000", "⛔"),
 ]
 
 
@@ -62,6 +62,7 @@ def _nivel_desde_score_urbano(score: float) -> Tuple[str, str, str]:
 # ============================================================================
 # SCORE DE CONTAMINACION (delega en quality_index.py)
 # ============================================================================
+
 
 def _score_contaminacion(contam_rt: Optional[dict]) -> Optional[Dict[str, Any]]:
     """
@@ -93,18 +94,24 @@ def _score_contaminacion(contam_rt: Optional[dict]) -> Optional[Dict[str, Any]]:
         # Convertir datos RT a formato DataFrame para quality_index
         registros = []
         key_map = {
-            "no2": "NO2", "o3": "O3", "pm10": "PM10",
-            "pm25": "PM2.5", "so2": "SO2", "co": "CO",
+            "no2": "NO2",
+            "o3": "O3",
+            "pm10": "PM10",
+            "pm25": "PM2.5",
+            "so2": "SO2",
+            "co": "CO",
         }
         for est in estaciones:
             for key_rt, variable in key_map.items():
                 valor = est.get(key_rt)
                 if valor is not None:
-                    registros.append({
-                        "variable": variable,
-                        "valor": float(valor),
-                        "calidad_dato": "ok",
-                    })
+                    registros.append(
+                        {
+                            "variable": variable,
+                            "valor": float(valor),
+                            "calidad_dato": "ok",
+                        }
+                    )
 
         if not registros:
             return None
@@ -123,6 +130,7 @@ def _score_contaminacion(contam_rt: Optional[dict]) -> Optional[Dict[str, Any]]:
 # ============================================================================
 # SCORE DE METEOROLOGIA
 # ============================================================================
+
 
 def _score_temperatura(temp: float) -> float:
     """
@@ -229,6 +237,7 @@ def _score_meteorologia(meteo_rt: Optional[dict]) -> Optional[Dict[str, Any]]:
 # SCORE DE TRAFICO
 # ============================================================================
 
+
 def _score_trafico(trafico_rt: Optional[dict]) -> Optional[Dict[str, Any]]:
     """
     Calcula el score de trafico (0-10) basado en incidencias en Valencia.
@@ -254,8 +263,7 @@ def _score_trafico(trafico_rt: Optional[dict]) -> Optional[Dict[str, Any]]:
 
     # Contar incidencias graves (high/highest)
     graves = sum(
-        1 for inc in incidencias
-        if inc.get("severidad") in ("high", "highest")
+        1 for inc in incidencias if inc.get("severidad") in ("high", "highest")
     )
 
     if total == 0:
@@ -280,6 +288,7 @@ def _score_trafico(trafico_rt: Optional[dict]) -> Optional[Dict[str, Any]]:
 # ============================================================================
 # FUNCION PRINCIPAL: INDICE DE CALIDAD URBANA
 # ============================================================================
+
 
 def calcular_indice_urbano(
     contam_rt: Optional[dict] = None,
@@ -348,9 +357,7 @@ def calcular_indice_urbano(
 
     # Redistribuir pesos entre ejes con datos
     peso_total = sum(e["peso"] for e in ejes.values())
-    score_global = sum(
-        e["score"] * e["peso"] for e in ejes.values()
-    ) / peso_total
+    score_global = sum(e["score"] * e["peso"] for e in ejes.values()) / peso_total
 
     score_global = round(min(10.0, max(0.0, score_global)), 2)
     nivel, color, emoji = _nivel_desde_score_urbano(score_global)
@@ -410,31 +417,51 @@ if __name__ == "__main__":
         """Verifica logica de incidencias de trafico."""
         assert _score_trafico(None) is None
         assert _score_trafico({"incidencias": []})["score"] == 10.0
-        assert _score_trafico({
-            "incidencias": [
-                {"severidad": "low"}, {"severidad": "low"},
-            ]
-        })["score"] == 7.0
-        assert _score_trafico({
-            "incidencias": [
-                {"severidad": "high"}, {"severidad": "low"},
-            ]
-        })["score"] == 4.0
-        assert _score_trafico({
-            "incidencias": [{"severidad": "low"}] * 12
-        })["score"] == 1.0
-        assert _score_trafico({
-            "incidencias": [
-                {"severidad": "highest"}, {"severidad": "high"},
-            ]
-        })["score"] == 1.0
+        assert (
+            _score_trafico(
+                {
+                    "incidencias": [
+                        {"severidad": "low"},
+                        {"severidad": "low"},
+                    ]
+                }
+            )["score"]
+            == 7.0
+        )
+        assert (
+            _score_trafico(
+                {
+                    "incidencias": [
+                        {"severidad": "high"},
+                        {"severidad": "low"},
+                    ]
+                }
+            )["score"]
+            == 4.0
+        )
+        assert (
+            _score_trafico({"incidencias": [{"severidad": "low"}] * 12})["score"] == 1.0
+        )
+        assert (
+            _score_trafico(
+                {
+                    "incidencias": [
+                        {"severidad": "highest"},
+                        {"severidad": "high"},
+                    ]
+                }
+            )["score"]
+            == 1.0
+        )
         print("  [OK] test_score_trafico")
 
     def test_score_meteorologia():
         """Verifica fusion de sub-scores meteorologicos."""
         result = _score_meteorologia({"temp": 22.0, "humedad": 55.0})
         assert result is not None
-        assert result["score"] == 10.0, f"Condiciones ideales deben dar 10, got {result['score']}"
+        assert (
+            result["score"] == 10.0
+        ), f"Condiciones ideales deben dar 10, got {result['score']}"
 
         result_none = _score_meteorologia(None)
         assert result_none is None

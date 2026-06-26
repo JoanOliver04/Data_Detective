@@ -40,28 +40,29 @@ from config import TAB_NAMES, DESCRIPCION_TABS
 logger = logging.getLogger("Eventos")
 
 # Colores de la seccion
-COLOR_EVENTO = "#9b59b6"           # Purpura principal
-COLOR_POSITIVO = "#d62728"         # Rojo = sube contaminacion (malo)
-COLOR_NEGATIVO = "#2ca02c"         # Verde = baja contaminacion (bueno)
-COLOR_NEUTRO = "#7f7f7f"           # Gris
+COLOR_EVENTO = "#9b59b6"  # Purpura principal
+COLOR_POSITIVO = "#d62728"  # Rojo = sube contaminacion (malo)
+COLOR_NEGATIVO = "#2ca02c"  # Verde = baja contaminacion (bueno)
+COLOR_NEUTRO = "#7f7f7f"  # Gris
 
 # Paleta para categorias de evento (taxonomia multidimensional v2)
 # Mapea categoria_evento -> color (tipo_evento = categoria_evento)
 PALETA_TIPOS = {
-    "festivo": "#e74c3c",        # Rojo (Fallas, Navidad, fiestas)
-    "deportivo": "#3498db",      # Azul (Valencia CF, maratones)
-    "musical": "#9b59b6",        # Purpura (conciertos, festivales)
-    "cultural": "#e67e22",       # Naranja (exposiciones, teatro)
+    "festivo": "#e74c3c",  # Rojo (Fallas, Navidad, fiestas)
+    "deportivo": "#3498db",  # Azul (Valencia CF, maratones)
+    "musical": "#9b59b6",  # Purpura (conciertos, festivales)
+    "cultural": "#e67e22",  # Naranja (exposiciones, teatro)
     "institucional": "#1abc9c",  # Turquesa (conferencias, talleres)
-    "comercial": "#f39c12",      # Amarillo (ferias, mercados)
-    "religioso": "#8e44ad",      # Violeta (procesiones)
-    "otro": "#95a5a6",           # Gris (sin clasificar)
+    "comercial": "#f39c12",  # Amarillo (ferias, mercados)
+    "religioso": "#8e44ad",  # Violeta (procesiones)
+    "otro": "#95a5a6",  # Gris (sin clasificar)
 }
 
 
 # ==============================================================================
 # UTILIDADES
 # ==============================================================================
+
 
 def _color_impacto(valor: float) -> str:
     """Retorna color segun si el impacto es positivo (malo) o negativo (bueno)."""
@@ -83,6 +84,7 @@ def _color_tipo_evento(tipo: str) -> str:
 # 1. KPIs
 # ==============================================================================
 
+
 def render_kpis_eventos(df: pd.DataFrame) -> None:
     """
     Renderiza 4 KPIs de eventos masivos:
@@ -103,26 +105,25 @@ def render_kpis_eventos(df: pd.DataFrame) -> None:
 
     # Impacto medio NO2 (filtrar filas donde variable == NO2)
     df_no2 = df[df["variable"] == "NO2"] if "variable" in df.columns else df
-    media_no2 = df_no2["impacto_pct"].dropna(
-    ).mean() if not df_no2.empty else np.nan
+    media_no2 = df_no2["impacto_pct"].dropna().mean() if not df_no2.empty else np.nan
 
     # Impacto medio trafico (impacto_trafico_pct existe una vez por fila,
     # pero se repite por variable; tomar media por evento unico)
     if "impacto_trafico_pct" in df.columns:
-        trafico_por_evento = (
-            df.drop_duplicates(subset=["evento_id"])["impacto_trafico_pct"]
-            .dropna()
+        trafico_por_evento = df.drop_duplicates(subset=["evento_id"])[
+            "impacto_trafico_pct"
+        ].dropna()
+        media_trafico = (
+            trafico_por_evento.mean() if not trafico_por_evento.empty else np.nan
         )
-        media_trafico = trafico_por_evento.mean() if not trafico_por_evento.empty else np.nan
     else:
         media_trafico = np.nan
 
     # Tipo con mayor impacto medio absoluto (sobre contaminacion)
     if "tipo_evento" in df.columns and "impacto_pct" in df.columns:
-        impacto_por_tipo = (
-            df.groupby("tipo_evento", as_index=False)["impacto_pct"]
-            .mean()
-        )
+        impacto_por_tipo = df.groupby("tipo_evento", as_index=False)[
+            "impacto_pct"
+        ].mean()
         impacto_por_tipo["abs_impacto"] = impacto_por_tipo["impacto_pct"].abs()
         if not impacto_por_tipo.empty:
             idx_max = impacto_por_tipo["abs_impacto"].idxmax()
@@ -141,8 +142,8 @@ def render_kpis_eventos(df: pd.DataFrame) -> None:
         f'margin-bottom:1rem;">'
         f'<h4 style="margin:0;">Indicadores de impacto de eventos</h4>'
         f'<small style="color:#888;">'
-        f'Análisis quasi-experimental vs. baseline de días comparables'
-        f'</small></div>',
+        f"Análisis quasi-experimental vs. baseline de días comparables"
+        f"</small></div>",
         unsafe_allow_html=True,
     )
 
@@ -157,8 +158,10 @@ def render_kpis_eventos(df: pd.DataFrame) -> None:
     c2.metric(
         label="Impacto medio NO2",
         value=f"{media_no2:+.1f}%" if pd.notna(media_no2) else "-",
-        delta="Sube" if pd.notna(media_no2) and media_no2 > 0 else (
-            "Baja" if pd.notna(media_no2) else None
+        delta=(
+            "Sube"
+            if pd.notna(media_no2) and media_no2 > 0
+            else ("Baja" if pd.notna(media_no2) else None)
         ),
         delta_color="inverse",
         help=(
@@ -170,8 +173,10 @@ def render_kpis_eventos(df: pd.DataFrame) -> None:
     c3.metric(
         label="Impacto medio tráfico",
         value=f"{media_trafico:+.1f}%" if pd.notna(media_trafico) else "-",
-        delta="Sube" if pd.notna(media_trafico) and media_trafico > 0 else (
-            "Baja" if pd.notna(media_trafico) else None
+        delta=(
+            "Sube"
+            if pd.notna(media_trafico) and media_trafico > 0
+            else ("Baja" if pd.notna(media_trafico) else None)
         ),
         delta_color="inverse",
         help=(
@@ -200,6 +205,7 @@ def render_kpis_eventos(df: pd.DataFrame) -> None:
 # 2. IMPACTO EN CONTAMINACION POR TIPO DE EVENTO
 # ==============================================================================
 
+
 def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
     """
     Barras agrupadas de impacto medio (%) en contaminacion por tipo de evento.
@@ -220,10 +226,7 @@ def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
 
     # Variables principales a mostrar
     vars_principales = ["NO2", "PM10", "PM2.5", "O3"]
-    vars_disponibles = [
-        v for v in vars_principales
-        if v in df["variable"].unique()
-    ]
+    vars_disponibles = [v for v in vars_principales if v in df["variable"].unique()]
 
     if not vars_disponibles:
         vars_disponibles = df["variable"].unique().tolist()[:4]
@@ -242,6 +245,7 @@ def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
     fig = go.Figure()
 
     from config import VARIABLE_COLORS
+
     for var in vars_disponibles:
         datos_var = agg[agg["variable"] == var].sort_values("tipo_evento")
         if datos_var.empty:
@@ -249,18 +253,18 @@ def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
 
         color_var = VARIABLE_COLORS.get(var, COLOR_EVENTO)
 
-        fig.add_trace(go.Bar(
-            x=datos_var["tipo_evento"],
-            y=datos_var["impacto_pct"],
-            name=var,
-            marker_color=color_var,
-            opacity=0.85,
-            hovertemplate=(
-                "<b>%{x}</b><br>"
-                f"{var}: " + "%{y:+.1f}%<br>"
-                "<extra></extra>"
-            ),
-        ))
+        fig.add_trace(
+            go.Bar(
+                x=datos_var["tipo_evento"],
+                y=datos_var["impacto_pct"],
+                name=var,
+                marker_color=color_var,
+                opacity=0.85,
+                hovertemplate=(
+                    "<b>%{x}</b><br>" f"{var}: " + "%{y:+.1f}%<br>" "<extra></extra>"
+                ),
+            )
+        )
 
     # Linea de referencia en 0%
     fig.add_hline(
@@ -284,8 +288,10 @@ def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
         hovermode="x unified",
         legend=dict(
             orientation="h",
-            yanchor="bottom", y=1.02,
-            xanchor="right", x=1,
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
         ),
     )
 
@@ -297,14 +303,13 @@ def render_grafico_impacto_contaminacion(df: pd.DataFrame) -> None:
         "Valores negativos (-) indican mejora respecto al baseline."
     )
 
-    logger.info(
-        f"[Grafico contam] {len(agg)} combinaciones tipo x variable"
-    )
+    logger.info(f"[Grafico contam] {len(agg)} combinaciones tipo x variable")
 
 
 # ==============================================================================
 # 3. IMPACTO EN TRAFICO POR TIPO DE EVENTO
 # ==============================================================================
+
 
 def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
     """
@@ -327,8 +332,7 @@ def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
     df_unico = df.drop_duplicates(subset=["evento_id"])
 
     agg = (
-        df_unico
-        .groupby("tipo_evento", as_index=False)["impacto_trafico_pct"]
+        df_unico.groupby("tipo_evento", as_index=False)["impacto_trafico_pct"]
         .mean()
         .dropna(subset=["impacto_trafico_pct"])
     )
@@ -344,17 +348,17 @@ def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
 
     fig = go.Figure()
 
-    fig.add_trace(go.Bar(
-        x=agg["tipo_evento"],
-        y=agg["impacto_trafico_pct"],
-        marker_color=colores,
-        opacity=0.85,
-        hovertemplate=(
-            "<b>%{x}</b><br>"
-            "Impacto tráfico: %{y:+.1f}%<br>"
-            "<extra></extra>"
-        ),
-    ))
+    fig.add_trace(
+        go.Bar(
+            x=agg["tipo_evento"],
+            y=agg["impacto_trafico_pct"],
+            marker_color=colores,
+            opacity=0.85,
+            hovertemplate=(
+                "<b>%{x}</b><br>" "Impacto tráfico: %{y:+.1f}%<br>" "<extra></extra>"
+            ),
+        )
+    )
 
     fig.add_hline(
         y=0,
@@ -390,6 +394,7 @@ def render_grafico_impacto_trafico(df: pd.DataFrame) -> None:
 # ==============================================================================
 # 4. TIMELINE DE EVENTOS
 # ==============================================================================
+
 
 def render_timeline_eventos(df: pd.DataFrame) -> None:
     """
@@ -438,34 +443,39 @@ def render_timeline_eventos(df: pd.DataFrame) -> None:
         if "impacto_trafico_pct" in row and pd.notna(row["impacto_trafico_pct"]):
             impacto_str = f"<br>Impacto tráfico: {row['impacto_trafico_pct']:+.1f}%"
 
-        fig.add_trace(go.Scatter(
-            x=[row["fecha_inicio"], row["fecha_fin"]],
-            y=[nombre, nombre],
-            mode="lines+markers",
-            line=dict(color=color, width=8),
-            marker=dict(size=8, color=color),
-            name=tipo,
-            showlegend=False,
-            hovertemplate=(
-                f"<b>{nombre}</b><br>"
-                f"Tipo: {tipo}<br>"
-                f"Inicio: {row['fecha_inicio'].strftime('%d/%m/%Y')}<br>"
-                f"Fin: {row['fecha_fin'].strftime('%d/%m/%Y')}"
-                f"{impacto_str}"
-                f"<extra></extra>"
-            ),
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=[row["fecha_inicio"], row["fecha_fin"]],
+                y=[nombre, nombre],
+                mode="lines+markers",
+                line=dict(color=color, width=8),
+                marker=dict(size=8, color=color),
+                name=tipo,
+                showlegend=False,
+                hovertemplate=(
+                    f"<b>{nombre}</b><br>"
+                    f"Tipo: {tipo}<br>"
+                    f"Inicio: {row['fecha_inicio'].strftime('%d/%m/%Y')}<br>"
+                    f"Fin: {row['fecha_fin'].strftime('%d/%m/%Y')}"
+                    f"{impacto_str}"
+                    f"<extra></extra>"
+                ),
+            )
+        )
 
     # Leyenda manual para tipos unicos
     tipos_unicos = df_ev["tipo_evento"].unique()
     for tipo in tipos_unicos:
-        fig.add_trace(go.Scatter(
-            x=[None], y=[None],
-            mode="markers",
-            marker=dict(size=10, color=_color_tipo_evento(tipo)),
-            name=str(tipo),
-            showlegend=True,
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="markers",
+                marker=dict(size=10, color=_color_tipo_evento(tipo)),
+                name=str(tipo),
+                showlegend=True,
+            )
+        )
 
     fig.update_layout(
         title=dict(
@@ -480,8 +490,10 @@ def render_timeline_eventos(df: pd.DataFrame) -> None:
         hovermode="closest",
         legend=dict(
             orientation="h",
-            yanchor="bottom", y=1.02,
-            xanchor="right", x=1,
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
             title="Tipo de evento",
         ),
     )
@@ -494,6 +506,7 @@ def render_timeline_eventos(df: pd.DataFrame) -> None:
 # ==============================================================================
 # 5. FUNCION ORQUESTADORA
 # ==============================================================================
+
 
 def render_tab_eventos(datos: dict) -> None:
     """
@@ -549,18 +562,30 @@ def render_tab_eventos(datos: dict) -> None:
     # 4. Tabla resumen rapida
     st.divider()
     with st.expander("📋 Tabla de eventos analizados"):
-        df_resumen = df.drop_duplicates(subset=["evento_id"])[
-            ["nombre_evento", "tipo_evento", "impacto_esperado", "impacto_trafico_pct"]
-        ].copy() if all(
-            c in df.columns for c in ["nombre_evento", "tipo_evento", "impacto_esperado"]
-        ) else None
+        df_resumen = (
+            df.drop_duplicates(subset=["evento_id"])[
+                [
+                    "nombre_evento",
+                    "tipo_evento",
+                    "impacto_esperado",
+                    "impacto_trafico_pct",
+                ]
+            ].copy()
+            if all(
+                c in df.columns
+                for c in ["nombre_evento", "tipo_evento", "impacto_esperado"]
+            )
+            else None
+        )
         if df_resumen is not None and not df_resumen.empty:
-            df_resumen = df_resumen.rename(columns={
-                "nombre_evento": "Evento",
-                "tipo_evento": "Tipo",
-                "impacto_esperado": "Impacto esperado",
-                "impacto_trafico_pct": "Impacto tráfico (%)",
-            })
+            df_resumen = df_resumen.rename(
+                columns={
+                    "nombre_evento": "Evento",
+                    "tipo_evento": "Tipo",
+                    "impacto_esperado": "Impacto esperado",
+                    "impacto_trafico_pct": "Impacto tráfico (%)",
+                }
+            )
             st.dataframe(
                 df_resumen,
                 hide_index=True,

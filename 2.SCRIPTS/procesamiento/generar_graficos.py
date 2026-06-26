@@ -54,7 +54,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-
 # ==============================================================================
 # CONFIGURACIÓN
 # ==============================================================================
@@ -65,9 +64,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 CONTAMINACION_PATH = (
     PROJECT_ROOT / "3.DATOS_LIMPIOS" / "contaminacion_normalizada.parquet"
 )
-METEOROLOGIA_PATH = (
-    PROJECT_ROOT / "3.DATOS_LIMPIOS" / "meteorologia_limpio.csv"
-)
+METEOROLOGIA_PATH = PROJECT_ROOT / "3.DATOS_LIMPIOS" / "meteorologia_limpio.csv"
 
 # --- Salida ---
 GRAFICOS_DIR = PROJECT_ROOT / "4.VISUALIZACIONES" / "graficos"
@@ -82,21 +79,22 @@ OMS_NO2_ANUAL = 10.0
 UE_NO2_ANUAL = 40.0
 
 # --- Definición de estaciones ---
-MESES_VERANO = [6, 7, 8]       # Junio, Julio, Agosto
-MESES_INVIERNO = [12, 1, 2]    # Diciembre, Enero, Febrero
+MESES_VERANO = [6, 7, 8]  # Junio, Julio, Agosto
+MESES_INVIERNO = [12, 1, 2]  # Diciembre, Enero, Febrero
 
 # --- Paleta accesible (colorblind-friendly) ---
-COLOR_NO2_LINE = "#D62728"       # Rojo ladrillo (línea principal)
-COLOR_OMS = "#2CA02C"            # Verde OMS
-COLOR_UE = "#FF7F0E"             # Naranja UE
-COLOR_VERANO = "#FF7F0E"         # Naranja cálido
-COLOR_INVIERNO = "#1F77B4"       # Azul frío
-COLOR_PRECIP = "#1F77B4"         # Azul agua
+COLOR_NO2_LINE = "#D62728"  # Rojo ladrillo (línea principal)
+COLOR_OMS = "#2CA02C"  # Verde OMS
+COLOR_UE = "#FF7F0E"  # Naranja UE
+COLOR_VERANO = "#FF7F0E"  # Naranja cálido
+COLOR_INVIERNO = "#1F77B4"  # Azul frío
+COLOR_PRECIP = "#1F77B4"  # Azul agua
 
 
 # ==============================================================================
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
+
 
 def setup_logging() -> logging.Logger:
     """
@@ -130,6 +128,7 @@ def setup_logging() -> logging.Logger:
 # ==============================================================================
 # CARGA DE DATOS
 # ==============================================================================
+
 
 def load_contaminacion(logger: logging.Logger) -> Optional[pd.DataFrame]:
     """
@@ -172,8 +171,7 @@ def load_contaminacion(logger: logging.Logger) -> Optional[pd.DataFrame]:
 
     logger.info(f"      {len(df):,} registros cargados")
     logger.info(
-        f"      Rango: {df['fecha_utc'].min().year} → "
-        f"{df['fecha_utc'].max().year}"
+        f"      Rango: {df['fecha_utc'].min().year} → " f"{df['fecha_utc'].max().year}"
     )
     logger.info(f"      Variables: {sorted(df['variable'].unique())}")
 
@@ -218,9 +216,7 @@ def load_meteorologia(logger: logging.Logger) -> Optional[pd.DataFrame]:
         return None
 
     logger.info(f"      {len(df):,} registros cargados")
-    logger.info(
-        f"      Rango: {df['fecha'].min()} → {df['fecha'].max()}"
-    )
+    logger.info(f"      Rango: {df['fecha'].min()} → {df['fecha'].max()}")
 
     return df
 
@@ -229,7 +225,10 @@ def load_meteorologia(logger: logging.Logger) -> Optional[pd.DataFrame]:
 # UTILIDADES
 # ==============================================================================
 
-def _save_figure(fig: go.Figure, filename: str, logger: logging.Logger) -> Optional[Path]:
+
+def _save_figure(
+    fig: go.Figure, filename: str, logger: logging.Logger
+) -> Optional[Path]:
     """
     Guarda una figura Plotly como HTML autocontenido.
 
@@ -262,6 +261,7 @@ def _save_figure(fig: go.Figure, filename: str, logger: logging.Logger) -> Optio
 # GRÁFICO 1: EVOLUCIÓN ANUAL DE NO₂
 # ==============================================================================
 
+
 def generate_no2_evolution(
     df_contam: pd.DataFrame,
     logger: logging.Logger,
@@ -291,8 +291,7 @@ def generate_no2_evolution(
 
     # --- 1. Filtrar NO₂ con calidad OK ---
     df_no2 = df_contam[
-        (df_contam["variable"] == "NO2") &
-        (df_contam["calidad_dato"] == "ok")
+        (df_contam["variable"] == "NO2") & (df_contam["calidad_dato"] == "ok")
     ].copy()
 
     if df_no2.empty:
@@ -303,14 +302,10 @@ def generate_no2_evolution(
     df_no2["year"] = df_no2["fecha_utc"].dt.year
 
     # --- 3. Media anual (ciudad) ---
-    no2_anual = (
-        df_no2
-        .groupby("year", as_index=False)
-        .agg(
-            media_no2=("valor", "mean"),
-            n_registros=("valor", "count"),
-            n_estaciones=("estacion_id", "nunique"),
-        )
+    no2_anual = df_no2.groupby("year", as_index=False).agg(
+        media_no2=("valor", "mean"),
+        n_registros=("valor", "count"),
+        n_estaciones=("estacion_id", "nunique"),
     )
     no2_anual["media_no2"] = no2_anual["media_no2"].round(2)
 
@@ -320,8 +315,7 @@ def generate_no2_evolution(
 
     logger.info(f"      Rango: {year_min} → {year_max} ({n_years} años)")
     logger.info(
-        f"      NO₂ medio global: "
-        f"{no2_anual['media_no2'].mean():.1f} µg/m³"
+        f"      NO₂ medio global: " f"{no2_anual['media_no2'].mean():.1f} µg/m³"
     )
 
     # --- 4. Crear gráfico con Plotly ---
@@ -334,10 +328,7 @@ def generate_no2_evolution(
             "year": "Año",
             "media_no2": "NO₂ (µg/m³)",
         },
-        title=(
-            f"Evolución anual de NO₂ en Valencia "
-            f"({year_min}–{year_max})"
-        ),
+        title=(f"Evolución anual de NO₂ en Valencia " f"({year_min}–{year_max})"),
         hover_data={
             "n_registros": ":,",
             "n_estaciones": True,
@@ -383,17 +374,17 @@ def generate_no2_evolution(
         template="plotly_white",
         font=dict(family="Arial, sans-serif", size=13),
         xaxis=dict(
-            dtick=5,                         # Marca cada 5 años
-            tickformat="d",                   # Sin separador de miles
+            dtick=5,  # Marca cada 5 años
+            tickformat="d",  # Sin separador de miles
             title_font=dict(size=14),
         ),
         yaxis=dict(
             title_font=dict(size=14),
-            rangemode="tozero",               # Eje Y empieza en 0
+            rangemode="tozero",  # Eje Y empieza en 0
         ),
         title=dict(
             font=dict(size=18),
-            x=0.5,                            # Centrado
+            x=0.5,  # Centrado
             xanchor="center",
         ),
         margin=dict(l=60, r=40, t=80, b=60),
@@ -407,6 +398,7 @@ def generate_no2_evolution(
 # ==============================================================================
 # GRÁFICO 2: PRECIPITACIONES ANUALES
 # ==============================================================================
+
 
 def generate_precipitation_annual(
     df_meteo: pd.DataFrame,
@@ -453,14 +445,10 @@ def generate_precipitation_annual(
 
     # --- 3. Agregar por año ---
     # Precipitación se ACUMULA (suma), no se promedia
-    precip_anual = (
-        df
-        .groupby("year", as_index=False)
-        .agg(
-            precipitacion_total=("precipitacion_mm", "sum"),
-            n_registros=("precipitacion_mm", "count"),
-            n_dias_lluvia=("precipitacion_mm", lambda x: (x > 0).sum()),
-        )
+    precip_anual = df.groupby("year", as_index=False).agg(
+        precipitacion_total=("precipitacion_mm", "sum"),
+        n_registros=("precipitacion_mm", "count"),
+        n_dias_lluvia=("precipitacion_mm", lambda x: (x > 0).sum()),
     )
     precip_anual["precipitacion_total"] = precip_anual["precipitacion_total"].round(1)
 
@@ -475,8 +463,11 @@ def generate_precipitation_annual(
 
     # --- 4. Clasificar barras (encima/debajo de media) ---
     precip_anual["categoria"] = precip_anual["precipitacion_total"].apply(
-        lambda x: "Por encima de la media" if x >= media_historica
-        else "Por debajo de la media"
+        lambda x: (
+            "Por encima de la media"
+            if x >= media_historica
+            else "Por debajo de la media"
+        )
     )
 
     # --- 5. Crear gráfico ---
@@ -486,8 +477,8 @@ def generate_precipitation_annual(
         y="precipitacion_total",
         color="categoria",
         color_discrete_map={
-            "Por encima de la media": "#1F77B4",     # Azul
-            "Por debajo de la media": "#AEC7E8",     # Azul claro
+            "Por encima de la media": "#1F77B4",  # Azul
+            "Por debajo de la media": "#AEC7E8",  # Azul claro
         },
         labels={
             "year": "Año",
@@ -495,8 +486,7 @@ def generate_precipitation_annual(
             "categoria": "Respecto a media",
         },
         title=(
-            f"Precipitación anual acumulada en Valencia "
-            f"({year_min}–{year_max})"
+            f"Precipitación anual acumulada en Valencia " f"({year_min}–{year_max})"
         ),
         hover_data={
             "n_registros": ":,",
@@ -559,6 +549,7 @@ def generate_precipitation_annual(
 # GRÁFICO 3: COMPARATIVA ESTACIONAL (VERANO vs INVIERNO)
 # ==============================================================================
 
+
 def generate_seasonal_comparison(
     df_contam: pd.DataFrame,
     logger: logging.Logger,
@@ -596,8 +587,7 @@ def generate_seasonal_comparison(
 
     # --- 1. Filtrar NO₂ con calidad OK ---
     df_no2 = df_contam[
-        (df_contam["variable"] == "NO2") &
-        (df_contam["calidad_dato"] == "ok")
+        (df_contam["variable"] == "NO2") & (df_contam["calidad_dato"] == "ok")
     ].copy()
 
     if df_no2.empty:
@@ -642,22 +632,16 @@ def generate_seasonal_comparison(
         return None
 
     # --- 4. Media estacional por año ---
-    seasonal_means = (
-        df_seasonal
-        .groupby(["year_season", "estacion"], as_index=False)
-        .agg(
-            media_no2=("valor", "mean"),
-            n_registros=("valor", "count"),
-        )
+    seasonal_means = df_seasonal.groupby(
+        ["year_season", "estacion"], as_index=False
+    ).agg(
+        media_no2=("valor", "mean"),
+        n_registros=("valor", "count"),
     )
     seasonal_means["media_no2"] = seasonal_means["media_no2"].round(2)
 
     # Solo años con datos en AMBAS estaciones
-    years_both = (
-        seasonal_means
-        .groupby("year_season")["estacion"]
-        .nunique()
-    )
+    years_both = seasonal_means.groupby("year_season")["estacion"].nunique()
     years_complete = years_both[years_both == 2].index
     seasonal_means = seasonal_means[
         seasonal_means["year_season"].isin(years_complete)
@@ -677,9 +661,7 @@ def generate_seasonal_comparison(
 
     # Log de medias globales
     for est in ["Verano", "Invierno"]:
-        media = seasonal_means[
-            seasonal_means["estacion"] == est
-        ]["media_no2"].mean()
+        media = seasonal_means[seasonal_means["estacion"] == est]["media_no2"].mean()
         logger.info(f"      {est}: media global = {media:.1f} µg/m³")
 
     # --- 5. Crear gráfico ---
@@ -698,10 +680,7 @@ def generate_seasonal_comparison(
             "media_no2": "NO₂ (µg/m³)",
             "estacion": "Estación",
         },
-        title=(
-            f"NO₂ en Valencia: Verano vs Invierno "
-            f"({year_min}–{year_max})"
-        ),
+        title=(f"NO₂ en Valencia: Verano vs Invierno " f"({year_min}–{year_max})"),
         hover_data={"n_registros": ":,"},
     )
 
@@ -759,6 +738,7 @@ def generate_seasonal_comparison(
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """
@@ -854,7 +834,9 @@ def main():
 
     # Mensaje para consola
     if graficos_generados:
-        print(f"\n\u2705 {len(graficos_generados)} gráficos generados en: {GRAFICOS_DIR}")
+        print(
+            f"\n\u2705 {len(graficos_generados)} gráficos generados en: {GRAFICOS_DIR}"
+        )
         for nombre in graficos_generados:
             print(f"   \u2192 {nombre}")
     else:

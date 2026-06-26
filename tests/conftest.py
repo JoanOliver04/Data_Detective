@@ -31,11 +31,15 @@ for _p in (DASHBOARD_DIR, PROCESAMIENTO_DIR):
 # ---------------------------------------------------------------------------
 import streamlit as st  # noqa: E402  (importacion post-path)
 
+
 def _noop_cache(**kwargs):
     """Sustituye st.cache_data / st.cache_resource por un decorator nulo."""
+
     def decorator(func):
         return func
+
     return decorator
+
 
 st.cache_data = _noop_cache
 st.cache_resource = _noop_cache

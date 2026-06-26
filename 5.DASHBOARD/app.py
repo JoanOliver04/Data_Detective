@@ -29,11 +29,18 @@ from components.sidebar import render_sidebar
 from components.exportar import render_panel_exportacion
 from components.realtime import render_datos_realtime
 from data_loader import (
-    cargar_contaminacion, cargar_meteorologia, cargar_trafico,
-    cargar_impacto_eventos, cargar_contam_anual_barrio,
-    cargar_precip_mensual, cargar_tendencias, cargar_pronostico_72h,
-    cargar_contaminacion_realtime, cargar_meteo_realtime,
-    cargar_trafico_realtime, cargar_espiras_realtime,
+    cargar_contaminacion,
+    cargar_meteorologia,
+    cargar_trafico,
+    cargar_impacto_eventos,
+    cargar_contam_anual_barrio,
+    cargar_precip_mensual,
+    cargar_tendencias,
+    cargar_pronostico_72h,
+    cargar_contaminacion_realtime,
+    cargar_meteo_realtime,
+    cargar_trafico_realtime,
+    cargar_espiras_realtime,
     diagnostico_datos,
 )
 from config import PAGE_CONFIG, TAB_NAMES, DESCRIPCION_TABS
@@ -57,9 +64,11 @@ iniciar_streaming_background()
 # CSS
 # ==============================================================================
 
+
 def _aplicar_estilos():
     t = get_theme()
-    st.markdown(f"""<style>
+    st.markdown(
+        f"""<style>
     /* --- Override global de Streamlit para respetar nuestro tema --- */
     .stApp {{
         background-color: {t["app_bg"]};
@@ -173,12 +182,15 @@ def _aplicar_estilos():
     .stDownloadButton > button:hover{{
         transform: scale(1.03);
     }}
-    </style>""", unsafe_allow_html=True)
+    </style>""",
+        unsafe_allow_html=True,
+    )
 
 
 # ==============================================================================
 # CARGA DE DATOS
 # ==============================================================================
+
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def _cargar_datos_estaticos():
@@ -217,9 +229,11 @@ def _cargar_todos_los_datos():
 # FILTRADO GLOBAL
 # ==============================================================================
 
+
 def _aplicar_filtros_globales(datos, filtros):
     cache_key = (
-        filtros["anio_min"], filtros["anio_max"],
+        filtros["anio_min"],
+        filtros["anio_max"],
         filtros["variable"],
         tuple(sorted(filtros.get("barrios", []))),
         tuple(sorted(filtros.get("tipos_evento", []))),
@@ -264,6 +278,7 @@ def _aplicar_filtros_globales(datos, filtros):
 # DIAGNOSTICO (si faltan datos)
 # ==============================================================================
 
+
 def _render_diagnostico():
     st.warning("Algunos datasets no están disponibles.")
     informe = diagnostico_datos()
@@ -285,6 +300,7 @@ def _render_diagnostico():
 # ==============================================================================
 # TAB CONTAMINACION (Fase 7.2 - COMPLETA)
 # ==============================================================================
+
 
 @st.fragment
 def _tab_contaminacion(datos):
@@ -340,7 +356,9 @@ def _tab_contaminacion(datos):
 
     with col_mapa:
         render_mapa_contaminacion(
-            df, var, df_contam_anual,
+            df,
+            var,
+            df_contam_anual,
             trafico_rt=datos.get("trafico_rt"),
             contam_rt=datos.get("contam_rt"),
             meteo_rt=datos.get("meteo_rt"),
@@ -389,6 +407,7 @@ def _tab_contaminacion(datos):
 # ==============================================================================
 # TABS COMPLETADAS (Fases 7.2-7.6) + EXPORTACION
 # ==============================================================================
+
 
 @st.fragment
 def _tab_precipitaciones(datos):
@@ -466,6 +485,7 @@ def _tab_rutas_limpias(datos):
 # MAIN
 # ==============================================================================
 
+
 def main():
     _aplicar_estilos()
 
@@ -476,8 +496,7 @@ def main():
 
     datos = _cargar_todos_los_datos()  # cache estatico evita spinner en recargas
 
-    tiene_datos = any(v is not None for k, v in datos.items()
-                      if not k.startswith("_"))
+    tiene_datos = any(v is not None for k, v in datos.items() if not k.startswith("_"))
     if not tiene_datos:
         _render_diagnostico()
         return
@@ -498,12 +517,17 @@ def main():
     # Banner de datos en tiempo real (antes de las tabs)
     render_datos_realtime(datos)
 
-    tabs = st.tabs([
-        TAB_NAMES["contaminacion"], TAB_NAMES["precipitaciones"],
-        TAB_NAMES["trafico"], TAB_NAMES["eventos"],
-        TAB_NAMES["comparador"], TAB_NAMES["pronostico"],
-        TAB_NAMES["rutas_limpias"],
-    ])
+    tabs = st.tabs(
+        [
+            TAB_NAMES["contaminacion"],
+            TAB_NAMES["precipitaciones"],
+            TAB_NAMES["trafico"],
+            TAB_NAMES["eventos"],
+            TAB_NAMES["comparador"],
+            TAB_NAMES["pronostico"],
+            TAB_NAMES["rutas_limpias"],
+        ]
+    )
 
     with tabs[0]:
         _tab_contaminacion(datos_f)
@@ -522,14 +546,14 @@ def main():
 
     st.markdown(
         '<div class="footer-text">'
-        '🔍 <b>Data Detective Valencia</b><br>'
+        "🔍 <b>Data Detective Valencia</b><br>"
         '<span style="color:#666;">'
-        'Proyecto Big Data · Universitat de València · 2026 · Joan Oliver'
-        '</span><br>'
+        "Proyecto Big Data · Universitat de València · 2026 · Joan Oliver"
+        "</span><br>"
         '<span style="color:#444;font-size:0.65rem;">'
-        'Streamlit · Plotly · Folium · Pandas · OpenWeatherMap · AQICN · DGT'
-        '</span>'
-        '</div>',
+        "Streamlit · Plotly · Folium · Pandas · OpenWeatherMap · AQICN · DGT"
+        "</span>"
+        "</div>",
         unsafe_allow_html=True,
     )
 

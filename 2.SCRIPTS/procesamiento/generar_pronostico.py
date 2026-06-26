@@ -73,7 +73,6 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-
 # ==============================================================================
 # CONFIGURACIÓN
 # ==============================================================================
@@ -92,23 +91,24 @@ LOG_DIR = PROJECT_ROOT / "logs"
 
 # --- Constantes ---
 FORECAST_HOURS = 72
-FORECAST_INTERVAL_H = 3     # OWM /forecast da puntos cada 3h
+FORECAST_INTERVAL_H = 3  # OWM /forecast da puntos cada 3h
 MAX_POINTS = FORECAST_HOURS // FORECAST_INTERVAL_H  # 24 puntos
 
 # --- Colores accesibles (colorblind-friendly) ---
-COLOR_TEMP = "#D62728"       # Rojo
-COLOR_HUMIDITY = "#1F77B4"   # Azul
-COLOR_RAIN = "#2CA02C"       # Verde
-COLOR_POP = "#FF7F0E"        # Naranja
+COLOR_TEMP = "#D62728"  # Rojo
+COLOR_HUMIDITY = "#1F77B4"  # Azul
+COLOR_RAIN = "#2CA02C"  # Verde
+COLOR_POP = "#FF7F0E"  # Naranja
 
 # --- Umbrales de riesgo ---
-RAIN_THRESHOLD_LOW = 10.0    # mm totales → riesgo bajo
-POP_THRESHOLD_MOD = 60.0     # % prob. máx. → riesgo moderado
+RAIN_THRESHOLD_LOW = 10.0  # mm totales → riesgo bajo
+POP_THRESHOLD_MOD = 60.0  # % prob. máx. → riesgo moderado
 
 
 # ==============================================================================
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
+
 
 def setup_logging() -> logging.Logger:
     """
@@ -142,6 +142,7 @@ def setup_logging() -> logging.Logger:
 # ==============================================================================
 # CARGA DE DATOS
 # ==============================================================================
+
 
 def load_latest_forecast(logger: logging.Logger) -> Optional[pd.DataFrame]:
     """
@@ -279,13 +280,15 @@ def load_latest_forecast(logger: logging.Logger) -> Optional[pd.DataFrame]:
             pop = 0.0
         pop_pct = float(pop) * 100
 
-        records.append({
-            "datetime": fecha,
-            "temp_c": float(temp) if temp is not None else None,
-            "humidity_pct": float(humidity) if humidity is not None else None,
-            "rain_mm": float(rain_mm),
-            "precip_probability_pct": round(pop_pct, 1),
-        })
+        records.append(
+            {
+                "datetime": fecha,
+                "temp_c": float(temp) if temp is not None else None,
+                "humidity_pct": float(humidity) if humidity is not None else None,
+                "rain_mm": float(rain_mm),
+                "precip_probability_pct": round(pop_pct, 1),
+            }
+        )
 
     if not records:
         logger.error("  Sin registros v\u00e1lidos tras parsear")
@@ -318,6 +321,7 @@ def load_latest_forecast(logger: logging.Logger) -> Optional[pd.DataFrame]:
 # ==============================================================================
 # INDICADORES DE RIESGO
 # ==============================================================================
+
 
 def compute_risk_indicators(
     df: pd.DataFrame,
@@ -391,8 +395,7 @@ def compute_risk_indicators(
     logger.info(f"  Temp media: {indicators['mean_temp']}\u00b0C")
     logger.info(f"  Humedad media: {indicators['mean_humidity']}%")
     logger.info(f"  Lluvia total: {indicators['total_rain']} mm")
-    logger.info(
-        f"  Max prob. precipitaci\u00f3n: {indicators['max_precip_prob']}%")
+    logger.info(f"  Max prob. precipitaci\u00f3n: {indicators['max_precip_prob']}%")
     logger.info(f"  \u2192 Riesgo contaminaci\u00f3n: {risk_level}")
     logger.info(f"  Raz\u00f3n: {risk_reason}")
 
@@ -402,6 +405,7 @@ def compute_risk_indicators(
 # ==============================================================================
 # GENERACIÓN DE VISUALIZACIÓN
 # ==============================================================================
+
 
 def generate_visualization(
     df: pd.DataFrame,
@@ -440,7 +444,8 @@ def generate_visualization(
 
     # Crear figura con 2 filas, cada una con eje Y secundario
     fig = make_subplots(
-        rows=2, cols=1,
+        rows=2,
+        cols=1,
         shared_xaxes=True,
         vertical_spacing=0.12,
         subplot_titles=(
@@ -468,12 +473,11 @@ def generate_visualization(
             line=dict(color=COLOR_TEMP, width=2.5),
             marker=dict(size=5),
             hovertemplate=(
-                "<b>%{x|%d/%m %H:%M}</b><br>"
-                "Temp: %{y:.1f}\u00b0C"
-                "<extra></extra>"
+                "<b>%{x|%d/%m %H:%M}</b><br>" "Temp: %{y:.1f}\u00b0C" "<extra></extra>"
             ),
         ),
-        row=1, col=1,
+        row=1,
+        col=1,
         secondary_y=False,
     )
 
@@ -487,12 +491,11 @@ def generate_visualization(
             legend="legend",
             line=dict(color=COLOR_HUMIDITY, width=1.5, dash="dot"),
             hovertemplate=(
-                "<b>%{x|%d/%m %H:%M}</b><br>"
-                "Humedad: %{y:.0f}%"
-                "<extra></extra>"
+                "<b>%{x|%d/%m %H:%M}</b><br>" "Humedad: %{y:.0f}%" "<extra></extra>"
             ),
         ),
-        row=1, col=1,
+        row=1,
+        col=1,
         secondary_y=True,
     )
 
@@ -500,14 +503,16 @@ def generate_visualization(
     fig.update_yaxes(
         title_text="Temperatura (\u00b0C)",
         color=COLOR_TEMP,
-        row=1, col=1,
+        row=1,
+        col=1,
         secondary_y=False,
     )
     fig.update_yaxes(
         title_text="Humedad (%)",
         color=COLOR_HUMIDITY,
         range=[0, 100],
-        row=1, col=1,
+        row=1,
+        col=1,
         secondary_y=True,
     )
 
@@ -525,12 +530,11 @@ def generate_visualization(
             marker_color=COLOR_RAIN,
             opacity=0.7,
             hovertemplate=(
-                "<b>%{x|%d/%m %H:%M}</b><br>"
-                "Lluvia: %{y:.1f} mm"
-                "<extra></extra>"
+                "<b>%{x|%d/%m %H:%M}</b><br>" "Lluvia: %{y:.1f} mm" "<extra></extra>"
             ),
         ),
-        row=2, col=1,
+        row=2,
+        col=1,
         secondary_y=False,
     )
 
@@ -550,7 +554,8 @@ def generate_visualization(
                 "<extra></extra>"
             ),
         ),
-        row=2, col=1,
+        row=2,
+        col=1,
         secondary_y=True,
     )
 
@@ -559,14 +564,16 @@ def generate_visualization(
         title_text="Precipitaci\u00f3n (mm/3h)",
         color=COLOR_RAIN,
         rangemode="tozero",
-        row=2, col=1,
+        row=2,
+        col=1,
         secondary_y=False,
     )
     fig.update_yaxes(
         title_text="Probabilidad (%)",
         color=COLOR_POP,
         range=[0, 100],
-        row=2, col=1,
+        row=2,
+        col=1,
         secondary_y=True,
     )
 
@@ -588,8 +595,10 @@ def generate_visualization(
 
     fig.add_annotation(
         text=risk_text,
-        xref="paper", yref="paper",
-        x=0.98, y=0.98,
+        xref="paper",
+        yref="paper",
+        x=0.98,
+        y=0.98,
         xanchor="right",
         yanchor="top",
         showarrow=False,
@@ -652,8 +661,9 @@ def generate_visualization(
     # Formato del eje X
     fig.update_xaxes(
         tickformat="%d/%m\n%H:%M",
-        dtick=6 * 3600 * 1000,    # Marca cada 6 horas
-        row=2, col=1,
+        dtick=6 * 3600 * 1000,  # Marca cada 6 horas
+        row=2,
+        col=1,
     )
 
     # ══════════════════════════════════════════════════════════════
@@ -680,6 +690,7 @@ def generate_visualization(
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """

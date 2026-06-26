@@ -44,7 +44,6 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 
-
 # ==============================================================================
 # CONFIGURACIÓN
 # ==============================================================================
@@ -56,8 +55,8 @@ LOG_DIR = PROJECT_ROOT / "logs"
 # Archivos de entrada
 INPUT_FILES = {
     "visitvalencia": EVENTOS_DIR / "visitvalencia.json",
-    "ayuntamiento":  EVENTOS_DIR / "ayuntamiento.json",
-    "valenciacf":    EVENTOS_DIR / "valenciacf.json",
+    "ayuntamiento": EVENTOS_DIR / "ayuntamiento.json",
+    "valenciacf": EVENTOS_DIR / "valenciacf.json",
 }
 
 # Archivo de salida
@@ -67,35 +66,79 @@ OUTPUT_FILE = EVENTOS_DIR / "eventos_clasificados.json"
 
 # Impacto ALTO: eventos masivos que generan grandes desplazamientos
 KEYWORDS_IMPACTO_ALTO = [
-    "fallas", "falla", "ninot", "mascletà", "mascletá", "cremà", "cremá",
-    "ofrenda", "plantà", "plantá", "nit del foc",
-    "roig arena", "concierto", "concert", "festival",
-    "maratón", "maraton", "marathon", "gran fira",
-    "cabalgata", "desfile", "procesión", "procesion",
-    "feria", "año nuevo", "nochevieja", "fin de año",
+    "fallas",
+    "falla",
+    "ninot",
+    "mascletà",
+    "mascletá",
+    "cremà",
+    "cremá",
+    "ofrenda",
+    "plantà",
+    "plantá",
+    "nit del foc",
+    "roig arena",
+    "concierto",
+    "concert",
+    "festival",
+    "maratón",
+    "maraton",
+    "marathon",
+    "gran fira",
+    "cabalgata",
+    "desfile",
+    "procesión",
+    "procesion",
+    "feria",
+    "año nuevo",
+    "nochevieja",
+    "fin de año",
 ]
 
 # Impacto BAJO: eventos pequeños o de nicho
 KEYWORDS_IMPACTO_BAJO = [
-    "charla", "conferencia", "taller", "workshop",
-    "seminario", "coloquio", "mesa redonda", "debate",
-    "presentación libro", "presentacion libro",
-    "lectura", "recital poético", "recital poetico",
-    "visita guiada", "ruta", "jornada técnica", "jornada tecnica",
-    "reunión", "reunion", "asamblea",
+    "charla",
+    "conferencia",
+    "taller",
+    "workshop",
+    "seminario",
+    "coloquio",
+    "mesa redonda",
+    "debate",
+    "presentación libro",
+    "presentacion libro",
+    "lectura",
+    "recital poético",
+    "recital poetico",
+    "visita guiada",
+    "ruta",
+    "jornada técnica",
+    "jornada tecnica",
+    "reunión",
+    "reunion",
+    "asamblea",
 ]
 
 # Categorías del Ayuntamiento que indican impacto medio
 CATEGORIAS_IMPACTO_MEDIO = [
-    "exposiciones", "exposición", "exposicion",
-    "música", "musica", "teatro", "danza",
-    "cine", "cinema", "artes escénicas", "artes escenicas",
+    "exposiciones",
+    "exposición",
+    "exposicion",
+    "música",
+    "musica",
+    "teatro",
+    "danza",
+    "cine",
+    "cinema",
+    "artes escénicas",
+    "artes escenicas",
 ]
 
 
 # ==============================================================================
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
+
 
 def setup_logging() -> logging.Logger:
     """
@@ -133,6 +176,7 @@ def setup_logging() -> logging.Logger:
 # ==============================================================================
 # FUNCIONES DE CARGA
 # ==============================================================================
+
 
 def load_json_file(
     filepath: Path,
@@ -225,6 +269,7 @@ def extract_events_from_source(
 # FUNCIONES DE CLASIFICACIÓN (HEURÍSTICAS)
 # ==============================================================================
 
+
 def _text_contains_any(text: str, keywords: List[str]) -> bool:
     """
     Comprueba si un texto contiene alguna de las palabras clave.
@@ -257,8 +302,16 @@ def _is_fallas_event(evento: Dict[str, Any]) -> bool:
         True si parece un evento de Fallas
     """
     fallas_keywords = [
-        "fallas", "falla", "ninot", "mascletà", "mascletá",
-        "cremà", "cremá", "ofrenda", "plantà", "plantá",
+        "fallas",
+        "falla",
+        "ninot",
+        "mascletà",
+        "mascletá",
+        "cremà",
+        "cremá",
+        "ofrenda",
+        "plantà",
+        "plantá",
         "nit del foc",
     ]
 
@@ -304,9 +357,13 @@ def _is_large_venue_event(evento: Dict[str, Any]) -> bool:
         True si el evento es en un gran recinto
     """
     grandes_recintos = [
-        "roig arena", "mestalla", "ciudad de las artes",
-        "ciutat de les arts", "palau de la música",
-        "palau de la musica", "plaza de toros",
+        "roig arena",
+        "mestalla",
+        "ciudad de las artes",
+        "ciutat de les arts",
+        "palau de la música",
+        "palau de la musica",
+        "plaza de toros",
         "plaça de bous",
     ]
 
@@ -463,6 +520,7 @@ def classify_event(
 # FUNCIÓN DE CLASIFICACIÓN MASIVA
 # ==============================================================================
 
+
 def classify_all_events(
     eventos: List[Dict[str, Any]],
     logger: logging.Logger,
@@ -502,6 +560,7 @@ def classify_all_events(
 # FUNCIÓN DE GUARDADO
 # ==============================================================================
 
+
 def build_output(
     eventos: List[Dict[str, Any]],
     eventos_por_fuente: Dict[str, int],
@@ -533,9 +592,7 @@ def build_output(
             "fase": "4.4 - Clasificación de eventos",
             "timestamp_captura": datetime.now().isoformat(),
             "timestamp_utc": (
-                datetime.now(timezone.utc)
-                .isoformat()
-                .replace("+00:00", "Z")
+                datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             ),
             "descripcion": (
                 "Eventos unificados de 3 fuentes con clasificación "
@@ -609,6 +666,7 @@ def save_output(
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """

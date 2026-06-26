@@ -82,6 +82,7 @@ REQUEST_HEADERS = {
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
 
+
 def setup_logging() -> logging.Logger:
     """Configura logging a archivo y consola."""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -112,6 +113,7 @@ def setup_logging() -> logging.Logger:
 # FUNCIONES DE CAPTURA
 # ==============================================================================
 
+
 def fetch_csv(
     station_id: str,
     station_info: Dict[str, str],
@@ -132,9 +134,7 @@ def fetch_csv(
     logger.info(f"Descargando CSV estación {station_id}: {url}")
 
     try:
-        response = requests.get(
-            url, headers=REQUEST_HEADERS, timeout=REQUEST_TIMEOUT
-        )
+        response = requests.get(url, headers=REQUEST_HEADERS, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
     except requests.RequestException as e:
         logger.error(f"Error HTTP descargando {station_id}: {e}")
@@ -162,8 +162,7 @@ def fetch_csv(
         return None
 
     logger.info(
-        f"Estación {station_id}: {len(df)} registros, "
-        f"columnas: {list(df.columns)}"
+        f"Estación {station_id}: {len(df)} registros, " f"columnas: {list(df.columns)}"
     )
     return df
 
@@ -250,6 +249,7 @@ def save_capture(
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """Captura datos de contaminación del portal VLCi de Valencia."""

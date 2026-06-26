@@ -66,9 +66,7 @@ OUTPUT_DIR = PROJECT_ROOT / "1.DATOS_EN_CRUDO" / "eventos"
 LOG_DIR = PROJECT_ROOT / "logs"
 
 # URL base de la agenda (la que realmente devuelve eventos)
-VISITVALENCIA_BASE_URL = (
-    "https://www.visitvalencia.com/en/agenda-convention-bureau"
-)
+VISITVALENCIA_BASE_URL = "https://www.visitvalencia.com/en/agenda-convention-bureau"
 VISITVALENCIA_DOMAIN = "www.visitvalencia.com"
 
 # Rango de fechas por defecto: hoy → hoy + 90 días
@@ -94,6 +92,7 @@ REQUEST_HEADERS = {
 # ==============================================================================
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
+
 
 def setup_logging() -> logging.Logger:
     """
@@ -135,6 +134,7 @@ def setup_logging() -> logging.Logger:
 # ==============================================================================
 # FUNCIONES DE CONSTRUCCIÓN DE URL
 # ==============================================================================
+
 
 def build_agenda_url(
     fecha_inicio: Optional[datetime] = None,
@@ -183,6 +183,7 @@ def build_agenda_url(
 # FUNCIONES DE SCRAPING ÉTICO
 # ==============================================================================
 
+
 def fetch_page(
     url: str,
     logger: logging.Logger,
@@ -220,9 +221,7 @@ def fetch_page(
             return response.text
 
         elif response.status_code == 403:
-            logger.warning(
-                "  ✗ HTTP 403: Acceso bloqueado por el servidor."
-            )
+            logger.warning("  ✗ HTTP 403: Acceso bloqueado por el servidor.")
             return None
 
         elif response.status_code == 429:
@@ -251,6 +250,7 @@ def fetch_page(
 # ==============================================================================
 # FUNCIONES DE PARSING
 # ==============================================================================
+
 
 def extract_event_name(card: BeautifulSoup, logger: logging.Logger) -> str:
     """
@@ -383,7 +383,7 @@ def extract_event_location(
         # Limpiar prefijos comunes
         for prefix in ("Place:", "Lugar:", "Location:"):
             if location.startswith(prefix):
-                location = location[len(prefix):].strip()
+                location = location[len(prefix) :].strip()
         logger.debug(f"    Ubicación: {location}")
         return location
 
@@ -481,8 +481,11 @@ def parse_event_cards(
         # Fallback: buscar divs con clase que contenga "card"
         cards = soup.find_all(
             "div",
-            class_=lambda c: c and "card" in " ".join(c) if isinstance(c, list)
-            else c and "card" in c,
+            class_=lambda c: (
+                c and "card" in " ".join(c)
+                if isinstance(c, list)
+                else c and "card" in c
+            ),
         )
         logger.debug(f"  Encontrados {len(cards)} divs con clase 'card'")
 
@@ -524,6 +527,7 @@ def parse_event_cards(
 # FUNCIÓN DE CAPTURA PRINCIPAL
 # ==============================================================================
 
+
 def capture_visitvalencia_events(
     logger: logging.Logger,
 ) -> Dict[str, Any]:
@@ -552,7 +556,9 @@ def capture_visitvalencia_events(
             "proyecto": "Data Detective Valencia",
             "fase": "4.1 - Eventos Visit Valencia",
             "timestamp_captura": capture_timestamp.isoformat(),
-            "timestamp_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "timestamp_utc": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
             "fuente": "Visit Valencia - Agenda Convention Bureau",
             "metodo": "Web scraping ético (BeautifulSoup4)",
             "url_consultada": None,
@@ -616,6 +622,7 @@ def capture_visitvalencia_events(
 # FUNCIONES DE GUARDADO
 # ==============================================================================
 
+
 def save_capture(
     data: Dict[str, Any],
     logger: logging.Logger,
@@ -664,6 +671,7 @@ def save_capture(
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
 
+
 def main():
     """
     Función principal que orquesta el scraping de Visit Valencia.
@@ -701,8 +709,10 @@ def main():
     logger.info("-" * 70)
     logger.info(f"  Estado fuente:    {estado}")
     logger.info(f"  Eventos extraídos: {num_eventos}")
-    logger.info(f"  Rango búsqueda:   {meta['rango_busqueda']['fecha_inicio']} → "
-                f"{meta['rango_busqueda']['fecha_fin']}")
+    logger.info(
+        f"  Rango búsqueda:   {meta['rango_busqueda']['fecha_inicio']} → "
+        f"{meta['rango_busqueda']['fecha_fin']}"
+    )
     logger.info(f"  Archivo:          {output_path.name}")
     logger.info(f"  Ubicación:        {OUTPUT_DIR}")
     logger.info(f"  Timestamp:        {meta['timestamp_captura']}")

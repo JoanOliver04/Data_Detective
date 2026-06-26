@@ -69,7 +69,6 @@ from typing import Optional, Tuple
 import pandas as pd
 import plotly.graph_objects as go
 
-
 # ==============================================================================
 # CONFIGURACIÓN
 # ==============================================================================
@@ -91,14 +90,14 @@ LOG_DIR = PROJECT_ROOT / "logs"
 # --- Paleta accesible (colorblind-friendly, máx 8 tipos) ---
 # Se asigna dinámicamente a los tipos de evento encontrados
 ACCESSIBLE_PALETTE = [
-    "#1F77B4",   # Azul
-    "#FF7F0E",   # Naranja
-    "#2CA02C",   # Verde
-    "#D62728",   # Rojo
-    "#9467BD",   # Morado
-    "#8C564B",   # Marrón
-    "#E377C2",   # Rosa
-    "#7F7F7F",   # Gris
+    "#1F77B4",  # Azul
+    "#FF7F0E",  # Naranja
+    "#2CA02C",  # Verde
+    "#D62728",  # Rojo
+    "#9467BD",  # Morado
+    "#8C564B",  # Marrón
+    "#E377C2",  # Rosa
+    "#7F7F7F",  # Gris
 ]
 
 # Color para la línea diaria de NO₂
@@ -109,6 +108,7 @@ COLOR_ROLLING = "#FF7F0E"
 # ==============================================================================
 # CONFIGURACIÓN DE LOGGING
 # ==============================================================================
+
 
 def setup_logging() -> logging.Logger:
     """
@@ -142,6 +142,7 @@ def setup_logging() -> logging.Logger:
 # ==============================================================================
 # CARGA DE DATOS
 # ==============================================================================
+
 
 def load_data(
     logger: logging.Logger,
@@ -179,8 +180,7 @@ def load_data(
 
             # Descubrimiento dinámico de tipos de evento
             tipos = sorted(df_impacto["tipo_evento"].dropna().unique())
-            logger.info(
-                f"      Tipos de evento detectados ({len(tipos)}): {tipos}")
+            logger.info(f"      Tipos de evento detectados ({len(tipos)}): {tipos}")
 
             variables = sorted(df_impacto["variable"].dropna().unique())
             logger.info(f"      Variables: {variables}")
@@ -201,9 +201,7 @@ def load_data(
     if CONTAMINACION_PATH.exists():
         try:
             df_contam = pd.read_parquet(CONTAMINACION_PATH)
-            df_contam["fecha_utc"] = pd.to_datetime(
-                df_contam["fecha_utc"], utc=True
-            )
+            df_contam["fecha_utc"] = pd.to_datetime(df_contam["fecha_utc"], utc=True)
             logger.info(f"      {len(df_contam):,} registros cargados")
         except Exception as e:
             logger.error(f"      Error leyendo Parquet: {e}")
@@ -219,6 +217,7 @@ def load_data(
 # ==============================================================================
 # UTILIDADES
 # ==============================================================================
+
 
 def _save_figure(
     fig: go.Figure,
@@ -270,6 +269,7 @@ def _build_color_map(tipos: list) -> dict:
 # VIS 1: IMPACTO MEDIO EN NO₂ POR TIPO DE EVENTO
 # ==============================================================================
 
+
 def generate_pollution_by_type(
     df_impacto: pd.DataFrame,
     logger: logging.Logger,
@@ -300,14 +300,14 @@ def generate_pollution_by_type(
 
     # --- 1. Filtrar NO₂ con impacto válido ---
     df_no2 = df_impacto[
-        (df_impacto["variable"] == "NO2") &
-        (df_impacto["impacto_pct"].notna())
+        (df_impacto["variable"] == "NO2") & (df_impacto["impacto_pct"].notna())
     ].copy()
 
     if df_no2.empty:
         # Fallback: probar con cualquier variable
         logger.warning(
-            "      Sin datos de NO\u2082, intentando con todas las variables")
+            "      Sin datos de NO\u2082, intentando con todas las variables"
+        )
         df_no2 = df_impacto[df_impacto["impacto_pct"].notna()].copy()
         if df_no2.empty:
             logger.warning("      Sin datos de impacto v\u00e1lido")
@@ -316,15 +316,11 @@ def generate_pollution_by_type(
     logger.info(f"      Filas con impacto v\u00e1lido: {len(df_no2)}")
 
     # --- 2. Agrupar por tipo_evento ---
-    agg = (
-        df_no2
-        .groupby("tipo_evento", as_index=False)
-        .agg(
-            impacto_medio=("impacto_pct", "mean"),
-            n_eventos=("evento_id", "nunique"),
-            impacto_min=("impacto_pct", "min"),
-            impacto_max=("impacto_pct", "max"),
-        )
+    agg = df_no2.groupby("tipo_evento", as_index=False).agg(
+        impacto_medio=("impacto_pct", "mean"),
+        n_eventos=("evento_id", "nunique"),
+        impacto_min=("impacto_pct", "min"),
+        impacto_max=("impacto_pct", "max"),
     )
     agg["impacto_medio"] = agg["impacto_medio"].round(1)
     agg["impacto_min"] = agg["impacto_min"].round(1)
@@ -347,19 +343,21 @@ def generate_pollution_by_type(
     # --- 4. Crear gráfico ---
     fig = go.Figure()
 
-    fig.add_trace(go.Bar(
-        x=agg["tipo_evento"],
-        y=agg["impacto_medio"],
-        marker_color=agg["color"],
-        customdata=agg[["n_eventos", "impacto_min", "impacto_max"]].values,
-        hovertemplate=(
-            "<b>%{x}</b><br>"
-            "Impacto medio: %{y:+.1f}%<br>"
-            "Eventos: %{customdata[0]}<br>"
-            "Rango: [%{customdata[1]:+.1f}%, %{customdata[2]:+.1f}%]"
-            "<extra></extra>"
-        ),
-    ))
+    fig.add_trace(
+        go.Bar(
+            x=agg["tipo_evento"],
+            y=agg["impacto_medio"],
+            marker_color=agg["color"],
+            customdata=agg[["n_eventos", "impacto_min", "impacto_max"]].values,
+            hovertemplate=(
+                "<b>%{x}</b><br>"
+                "Impacto medio: %{y:+.1f}%<br>"
+                "Eventos: %{customdata[0]}<br>"
+                "Rango: [%{customdata[1]:+.1f}%, %{customdata[2]:+.1f}%]"
+                "<extra></extra>"
+            ),
+        )
+    )
 
     fig.add_hline(
         y=0,
@@ -397,8 +395,10 @@ def generate_pollution_by_type(
                     "<span style='color:#2CA02C'>"
                     "\u25cf Menos contaminaci\u00f3n</span>"
                 ),
-                xref="paper", yref="paper",
-                x=0.5, y=-0.18,
+                xref="paper",
+                yref="paper",
+                x=0.5,
+                y=-0.18,
                 showarrow=False,
                 font=dict(size=12),
             )
@@ -411,6 +411,7 @@ def generate_pollution_by_type(
 # ==============================================================================
 # VIS 2: IMPACTO MEDIO EN TRÁFICO POR TIPO DE EVENTO
 # ==============================================================================
+
 
 def generate_traffic_by_type(
     df_impacto: pd.DataFrame,
@@ -453,20 +454,14 @@ def generate_traffic_by_type(
     # --- 2. Deduplicar por evento_id ---
     df_unique = df_traf.drop_duplicates(subset=["evento_id"]).copy()
 
-    logger.info(
-        f"      Eventos con tr\u00e1fico v\u00e1lido: {len(df_unique)}"
-    )
+    logger.info(f"      Eventos con tr\u00e1fico v\u00e1lido: {len(df_unique)}")
 
     # --- 3. Agrupar por tipo_evento ---
-    agg = (
-        df_unique
-        .groupby("tipo_evento", as_index=False)
-        .agg(
-            impacto_trafico_medio=("impacto_trafico_pct", "mean"),
-            n_eventos=("evento_id", "nunique"),
-            impacto_min=("impacto_trafico_pct", "min"),
-            impacto_max=("impacto_trafico_pct", "max"),
-        )
+    agg = df_unique.groupby("tipo_evento", as_index=False).agg(
+        impacto_trafico_medio=("impacto_trafico_pct", "mean"),
+        n_eventos=("evento_id", "nunique"),
+        impacto_min=("impacto_trafico_pct", "min"),
+        impacto_max=("impacto_trafico_pct", "max"),
     )
     agg["impacto_trafico_medio"] = agg["impacto_trafico_medio"].round(1)
     agg["impacto_min"] = agg["impacto_min"].round(1)
@@ -489,19 +484,21 @@ def generate_traffic_by_type(
     # --- 5. Crear gráfico ---
     fig = go.Figure()
 
-    fig.add_trace(go.Bar(
-        x=agg["tipo_evento"],
-        y=agg["impacto_trafico_medio"],
-        marker_color=agg["color"],
-        customdata=agg[["n_eventos", "impacto_min", "impacto_max"]].values,
-        hovertemplate=(
-            "<b>%{x}</b><br>"
-            "Impacto tr\u00e1fico: %{y:+.1f}%<br>"
-            "Eventos: %{customdata[0]}<br>"
-            "Rango: [%{customdata[1]:+.1f}%, %{customdata[2]:+.1f}%]"
-            "<extra></extra>"
-        ),
-    ))
+    fig.add_trace(
+        go.Bar(
+            x=agg["tipo_evento"],
+            y=agg["impacto_trafico_medio"],
+            marker_color=agg["color"],
+            customdata=agg[["n_eventos", "impacto_min", "impacto_max"]].values,
+            hovertemplate=(
+                "<b>%{x}</b><br>"
+                "Impacto tr\u00e1fico: %{y:+.1f}%<br>"
+                "Eventos: %{customdata[0]}<br>"
+                "Rango: [%{customdata[1]:+.1f}%, %{customdata[2]:+.1f}%]"
+                "<extra></extra>"
+            ),
+        )
+    )
 
     fig.add_hline(
         y=0,
@@ -539,8 +536,10 @@ def generate_traffic_by_type(
                     "<span style='color:#1F77B4'>"
                     "\u25cf Menos incidencias</span>"
                 ),
-                xref="paper", yref="paper",
-                x=0.5, y=-0.18,
+                xref="paper",
+                yref="paper",
+                x=0.5,
+                y=-0.18,
                 showarrow=False,
                 font=dict(size=12),
             )
@@ -553,6 +552,7 @@ def generate_traffic_by_type(
 # ==============================================================================
 # VIS 3: TIMELINE DE NO₂ CON EVENTOS SUPERPUESTOS
 # ==============================================================================
+
 
 def generate_timeline(
     df_impacto: pd.DataFrame,
@@ -590,23 +590,17 @@ def generate_timeline(
     # === PARTE A: Serie diaria de NO₂ ===
 
     df_no2 = df_contam[
-        (df_contam["variable"] == "NO2") &
-        (df_contam["calidad_dato"] == "ok")
+        (df_contam["variable"] == "NO2") & (df_contam["calidad_dato"] == "ok")
     ].copy()
 
     if df_no2.empty:
-        logger.warning(
-            "      Sin datos de NO\u2082 v\u00e1lidos para el timeline")
+        logger.warning("      Sin datos de NO\u2082 v\u00e1lidos para el timeline")
         return None
 
     df_no2["fecha_dia"] = df_no2["fecha_utc"].dt.date
-    no2_diario = (
-        df_no2
-        .groupby("fecha_dia", as_index=False)
-        .agg(
-            media_no2=("valor", "mean"),
-            n_registros=("valor", "count"),
-        )
+    no2_diario = df_no2.groupby("fecha_dia", as_index=False).agg(
+        media_no2=("valor", "mean"),
+        n_registros=("valor", "count"),
     )
     no2_diario["fecha_dia"] = pd.to_datetime(no2_diario["fecha_dia"])
     no2_diario["media_no2"] = no2_diario["media_no2"].round(1)
@@ -620,18 +614,19 @@ def generate_timeline(
 
     # === PARTE B: Eventos únicos ===
 
-    eventos_unique = (
-        df_impacto
-        .drop_duplicates(subset=["evento_id"])
-        [["evento_id", "nombre_evento", "tipo_evento",
-          "impacto_esperado", "fecha_inicio", "fecha_fin"]]
-        .copy()
-    )
-    eventos_unique = eventos_unique.dropna(
-        subset=["fecha_inicio", "fecha_fin"])
+    eventos_unique = df_impacto.drop_duplicates(subset=["evento_id"])[
+        [
+            "evento_id",
+            "nombre_evento",
+            "tipo_evento",
+            "impacto_esperado",
+            "fecha_inicio",
+            "fecha_fin",
+        ]
+    ].copy()
+    eventos_unique = eventos_unique.dropna(subset=["fecha_inicio", "fecha_fin"])
 
-    logger.info(
-        f"      Eventos \u00fanicos para timeline: {len(eventos_unique)}")
+    logger.info(f"      Eventos \u00fanicos para timeline: {len(eventos_unique)}")
 
     if eventos_unique.empty:
         logger.warning("      Sin eventos con fechas v\u00e1lidas")
@@ -651,8 +646,7 @@ def generate_timeline(
     view_end = evento_max + margin_days
 
     no2_view = no2_diario[
-        (no2_diario["fecha_dia"] >= view_start) &
-        (no2_diario["fecha_dia"] <= view_end)
+        (no2_diario["fecha_dia"] >= view_start) & (no2_diario["fecha_dia"] <= view_end)
     ].copy()
 
     if no2_view.empty:
@@ -674,35 +668,39 @@ def generate_timeline(
     fig = go.Figure()
 
     # Línea de NO₂ diario
-    fig.add_trace(go.Scatter(
-        x=no2_view["fecha_dia"],
-        y=no2_view["media_no2"],
-        mode="lines",
-        name="NO\u2082 diario",
-        line=dict(color=COLOR_NO2_LINE, width=1.2),
-        hovertemplate=(
-            "<b>%{x|%d/%m/%Y}</b><br>"
-            "NO\u2082: %{y:.1f} \u00b5g/m\u00b3"
-            "<extra></extra>"
-        ),
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=no2_view["fecha_dia"],
+            y=no2_view["media_no2"],
+            mode="lines",
+            name="NO\u2082 diario",
+            line=dict(color=COLOR_NO2_LINE, width=1.2),
+            hovertemplate=(
+                "<b>%{x|%d/%m/%Y}</b><br>"
+                "NO\u2082: %{y:.1f} \u00b5g/m\u00b3"
+                "<extra></extra>"
+            ),
+        )
+    )
 
     # Media móvil 7 días
     if len(no2_view) >= 7:
         rolling_7 = no2_view["media_no2"].rolling(7, center=True).mean()
 
-        fig.add_trace(go.Scatter(
-            x=no2_view["fecha_dia"],
-            y=rolling_7,
-            mode="lines",
-            name="Media m\u00f3vil (7d)",
-            line=dict(color=COLOR_ROLLING, width=2, dash="dot"),
-            hovertemplate=(
-                "<b>%{x|%d/%m/%Y}</b><br>"
-                "Media 7d: %{y:.1f} \u00b5g/m\u00b3"
-                "<extra></extra>"
-            ),
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=no2_view["fecha_dia"],
+                y=rolling_7,
+                mode="lines",
+                name="Media m\u00f3vil (7d)",
+                line=dict(color=COLOR_ROLLING, width=2, dash="dot"),
+                hovertemplate=(
+                    "<b>%{x|%d/%m/%Y}</b><br>"
+                    "Media 7d: %{y:.1f} \u00b5g/m\u00b3"
+                    "<extra></extra>"
+                ),
+            )
+        )
 
     # === PARTE E: Superponer eventos ===
 
@@ -710,12 +708,9 @@ def generate_timeline(
     show_labels = len(eventos_to_plot) <= 15
 
     for _, ev in eventos_to_plot.iterrows():
-        tipo = str(ev["tipo_evento"]) if pd.notna(
-            ev["tipo_evento"]) else "otro"
+        tipo = str(ev["tipo_evento"]) if pd.notna(ev["tipo_evento"]) else "otro"
         nombre = (
-            str(ev["nombre_evento"])[:35]
-            if pd.notna(ev["nombre_evento"])
-            else "Evento"
+            str(ev["nombre_evento"])[:35] if pd.notna(ev["nombre_evento"]) else "Evento"
         )
 
         # Color dinámico por tipo → rgba semi-transparente
@@ -745,9 +740,9 @@ def generate_timeline(
 
     for _, ev in eventos_to_plot.iterrows():
         if pd.notna(ev["fecha_inicio"]) and pd.notna(ev["fecha_fin"]):
-            center_date = ev["fecha_inicio"] + (
-                ev["fecha_fin"] - ev["fecha_inicio"]
-            ) / 2
+            center_date = (
+                ev["fecha_inicio"] + (ev["fecha_fin"] - ev["fecha_inicio"]) / 2
+            )
 
             # NO₂ más cercano a la fecha central
             if not no2_view.empty:
@@ -760,16 +755,11 @@ def generate_timeline(
             event_centers_y.append(y_val)
 
             nombre = (
-                str(ev["nombre_evento"])[:35]
-                if pd.notna(ev["nombre_evento"])
-                else "?"
+                str(ev["nombre_evento"])[:35] if pd.notna(ev["nombre_evento"]) else "?"
             )
-            tipo = str(ev["tipo_evento"]) if pd.notna(
-                ev["tipo_evento"]) else "?"
+            tipo = str(ev["tipo_evento"]) if pd.notna(ev["tipo_evento"]) else "?"
             impacto = (
-                str(ev["impacto_esperado"])
-                if pd.notna(ev["impacto_esperado"])
-                else "?"
+                str(ev["impacto_esperado"]) if pd.notna(ev["impacto_esperado"]) else "?"
             )
 
             event_labels.append(
@@ -781,20 +771,22 @@ def generate_timeline(
             )
 
     if event_centers_x:
-        fig.add_trace(go.Scatter(
-            x=event_centers_x,
-            y=event_centers_y,
-            mode="markers",
-            name="Eventos",
-            marker=dict(
-                symbol="diamond",
-                size=10,
-                color=COLOR_ROLLING,
-                line=dict(width=1.5, color="#333"),
-            ),
-            hovertemplate="%{text}<extra></extra>",
-            text=event_labels,
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=event_centers_x,
+                y=event_centers_y,
+                mode="markers",
+                name="Eventos",
+                marker=dict(
+                    symbol="diamond",
+                    size=10,
+                    color=COLOR_ROLLING,
+                    line=dict(width=1.5, color="#333"),
+                ),
+                hovertemplate="%{text}<extra></extra>",
+                text=event_labels,
+            )
+        )
 
     # Layout
     date_min_str = no2_view["fecha_dia"].min().strftime("%Y")
@@ -839,6 +831,7 @@ def generate_timeline(
 # ==============================================================================
 # FUNCIÓN PRINCIPAL
 # ==============================================================================
+
 
 def main():
     """
@@ -900,9 +893,7 @@ def main():
         else:
             vis_fallidas.append("timeline_eventos.html")
     else:
-        logger.warning(
-            "Sin contaminaci\u00f3n normalizada \u2192 timeline omitido"
-        )
+        logger.warning("Sin contaminaci\u00f3n normalizada \u2192 timeline omitido")
         vis_fallidas.append("timeline_eventos.html")
 
     # ------------------------------------------------------------------
@@ -931,7 +922,8 @@ def main():
             print(f"   \u2192 {nombre}")
     else:
         print(
-            "\n\u26a0\ufe0f  No se gener\u00f3 ninguna visualizaci\u00f3n. Revisa los logs.")
+            "\n\u26a0\ufe0f  No se gener\u00f3 ninguna visualizaci\u00f3n. Revisa los logs."
+        )
 
 
 # ==============================================================================

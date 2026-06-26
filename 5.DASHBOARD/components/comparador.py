@@ -30,23 +30,24 @@ from components.exportar import render_panel_exportacion
 logger = logging.getLogger(__name__)
 
 # Etiquetas de modo
-_MODO_EVENTO    = "Evento vs Baseline"
-_MODO_PERIODO   = "Periodo vs Periodo"
+_MODO_EVENTO = "Evento vs Baseline"
+_MODO_PERIODO = "Periodo vs Periodo"
 _MODO_DETECTIVE = "🔍 Detective de Patrones"
 
 # Orden preferido de variables en graficos
 _ORDEN_VARS = ["NO2", "PM2.5", "PM10", "O3", "SO2", "CO"]
 
 # Colores fijos para los dos conjuntos de barras / trazos radar
-_COLOR_EVENTO  = "#e74c3c"   # rojo
-_COLOR_BASE    = "#3498db"   # azul
-_COLOR_A       = "#1f77b4"   # azul oscuro
-_COLOR_B       = "#ff7f0e"   # naranja
+_COLOR_EVENTO = "#e74c3c"  # rojo
+_COLOR_BASE = "#3498db"  # azul
+_COLOR_A = "#1f77b4"  # azul oscuro
+_COLOR_B = "#ff7f0e"  # naranja
 
 
 # ==============================================================================
 # FUNCION PRINCIPAL
 # ==============================================================================
+
 
 def render_comparador(
     df_contaminacion: Optional[pd.DataFrame],
@@ -93,6 +94,7 @@ def render_comparador(
 # MODO A: EVENTO VS BASELINE
 # ==============================================================================
 
+
 def _render_modo_evento(df_eventos: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
     """
     Modo Evento vs Baseline.
@@ -131,21 +133,23 @@ def _render_modo_evento(df_eventos: Optional[pd.DataFrame]) -> Optional[pd.DataF
         st.warning(f"Sin datos para el evento '{nombre_sel}'.")
         return None
 
-    logger.info("[Comparador] Evento seleccionado: %s (%d variables)", nombre_sel, len(df_ev))
+    logger.info(
+        "[Comparador] Evento seleccionado: %s (%d variables)", nombre_sel, len(df_ev)
+    )
 
     # Metadatos del evento (primera fila; campos event-level)
     primera = df_ev.iloc[0]
     fecha_ini = primera.get("fecha_inicio", "")
     fecha_fin = primera.get("fecha_fin", "")
-    tipo      = primera.get("tipo_evento", primera.get("categoria_evento", ""))
+    tipo = primera.get("tipo_evento", primera.get("categoria_evento", ""))
 
     # Cabecera del evento
     st.markdown(
         f'<div style="border-left:4px solid {_COLOR_EVENTO};padding-left:12px;margin-bottom:1rem;">'
         f'<h4 style="margin:0;">{nombre_sel}</h4>'
         f'<small style="color:#888;">{tipo} &nbsp;|&nbsp; '
-        f'{_fmt_fecha(fecha_ini)} → {_fmt_fecha(fecha_fin)}</small>'
-        f'</div>',
+        f"{_fmt_fecha(fecha_ini)} → {_fmt_fecha(fecha_fin)}</small>"
+        f"</div>",
         unsafe_allow_html=True,
     )
 
@@ -158,7 +162,11 @@ def _render_modo_evento(df_eventos: Optional[pd.DataFrame]) -> Optional[pd.DataF
     var_kpi = st.selectbox(
         "Variable para KPIs",
         options=variables_ev,
-        index=variables_ev.index(var_kpi_default) if var_kpi_default in variables_ev else 0,
+        index=(
+            variables_ev.index(var_kpi_default)
+            if var_kpi_default in variables_ev
+            else 0
+        ),
         help="Elige la variable cuyos KPIs quieres ver en detalle.",
     )
 
@@ -186,12 +194,12 @@ def _render_kpis_evento(fila: pd.Series, variable: str) -> None:
         fila: Serie con datos de una variable del evento.
         variable: Nombre de la variable seleccionada.
     """
-    media_ev  = _safe_float(fila.get("media_evento"))
-    media_bl  = _safe_float(fila.get("media_baseline"))
-    imp_pct   = _safe_float(fila.get("impacto_pct"))
-    traf_pct  = _safe_float(fila.get("impacto_trafico_pct"))
-    temp_ev   = _safe_float(fila.get("media_temp_evento"))
-    temp_bl   = _safe_float(fila.get("media_temp_baseline"))
+    media_ev = _safe_float(fila.get("media_evento"))
+    media_bl = _safe_float(fila.get("media_baseline"))
+    imp_pct = _safe_float(fila.get("impacto_pct"))
+    traf_pct = _safe_float(fila.get("impacto_trafico_pct"))
+    temp_ev = _safe_float(fila.get("media_temp_evento"))
+    temp_bl = _safe_float(fila.get("media_temp_baseline"))
     _safe_int(fila.get("n_dias_evento"))
     n_dias_bl = _safe_int(fila.get("n_dias_baseline"))
 
@@ -286,12 +294,14 @@ def _grafico_comparativo_barras(
         Figura Plotly lista para st.plotly_chart.
     """
     df_plot = df_ev[df_ev["variable"].isin(variables)].copy()
-    df_plot["variable"] = pd.Categorical(df_plot["variable"], categories=variables, ordered=True)
+    df_plot["variable"] = pd.Categorical(
+        df_plot["variable"], categories=variables, ordered=True
+    )
     df_plot = df_plot.sort_values("variable")
 
     medias_ev = []
     medias_bl = []
-    labels_x  = []
+    labels_x = []
 
     for _, fila in df_plot.iterrows():
         me = _safe_float(fila.get("media_evento"))
@@ -306,24 +316,28 @@ def _grafico_comparativo_barras(
         return go.Figure().update_layout(title="Sin datos para el gráfico")
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(
-        name="Durante evento",
-        x=labels_x,
-        y=medias_ev,
-        marker_color=_COLOR_EVENTO,
-        opacity=0.85,
-        text=[f"{v:.1f}" for v in medias_ev],
-        textposition="outside",
-    ))
-    fig.add_trace(go.Bar(
-        name="Baseline (días normales)",
-        x=labels_x,
-        y=medias_bl,
-        marker_color=_COLOR_BASE,
-        opacity=0.85,
-        text=[f"{v:.1f}" for v in medias_bl],
-        textposition="outside",
-    ))
+    fig.add_trace(
+        go.Bar(
+            name="Durante evento",
+            x=labels_x,
+            y=medias_ev,
+            marker_color=_COLOR_EVENTO,
+            opacity=0.85,
+            text=[f"{v:.1f}" for v in medias_ev],
+            textposition="outside",
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            name="Baseline (días normales)",
+            x=labels_x,
+            y=medias_bl,
+            marker_color=_COLOR_BASE,
+            opacity=0.85,
+            text=[f"{v:.1f}" for v in medias_bl],
+            textposition="outside",
+        )
+    )
 
     fig.update_layout(
         title=f"{nombre_evento} — Contaminación: Evento vs Baseline",
@@ -337,7 +351,9 @@ def _grafico_comparativo_barras(
     )
 
     logger.info(
-        "[Comparador] Grafico barras generado: %s, %d variables.", nombre_evento, len(labels_x)
+        "[Comparador] Grafico barras generado: %s, %d variables.",
+        nombre_evento,
+        len(labels_x),
     )
     return fig
 
@@ -345,6 +361,7 @@ def _grafico_comparativo_barras(
 # ==============================================================================
 # MODO B: PERIODO VS PERIODO
 # ==============================================================================
+
 
 def _render_modo_periodo(
     df_contaminacion: Optional[pd.DataFrame],
@@ -363,32 +380,36 @@ def _render_modo_periodo(
         DataFrame con la tabla comparativa (para exportacion).
     """
     if df_contaminacion is None or df_contaminacion.empty:
-        st.info(
-            "Sin datos de contaminacion para el modo Periodo vs Periodo."
-        )
+        st.info("Sin datos de contaminacion para el modo Periodo vs Periodo.")
         return None
 
     if "fecha_utc" not in df_contaminacion.columns:
-        st.warning("El dataset no contiene columna 'fecha_utc'; no es posible filtrar por periodo.")
+        st.warning(
+            "El dataset no contiene columna 'fecha_utc'; no es posible filtrar por periodo."
+        )
         return None
 
     # Derivar limites de fechas del propio dataset
-    fechas = pd.to_datetime(df_contaminacion["fecha_utc"], utc=True, errors="coerce").dropna()
+    fechas = pd.to_datetime(
+        df_contaminacion["fecha_utc"], utc=True, errors="coerce"
+    ).dropna()
     fecha_max = fechas.max().date()
     fecha_min = fechas.min().date()
 
     # Defaults: Periodo A = ultimos 30 dias, Periodo B = mismo periodo 1 año antes
-    default_a_fin   = fecha_max
-    default_a_ini   = max(fecha_min, fecha_max - timedelta(days=30))
-    default_b_fin   = default_a_fin   - timedelta(days=365)
-    default_b_ini   = default_a_ini   - timedelta(days=365)
-    default_b_ini   = max(fecha_min, default_b_ini)
-    default_b_fin   = max(fecha_min, default_b_fin)
+    default_a_fin = fecha_max
+    default_a_ini = max(fecha_min, fecha_max - timedelta(days=30))
+    default_b_fin = default_a_fin - timedelta(days=365)
+    default_b_ini = default_a_ini - timedelta(days=365)
+    default_b_ini = max(fecha_min, default_b_ini)
+    default_b_fin = max(fecha_min, default_b_fin)
 
     # --- Selector de periodos ---
     col_a, col_b = st.columns(2)
     with col_a:
-        st.markdown(f'<b style="color:{_COLOR_A};">Periodo A</b>', unsafe_allow_html=True)
+        st.markdown(
+            f'<b style="color:{_COLOR_A};">Periodo A</b>', unsafe_allow_html=True
+        )
         periodo_a = st.date_input(
             "Rango Periodo A",
             value=(default_a_ini, default_a_fin),
@@ -397,7 +418,9 @@ def _render_modo_periodo(
             key="comparador_periodo_a",
         )
     with col_b:
-        st.markdown(f'<b style="color:{_COLOR_B};">Periodo B</b>', unsafe_allow_html=True)
+        st.markdown(
+            f'<b style="color:{_COLOR_B};">Periodo B</b>', unsafe_allow_html=True
+        )
         periodo_b = st.date_input(
             "Rango Periodo B",
             value=(default_b_ini, default_b_fin),
@@ -445,7 +468,10 @@ def _render_modo_periodo(
 
     logger.info(
         "[Comparador] Periodo A: %s (%d registros) | Periodo B: %s (%d registros)",
-        label_a, n_a, label_b, n_b,
+        label_a,
+        n_a,
+        label_b,
+        n_b,
     )
 
     # --- Grafico radar ---
@@ -461,8 +487,8 @@ def _render_modo_periodo(
         column_config={
             "Periodo A (µg/m³)": st.column_config.NumberColumn(format="%.2f"),
             "Periodo B (µg/m³)": st.column_config.NumberColumn(format="%.2f"),
-            "Cambio %":          st.column_config.NumberColumn(format="%.1f%%"),
-            "Umbral OMS":        st.column_config.NumberColumn(format="%.0f"),
+            "Cambio %": st.column_config.NumberColumn(format="%.1f%%"),
+            "Umbral OMS": st.column_config.NumberColumn(format="%.0f"),
         },
         hide_index=True,
         use_container_width=True,
@@ -492,10 +518,7 @@ def _calcular_medias_periodo(
 
     # Filtrar por fecha usando la parte de fecha de fecha_utc
     col_fecha = pd.to_datetime(df["fecha_utc"], utc=True, errors="coerce")
-    mascara = (
-        (col_fecha.dt.date >= fecha_ini) &
-        (col_fecha.dt.date <= fecha_fin)
-    )
+    mascara = (col_fecha.dt.date >= fecha_ini) & (col_fecha.dt.date <= fecha_fin)
     df_periodo = df[mascara].copy()
 
     if df_periodo.empty:
@@ -536,10 +559,7 @@ def _grafico_radar_periodos(
         Figura Plotly con el radar chart.
     """
     # Variables presentes en al menos uno de los dos periodos
-    variables_radar = [
-        v for v in _ORDEN_VARS
-        if v in medias_a or v in medias_b
-    ]
+    variables_radar = [v for v in _ORDEN_VARS if v in medias_a or v in medias_b]
 
     if not variables_radar:
         return go.Figure().update_layout(title="Sin datos para el gráfico radar")
@@ -561,24 +581,28 @@ def _grafico_radar_periodos(
     vals_b_closed = vals_b + [vals_b[0]]
 
     fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(
-        r=vals_a_closed,
-        theta=theta,
-        fill="toself",
-        name=f"Periodo A: {label_a}",
-        line_color=_COLOR_A,
-        fillcolor=_COLOR_A,
-        opacity=0.4,
-    ))
-    fig.add_trace(go.Scatterpolar(
-        r=vals_b_closed,
-        theta=theta,
-        fill="toself",
-        name=f"Periodo B: {label_b}",
-        line_color=_COLOR_B,
-        fillcolor=_COLOR_B,
-        opacity=0.4,
-    ))
+    fig.add_trace(
+        go.Scatterpolar(
+            r=vals_a_closed,
+            theta=theta,
+            fill="toself",
+            name=f"Periodo A: {label_a}",
+            line_color=_COLOR_A,
+            fillcolor=_COLOR_A,
+            opacity=0.4,
+        )
+    )
+    fig.add_trace(
+        go.Scatterpolar(
+            r=vals_b_closed,
+            theta=theta,
+            fill="toself",
+            name=f"Periodo B: {label_b}",
+            line_color=_COLOR_B,
+            fillcolor=_COLOR_B,
+            opacity=0.4,
+        )
+    )
 
     fig.update_layout(
         title="Comparación de periodos (valores normalizados al umbral OMS)",
@@ -595,12 +619,17 @@ def _grafico_radar_periodos(
         legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5),
         height=480,
         margin=dict(t=80, b=80),
-        annotations=[dict(
-            text="1.0 = umbral OMS",
-            xref="paper", yref="paper",
-            x=1.0, y=0.0, showarrow=False,
-            font=dict(size=10, color="#888"),
-        )],
+        annotations=[
+            dict(
+                text="1.0 = umbral OMS",
+                xref="paper",
+                yref="paper",
+                x=1.0,
+                y=0.0,
+                showarrow=False,
+                font=dict(size=10, color="#888"),
+            )
+        ],
     )
 
     logger.info("[Comparador] Radar generado: %d variables.", len(variables_radar))
@@ -637,13 +666,15 @@ def _tabla_comparativa(
         else:
             cambio = None
 
-        filas.append({
-            "Variable":          var,
-            "Periodo A (µg/m³)": val_a,
-            "Periodo B (µg/m³)": val_b,
-            "Cambio %":          cambio,
-            "Umbral OMS":        umbral,
-        })
+        filas.append(
+            {
+                "Variable": var,
+                "Periodo A (µg/m³)": val_a,
+                "Periodo B (µg/m³)": val_b,
+                "Cambio %": cambio,
+                "Umbral OMS": umbral,
+            }
+        )
 
     return pd.DataFrame(filas)
 
@@ -758,7 +789,8 @@ def _render_modo_detective(
 
     # Variables disponibles
     variables_disponibles = [
-        v for v in _ORDEN_VARS
+        v
+        for v in _ORDEN_VARS
         if v in df_a["variable"].values or v in df_b["variable"].values
     ]
 
@@ -768,7 +800,11 @@ def _render_modo_detective(
 
     if medias_a and medias_b:
         fig_barras = _grafico_comparativo_detective(
-            medias_a, medias_b, label_a, label_b, variables_disponibles,
+            medias_a,
+            medias_b,
+            label_a,
+            label_b,
+            variables_disponibles,
         )
         st.plotly_chart(fig_barras, use_container_width=True)
 
@@ -805,13 +841,20 @@ def _render_modo_detective(
     # --- d) Resumen automatico ---
     st.markdown("### 🕵️ Informe del Detective")
     _render_resumen_detective(
-        df_a, df_b, df_anomalias, df_principal,
-        label_a, label_b, variables_disponibles,
+        df_a,
+        df_b,
+        df_anomalias,
+        df_principal,
+        label_a,
+        label_b,
+        variables_disponibles,
     )
 
     logger.info(
         "[Comparador] Detective: A=%d reg, B=%d reg, %d variables",
-        len(df_a), len(df_b), len(variables_disponibles),
+        len(df_a),
+        len(df_b),
+        len(variables_disponibles),
     )
 
     return df_anomalias
@@ -867,27 +910,43 @@ def _grafico_comparativo_detective(
     vals_b = [medias_b.get(v, 0.0) for v in vars_plot]
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(
-        name=f"A: {label_a}", x=vars_plot, y=vals_a,
-        marker_color=_COLOR_A, opacity=0.85,
-        text=[f"{v:.1f}" for v in vals_a], textposition="outside",
-    ))
-    fig.add_trace(go.Bar(
-        name=f"B: {label_b}", x=vars_plot, y=vals_b,
-        marker_color=_COLOR_B, opacity=0.85,
-        text=[f"{v:.1f}" for v in vals_b], textposition="outside",
-    ))
+    fig.add_trace(
+        go.Bar(
+            name=f"A: {label_a}",
+            x=vars_plot,
+            y=vals_a,
+            marker_color=_COLOR_A,
+            opacity=0.85,
+            text=[f"{v:.1f}" for v in vals_a],
+            textposition="outside",
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            name=f"B: {label_b}",
+            x=vars_plot,
+            y=vals_b,
+            marker_color=_COLOR_B,
+            opacity=0.85,
+            text=[f"{v:.1f}" for v in vals_b],
+            textposition="outside",
+        )
+    )
     fig.update_layout(
         title="Comparación de medias por variable",
-        xaxis_title="Variable", yaxis_title="Media (µg/m³)",
-        barmode="group", template=get_theme()["plotly_template"],
+        xaxis_title="Variable",
+        yaxis_title="Media (µg/m³)",
+        barmode="group",
+        template=get_theme()["plotly_template"],
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        margin=dict(t=80, b=40), height=400,
+        margin=dict(t=80, b=40),
+        height=400,
     )
     return fig
 
 
 # --- a) ANOMALIAS ---
+
 
 def _detectar_anomalias(
     df_a: pd.DataFrame,
@@ -933,15 +992,17 @@ def _detectar_anomalias(
         else:
             diag = "✅ Normal"
 
-        filas.append({
-            "Variable": var,
-            "Media A": round(media_a, 2),
-            "Media B": round(media_b, 2),
-            "Std B": round(std_b, 2),
-            "Z-score": round(z, 2),
-            "Cambio %": round(cambio_pct, 1),
-            "Diagnóstico": diag,
-        })
+        filas.append(
+            {
+                "Variable": var,
+                "Media A": round(media_a, 2),
+                "Media B": round(media_b, 2),
+                "Std B": round(std_b, 2),
+                "Z-score": round(z, 2),
+                "Cambio %": round(cambio_pct, 1),
+                "Diagnóstico": diag,
+            }
+        )
 
     if not filas:
         return None
@@ -968,11 +1029,11 @@ def _render_anomalias(df_anomalias: pd.DataFrame) -> None:
     st.dataframe(
         df_anomalias,
         column_config={
-            "Media A":   st.column_config.NumberColumn(format="%.2f"),
-            "Media B":   st.column_config.NumberColumn(format="%.2f"),
-            "Std B":     st.column_config.NumberColumn(format="%.2f"),
-            "Z-score":   st.column_config.NumberColumn(format="%.2f"),
-            "Cambio %":  st.column_config.NumberColumn(format="%.1f%%"),
+            "Media A": st.column_config.NumberColumn(format="%.2f"),
+            "Media B": st.column_config.NumberColumn(format="%.2f"),
+            "Std B": st.column_config.NumberColumn(format="%.2f"),
+            "Z-score": st.column_config.NumberColumn(format="%.2f"),
+            "Cambio %": st.column_config.NumberColumn(format="%.1f%%"),
         },
         hide_index=True,
         use_container_width=True,
@@ -980,6 +1041,7 @@ def _render_anomalias(df_anomalias: pd.DataFrame) -> None:
 
 
 # --- b) CORRELACIONES ---
+
 
 def _render_correlaciones(
     df: pd.DataFrame,
@@ -1003,13 +1065,18 @@ def _render_correlaciones(
 
     # Pivotar: media diaria por variable
     pivot = df_work.pivot_table(
-        index="fecha_dia", columns="variable", values="valor", aggfunc="mean",
+        index="fecha_dia",
+        columns="variable",
+        values="valor",
+        aggfunc="mean",
     )
 
     # Necesitamos al menos 2 variables con datos superpuestos
     pivot = pivot.dropna(axis=1, how="all")
     if pivot.shape[1] < 2:
-        st.info("Se necesitan al menos 2 variables con datos en el periodo para correlaciones.")
+        st.info(
+            "Se necesitan al menos 2 variables con datos en el periodo para correlaciones."
+        )
         return
 
     corr = pivot.corr()
@@ -1019,19 +1086,24 @@ def _render_correlaciones(
     corr_ordered = corr.loc[vars_corr, vars_corr]
 
     # Texto con valores formateados
-    text_matrix = [[f"{corr_ordered.iloc[i, j]:.2f}" for j in range(len(vars_corr))]
-                   for i in range(len(vars_corr))]
+    text_matrix = [
+        [f"{corr_ordered.iloc[i, j]:.2f}" for j in range(len(vars_corr))]
+        for i in range(len(vars_corr))
+    ]
 
-    fig = go.Figure(data=go.Heatmap(
-        z=corr_ordered.values,
-        x=vars_corr,
-        y=vars_corr,
-        text=text_matrix,
-        texttemplate="%{text}",
-        colorscale="RdBu_r",
-        zmin=-1, zmax=1,
-        colorbar=dict(title="r"),
-    ))
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=corr_ordered.values,
+            x=vars_corr,
+            y=vars_corr,
+            text=text_matrix,
+            texttemplate="%{text}",
+            colorscale="RdBu_r",
+            zmin=-1,
+            zmax=1,
+            colorbar=dict(title="r"),
+        )
+    )
     fig.update_layout(
         title="Correlación de Pearson entre contaminantes (medias diarias)",
         template=get_theme()["plotly_template"],
@@ -1059,6 +1131,7 @@ def _render_correlaciones(
 
 
 # --- c) PATRONES TEMPORALES ---
+
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def _preparar_datos_temporales(
@@ -1124,13 +1197,22 @@ def _render_patrones_temporales(
     # --- Heatmap: dia de semana ---
     with col_dia:
         dias_orden = [
-            "Monday", "Tuesday", "Wednesday", "Thursday",
-            "Friday", "Saturday", "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
         ]
         dias_es = {
-            "Monday": "Lunes", "Tuesday": "Martes", "Wednesday": "Miércoles",
-            "Thursday": "Jueves", "Friday": "Viernes",
-            "Saturday": "Sábado", "Sunday": "Domingo",
+            "Monday": "Lunes",
+            "Tuesday": "Martes",
+            "Wednesday": "Miércoles",
+            "Thursday": "Jueves",
+            "Friday": "Viernes",
+            "Saturday": "Sábado",
+            "Sunday": "Domingo",
         }
 
         media_dia = df_var.groupby("dia_semana")["valor"].mean()
@@ -1140,20 +1222,29 @@ def _render_patrones_temporales(
             labels_dia = [dias_es.get(d, d) for d in dias_con_datos]
             color_var = VARIABLE_COLORS.get(var_selector, "#1f77b4")
 
-            fig_dia = go.Figure(go.Bar(
-                x=labels_dia, y=vals_dia,
-                marker_color=color_var, opacity=0.8,
-                text=[f"{v:.1f}" for v in vals_dia], textposition="outside",
-            ))
+            fig_dia = go.Figure(
+                go.Bar(
+                    x=labels_dia,
+                    y=vals_dia,
+                    marker_color=color_var,
+                    opacity=0.8,
+                    text=[f"{v:.1f}" for v in vals_dia],
+                    textposition="outside",
+                )
+            )
             fig_dia.update_layout(
                 title=f"{var_selector} — Media por día de la semana",
-                yaxis_title="µg/m³", template=get_theme()["plotly_template"],
-                height=350, margin=dict(t=50, b=30),
+                yaxis_title="µg/m³",
+                template=get_theme()["plotly_template"],
+                height=350,
+                margin=dict(t=50, b=30),
             )
             st.plotly_chart(fig_dia, use_container_width=True)
 
             peor_dia_idx = int(np.argmax(vals_dia))
-            st.caption(f"Peor día: **{labels_dia[peor_dia_idx]}** ({vals_dia[peor_dia_idx]:.1f} µg/m³)")
+            st.caption(
+                f"Peor día: **{labels_dia[peor_dia_idx]}** ({vals_dia[peor_dia_idx]:.1f} µg/m³)"
+            )
 
     # --- Hora del dia ---
     with col_hora:
@@ -1162,19 +1253,32 @@ def _render_patrones_temporales(
             media_hora = df_var.groupby("hora")["valor"].mean()
             vals_hora = [round(media_hora.get(h, 0), 2) for h in horas_con_datos]
 
-            fig_hora = go.Figure(go.Scatter(
-                x=horas_con_datos, y=vals_hora,
-                mode="lines+markers",
-                line=dict(color=VARIABLE_COLORS.get(var_selector, "#1f77b4"), width=2),
-                marker=dict(size=6),
-                fill="tozeroy",
-                fillcolor=VARIABLE_COLORS.get(var_selector, "#1f77b4").replace(")", ",0.15)").replace("rgb", "rgba") if "rgb" in VARIABLE_COLORS.get(var_selector, "") else None,
-            ))
+            fig_hora = go.Figure(
+                go.Scatter(
+                    x=horas_con_datos,
+                    y=vals_hora,
+                    mode="lines+markers",
+                    line=dict(
+                        color=VARIABLE_COLORS.get(var_selector, "#1f77b4"), width=2
+                    ),
+                    marker=dict(size=6),
+                    fill="tozeroy",
+                    fillcolor=(
+                        VARIABLE_COLORS.get(var_selector, "#1f77b4")
+                        .replace(")", ",0.15)")
+                        .replace("rgb", "rgba")
+                        if "rgb" in VARIABLE_COLORS.get(var_selector, "")
+                        else None
+                    ),
+                )
+            )
             fig_hora.update_layout(
                 title=f"{var_selector} — Media por hora del día",
-                xaxis_title="Hora", yaxis_title="µg/m³",
+                xaxis_title="Hora",
+                yaxis_title="µg/m³",
                 template=get_theme()["plotly_template"],
-                height=350, margin=dict(t=50, b=30),
+                height=350,
+                margin=dict(t=50, b=30),
                 xaxis=dict(dtick=2),
             )
             st.plotly_chart(fig_hora, use_container_width=True)
@@ -1188,28 +1292,43 @@ def _render_patrones_temporales(
     trimestres_con_datos = sorted(df_var["trimestre"].unique())
     if len(trimestres_con_datos) > 1:
         media_trim = df_var.groupby("trimestre")["valor"].mean()
-        trim_labels = {1: "Q1 (Ene-Mar)", 2: "Q2 (Abr-Jun)", 3: "Q3 (Jul-Sep)", 4: "Q4 (Oct-Dic)"}
+        trim_labels = {
+            1: "Q1 (Ene-Mar)",
+            2: "Q2 (Abr-Jun)",
+            3: "Q3 (Jul-Sep)",
+            4: "Q4 (Oct-Dic)",
+        }
         labels_t = [trim_labels.get(t, f"Q{t}") for t in trimestres_con_datos]
         vals_t = [round(media_trim.get(t, 0), 2) for t in trimestres_con_datos]
 
-        fig_trim = go.Figure(go.Bar(
-            x=labels_t, y=vals_t,
-            marker_color=[VARIABLE_COLORS.get(var_selector, "#1f77b4")] * len(vals_t),
-            opacity=0.8,
-            text=[f"{v:.1f}" for v in vals_t], textposition="outside",
-        ))
+        fig_trim = go.Figure(
+            go.Bar(
+                x=labels_t,
+                y=vals_t,
+                marker_color=[VARIABLE_COLORS.get(var_selector, "#1f77b4")]
+                * len(vals_t),
+                opacity=0.8,
+                text=[f"{v:.1f}" for v in vals_t],
+                textposition="outside",
+            )
+        )
         fig_trim.update_layout(
             title=f"{var_selector} — Media por trimestre (estacionalidad)",
-            yaxis_title="µg/m³", template=get_theme()["plotly_template"],
-            height=320, margin=dict(t=50, b=30),
+            yaxis_title="µg/m³",
+            template=get_theme()["plotly_template"],
+            height=320,
+            margin=dict(t=50, b=30),
         )
         st.plotly_chart(fig_trim, use_container_width=True)
 
         peor_trim_idx = int(np.argmax(vals_t))
-        st.caption(f"Trimestre más contaminado: **{labels_t[peor_trim_idx]}** ({vals_t[peor_trim_idx]:.1f} µg/m³)")
+        st.caption(
+            f"Trimestre más contaminado: **{labels_t[peor_trim_idx]}** ({vals_t[peor_trim_idx]:.1f} µg/m³)"
+        )
 
 
 # --- d) RESUMEN AUTOMATICO ---
+
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def _calcular_patron_temporal(
@@ -1227,9 +1346,13 @@ def _calcular_patron_temporal(
         Devuelve (None, 0, None, 0) si no hay datos suficientes.
     """
     dias_es = {
-        "Monday": "lunes", "Tuesday": "martes", "Wednesday": "miércoles",
-        "Thursday": "jueves", "Friday": "viernes",
-        "Saturday": "sábado", "Sunday": "domingo",
+        "Monday": "lunes",
+        "Tuesday": "martes",
+        "Wednesday": "miércoles",
+        "Thursday": "jueves",
+        "Friday": "viernes",
+        "Saturday": "sábado",
+        "Sunday": "domingo",
     }
     df_temp = df.copy()
     df_temp["fecha_dt"] = pd.to_datetime(
@@ -1292,8 +1415,16 @@ def _render_resumen_detective(
                 cambio = fila["Cambio %"]
                 z = fila["Z-score"]
                 direccion = "subió" if cambio > 0 else "bajó"
-                var_display = var.replace("2.5", "₂.₅").replace("NO2", "NO₂").replace("O3", "O₃").replace("PM10", "PM₁₀").replace("SO2", "SO₂")
-                severidad = "anomalía significativa" if abs(z) > 3 else "cambio significativo"
+                var_display = (
+                    var.replace("2.5", "₂.₅")
+                    .replace("NO2", "NO₂")
+                    .replace("O3", "O₃")
+                    .replace("PM10", "PM₁₀")
+                    .replace("SO2", "SO₂")
+                )
+                severidad = (
+                    "anomalía significativa" if abs(z) > 3 else "cambio significativo"
+                )
                 parrafos.append(
                     f"El **{var_display}** {direccion} un **{abs(cambio):.1f}%** "
                     f"entre los periodos analizados ({severidad}, z={z:+.2f})."
@@ -1339,17 +1470,16 @@ def _render_resumen_detective(
         st.info("Sin hallazgos suficientes para generar un informe.")
         return
 
-    informe = (
-        f"**Periodo analizado:** {label_a} vs {label_b}\n\n"
-        + "\n\n".join(parrafos)
+    informe = f"**Periodo analizado:** {label_a} vs {label_b}\n\n" + "\n\n".join(
+        parrafos
     )
 
     st.markdown(
         f'<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);'
         f'border-radius:10px;padding:20px;margin:8px 0;">'
         f'<div style="font-size:0.95rem;line-height:1.7;">'
-        f'{_markdown_to_html(informe)}'
-        f'</div></div>',
+        f"{_markdown_to_html(informe)}"
+        f"</div></div>",
         unsafe_allow_html=True,
     )
 
@@ -1357,6 +1487,7 @@ def _render_resumen_detective(
 def _markdown_to_html(texto: str) -> str:
     """Conversion minimalista de Markdown bold a HTML bold y saltos de linea."""
     import re
+
     texto = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", texto)
     texto = texto.replace("\n\n", "<br><br>")
     return texto
@@ -1365,6 +1496,7 @@ def _markdown_to_html(texto: str) -> str:
 # ==============================================================================
 # UTILIDADES
 # ==============================================================================
+
 
 def _safe_float(val) -> Optional[float]:
     """Convierte un valor a float, retorna None si no es posible."""
