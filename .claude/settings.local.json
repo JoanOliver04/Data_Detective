@@ -21,7 +21,11 @@
       "Bash(wc -l ./5.DASHBOARD/components/*.py)",
       "Bash(./env_data_detective/Scripts/python.exe:*)",
       "Bash(grep -c \"def test_\" tests/test_dashboard_basico.py)",
-      "Bash(grep -rc \"def test_\" tests/)"
+      "Bash(grep -rc \"def test_\" tests/)",
+      "Bash(pip show *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(../env_data_detective/Scripts/python.exe -c ' *)",
+      "Bash(grep -vE \"^\\\\s*$\")"
     ]
   }
 }

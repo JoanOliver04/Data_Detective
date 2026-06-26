@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Folium-geospatial-77B829?logo=leaflet&logoColor=white" alt="Folium" />
   <img src="https://img.shields.io/badge/data-121K%2B%20rows-brightgreen" alt="121K rows" />
   <img src="https://img.shields.io/badge/sources-9%20official-blue" alt="9 sources" />
-  <img src="https://img.shields.io/badge/tests-24%20passing-brightgreen" alt="24 tests" />
+  <img src="https://img.shields.io/badge/tests-40%20passing-brightgreen" alt="40 tests" />
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="License MIT" />
 </p>
 
@@ -204,7 +204,7 @@ DATA_DETECTIVE/                       ← project root (holds .env marker)
 │       ├── urban_quality_index.py    3-axis urban fusion (pollution+weather+traffic)
 │       ├── pronostico_estadistico.py statistical next-day pollution forecast
 │       └── exportador.py             format converters (BOM, XML sanitization)
-├── tests/                           integration suite (24 tests, fully offline)
+├── tests/                           integration suite (40 tests, fully offline)
 ├── utils/paths.py                   PROJECT_ROOT resolver (.env-anchored)
 ├── .env                             API keys (git-ignored)
 ├── requirements.txt · CLAUDE.md · README.md
@@ -411,7 +411,7 @@ To capture live data every 10 minutes without keeping a terminal open:
 An integration suite validates core dashboard logic with **zero data files and zero network** — mock DataFrames, `st.cache_data` patched in `conftest.py`.
 
 ```powershell
-pytest tests/ -v          # 24 tests
+pytest tests/ -v          # 40 tests
 python tests/run_tests.py  # bundled runner
 ```
 
@@ -452,7 +452,7 @@ Maps and charts are generated offline into `4.VISUALIZACIONES/` and embedded as 
 Live capture runs as a daemon **thread inside the Streamlit process** rather than as an external worker or scheduled job. On a single-machine, single-user academic deployment this removes all inter-process plumbing and lets the sidebar **Update Data** button share the same cache namespace. The seam is clean: `streaming_master.py` is already a standalone entry point, so the exact same capture logic can be promoted to a Windows Task Scheduler job (documented above) for unattended operation.
 
 #### Parquet for one dataset, CSV for the rest
-Only the 121K-row pollution table justifies columnar storage; the sub-1K traffic/event/stat tables stay CSV so they remain human-diffable in git history and trivially inspectable. Mixing formats is a deliberate fit-to-size choice, not an inconsistency.
+Only the 121K-row pollution table justifies columnar storage; the smaller traffic/meteorology/event/stat tables stay CSV so they remain human-diffable in git history and trivially inspectable. Mixing formats is a deliberate fit-to-size choice, not an inconsistency.
 
 ---
 

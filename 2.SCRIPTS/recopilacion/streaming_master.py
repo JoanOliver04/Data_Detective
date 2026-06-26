@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+r"""
 ==============================================================================
 DATA DETECTIVE - VALENCIA
 Fase 3.6: Script Maestro de Streaming (Orquestador)

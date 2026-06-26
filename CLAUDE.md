@@ -48,9 +48,9 @@ DATA_DETECTIVE/                    ← RAÍZ DEL PROYECTO (contiene .env)
 │       └── generar_pronostico.py
 ├── 3.DATOS_LIMPIOS/               ← Datos procesados (NO están en git)
 │   ├── contaminacion_normalizada.parquet  ← 121K+ registros
-│   ├── meteorologia_limpio.csv            ← 2.8K+ registros
-│   ├── trafico_limpio.csv                 ← 750+ registros
-│   ├── impacto_eventos.csv                ← 24 registros
+│   ├── meteorologia_limpio.csv            ← 50K+ registros
+│   ├── trafico_limpio.csv                 ← 4.7K+ registros
+│   ├── impacto_eventos.csv                ← 42 registros
 │   └── estadisticas/
 │       ├── contaminacion_media_anual_barrio.csv
 │       ├── precipitacion_media_mensual.csv
@@ -208,19 +208,19 @@ VARIABLES_PRINCIPALES = ["NO2", "O3", "PM10", "PM2.5"]
 `calidad_dato` (str: ok/sospechoso)
 → data_loader añade: `barrio` (str), `anio` (int)
 
-### meteorologia_limpio.csv (2.8K registros)
+### meteorologia_limpio.csv (50K registros)
 
 `fecha` (date), `hora` (int), `precipitacion_mm` (float), `temp_c` (float),
 `humedad_pct` (float), `fuente` (str), `calidad_dato` (str)
 → data_loader añade: `anio` (int), `mes` (int)
 
-### trafico_limpio.csv (750 registros)
+### trafico_limpio.csv (4.7K registros)
 
 `fecha` (date), `hora` (int), `ubicacion` (str), `intensidad` (float),
 `velocidad` (float), `incidencias` (str), `fuente` (str), `calidad_dato` (str)
 → data_loader añade: `anio` (int), `mes` (int), `dia_semana` (str en inglés)
 
-### impacto_eventos.csv (24 registros)
+### impacto_eventos.csv (42 registros)
 
 `evento_id`, `nombre_evento`, `tipo_evento`, `categoria_evento`, `subcategoria_evento`,
 `duracion_tipo`, `impacto_esperado`, `impacto_score`, `fecha_inicio`, `fecha_fin`,
@@ -233,7 +233,7 @@ VARIABLES_PRINCIPALES = ["NO2", "O3", "PM10", "PM2.5"]
 `año` (float), `CO_ugm3`, `NO2_ugm3`, `O3_ugm3`, `PM10_ugm3`, `PM2.5_ugm3`, `SO2_ugm3`,
 `*_n_registros`, `temp_media_c`, `precipitacion_media_mm`, `humedad_media_pct`
 
-### contaminacion_media_anual_barrio.csv (130 registros)
+### contaminacion_media_anual_barrio.csv (397 registros)
 
 `año` (int), `barrio` (str), `variable` (str), `media_anual` (float),
 `n_registros` (int), `unidad` (str)
