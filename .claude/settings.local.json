@@ -28,7 +28,8 @@
       "Bash(grep -vE \"^\\\\s*$\")",
       "Bash(ls -la .streamlit)",
       "Bash(find . -name \"config.toml\" -not -path \"*/env_data_detective/*\")",
-      "Bash(echo \"COMPILE=$?\")"
+      "Bash(echo \"COMPILE=$?\")",
+      "Bash(grep -ivE \"^\\\\s+[0-9]+ \\(components|config|data_loader|streaming_background|theme|utils|os|sys|io|json|re|math|time|typing|datetime|pathlib|logging|hashlib|importlib|threading|collections|unicodedata|xml|abc|functools\\)$\")"
     ]
   }
 }

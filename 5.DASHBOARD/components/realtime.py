@@ -28,6 +28,7 @@ import streamlit as st
 from config import UMBRALES_OMS, ESTACION_BARRIO_MAP
 from streaming_background import estado_streaming
 from utils.urban_quality_index import calcular_indice_urbano
+from utils.formatters import escape_html
 
 logger = logging.getLogger("Realtime")
 
@@ -226,7 +227,7 @@ def _render_meteorologia(meteo_rt: Optional[dict]) -> None:
     descripcion = meteo_rt.get("descripcion", "")
     if descripcion:
         st.markdown(
-            f"<small>Condición: <b>{descripcion.capitalize()}</b></small>",
+            f"<small>Condición: <b>{escape_html(descripcion.capitalize())}</b></small>",
             unsafe_allow_html=True,
         )
 
@@ -312,7 +313,7 @@ def _render_trafico(trafico_rt: Optional[dict]) -> None:
                 carreteras[carr] = carreteras.get(carr, 0) + 1
         if carreteras:
             top = sorted(carreteras.items(), key=lambda x: -x[1])[:5]
-            lineas = [f"{c}: {n}" for c, n in top]
+            lineas = [f"{escape_html(c)}: {n}" for c, n in top]
             st.markdown(
                 "<small><b>Carreteras afectadas:</b><br>"
                 + "<br>".join(lineas) + "</small>",

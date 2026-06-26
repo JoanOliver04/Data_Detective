@@ -1,6 +1,28 @@
 # -*- coding: utf-8 -*-
 """Funciones de formateo para el dashboard."""
+import html as _html
 from typing import Optional
+
+
+def escape_html(valor) -> str:
+    """
+    Escapa un valor para insertarlo de forma segura en HTML inline o en
+    popups de Folium (que se renderizan en un iframe srcdoc del mismo origen).
+
+    Evita la inyeccion de HTML/JS cuando el texto procede de fuentes externas
+    no confiables (APIs de AQICN, OpenWeather, DGT: nombres de estacion,
+    carreteras, municipios, descripciones, etc.).
+
+    Args:
+        valor: Valor a escapar (cualquier tipo; None -> "").
+
+    Returns:
+        Cadena con &, <, >, ", ' escapados.
+    """
+    if valor is None:
+        return ""
+    return _html.escape(str(valor), quote=True)
+
 
 def formato_numero(valor, decimales=1):
     if valor is None: return "-"

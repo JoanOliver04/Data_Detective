@@ -37,6 +37,7 @@ from config import (
 )
 from data_loader import leer_html_visualizacion
 from theme import get_theme
+from utils.formatters import escape_html
 
 logger = logging.getLogger("Maps")
 
@@ -960,6 +961,13 @@ def _anadir_capa_trafico(m, trafico_rt: Optional[dict], theme: Optional[dict] = 
 
         sev_es = _SEVERIDAD_ES.get(severidad, severidad)
 
+        # Escapar valores de fuente externa (DGT) antes de inyectarlos en HTML
+        tipo_legible_e = escape_html(tipo_legible)
+        causa_legible_e = escape_html(causa_legible)
+        sev_es_e = escape_html(sev_es)
+        carretera_e = escape_html(carretera)
+        municipio_e = escape_html(municipio)
+
         # Popup HTML
         popup_html = (
             f'<div style="font-family:Arial,sans-serif;min-width:200px;'
@@ -967,23 +975,25 @@ def _anadir_capa_trafico(m, trafico_rt: Optional[dict], theme: Optional[dict] = 
             f'color:{t["text"]};padding:4px;">'
             f'<b style="color:#ff7f0e;">🚗 Incidencia de tráfico</b><br>'
             f'<hr style="margin:4px 0;border-color:{t["popup_hr"]};">'
-            f'<b>Tipo:</b> {tipo_legible}<br>'
-            f'<b>Causa:</b> {causa_legible}<br>'
-            f'<b>Severidad:</b> {sev_es}<br>'
-            f'<b>Carretera:</b> {carretera}<br>'
+            f'<b>Tipo:</b> {tipo_legible_e}<br>'
+            f'<b>Causa:</b> {causa_legible_e}<br>'
+            f'<b>Severidad:</b> {sev_es_e}<br>'
+            f'<b>Carretera:</b> {carretera_e}<br>'
         )
         if municipio:
-            popup_html += f'<b>Municipio:</b> {municipio}<br>'
+            popup_html += f'<b>Municipio:</b> {municipio_e}<br>'
         if timestamp:
             popup_html += (
                 f'<hr style="margin:4px 0;border-color:{t["popup_hr"]};">'
                 f'<small style="color:{t["text_muted"]};">'
-                f'Captura: {timestamp[:16]}</small>'
+                f'Captura: {escape_html(timestamp[:16])}</small>'
             )
         popup_html += '</div>'
 
         # Tooltip
-        tooltip_txt = f"{causa_legible} — {carretera}" if carretera else causa_legible
+        tooltip_txt = (
+            f"{causa_legible_e} — {carretera_e}" if carretera else causa_legible_e
+        )
 
         folium.Marker(
             location=[lat, lon],
@@ -1154,6 +1164,8 @@ def _anadir_capa_sensores_rt(
         aqi = est.get("aqi")
         barrio = ESTACION_BARRIO_MAP.get(est_id, est.get("barrio", "Desconocido"))
         nombre = est.get("nombre", coords.get("nombre", est_id))
+        nombre_e = escape_html(nombre)
+        barrio_e = escape_html(barrio)
         icon_color = _color_aqi_folium(aqi)
         color_hex = _color_aqi(aqi)
 
@@ -1162,9 +1174,9 @@ def _anadir_capa_sensores_rt(
             f'<div style="font-family:Arial,sans-serif;min-width:240px;'
             f'max-width:300px;background:{t["bg_popup"]};color:{t["text"]};'
             f'padding:6px;">',
-            f'<b style="font-size:13px;">📡 {nombre}</b><br>',
+            f'<b style="font-size:13px;">📡 {nombre_e}</b><br>',
             f'<span style="color:{t["text_label"]};font-size:11px;">'
-            f'Barrio: {barrio}</span>',
+            f'Barrio: {barrio_e}</span>',
             f'<hr style="margin:5px 0;border-color:{t["popup_hr"]};">',
         ]
 
@@ -1187,7 +1199,7 @@ def _anadir_capa_sensores_rt(
             if dominante:
                 popup_parts.append(
                     f'<div style="font-size:10px;color:{t["text_muted"]};">'
-                    f'Contaminante dominante: {dominante}</div>'
+                    f'Contaminante dominante: {escape_html(dominante)}</div>'
                 )
 
         # Contaminantes
@@ -1241,7 +1253,7 @@ def _anadir_capa_sensores_rt(
 
         # Tooltip
         aqi_txt = f"AQI: {aqi}" if aqi is not None else "AQI: —"
-        tooltip_txt = f"📡 {barrio} | {aqi_txt} | Click para detalles"
+        tooltip_txt = f"📡 {barrio_e} | {aqi_txt} | Click para detalles"
 
         folium.Marker(
             location=[coords["lat"], coords["lon"]],
