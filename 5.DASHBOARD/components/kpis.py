@@ -12,7 +12,6 @@ Autor: Joan | Fecha: 2026
 """
 
 import logging
-from typing import Optional
 
 import pandas as pd
 import streamlit as st

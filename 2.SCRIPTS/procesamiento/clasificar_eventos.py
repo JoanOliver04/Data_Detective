@@ -412,7 +412,7 @@ def _determine_categoria_y_subcategoria(
     Returns:
         Tupla (categoria, subcategoria).
     """
-    fuente = evento.get("fuente", "")
+    evento.get("fuente", "")
 
     # --- Regla 1: Buscar por keywords ---
     texto = _get_texto_combinado(evento)
@@ -815,24 +815,24 @@ def main():
     print(f"\nCLASIFICACION COMPLETA: {meta['total_eventos']} eventos")
     print(f"   -> {output_path.name}")
 
-    print(f"\nCategoria:")
+    print("\nCategoria:")
     for cat, count in sorted(clf["por_categoria"].items(), key=lambda x: -x[1]):
         print(f"   {cat:>15}: {count}")
 
-    print(f"\nSubcategoria:")
+    print("\nSubcategoria:")
     for sub, count in sorted(clf["por_subcategoria"].items(), key=lambda x: -x[1]):
         print(f"   {sub:>20}: {count}")
 
-    print(f"\nDuracion:")
+    print("\nDuracion:")
     for dur, count in sorted(clf["por_duracion"].items(), key=lambda x: -x[1]):
         print(f"   {dur:>12}: {count}")
 
-    print(f"\nImpacto:")
+    print("\nImpacto:")
     for imp, count in sorted(clf["por_impacto"].items(), key=lambda x: -x[1]):
         print(f"   {imp:>10}: {count} (score {IMPACTO_A_SCORE.get(imp, '?')})")
 
     # Preview
-    print(f"\nPreview (primeros 5):")
+    print("\nPreview (primeros 5):")
     print("-" * 70)
     for ev in todos_los_eventos[:5]:
         nombre = ev.get("nombre", ev.get("rival", "?"))[:42]

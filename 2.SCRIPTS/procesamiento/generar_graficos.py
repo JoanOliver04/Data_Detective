@@ -48,7 +48,7 @@ import logging
 import sys
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Optional, Tuple
+from typing import Optional
 
 import pandas as pd
 import plotly.express as px

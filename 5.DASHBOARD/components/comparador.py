@@ -24,7 +24,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from theme import get_theme
-from config import UMBRALES_OMS, VARIABLE_COLORS, VARIABLES_CONTAMINACION
+from config import UMBRALES_OMS, VARIABLE_COLORS
 from components.exportar import render_panel_exportacion
 
 logger = logging.getLogger(__name__)
@@ -192,7 +192,7 @@ def _render_kpis_evento(fila: pd.Series, variable: str) -> None:
     traf_pct  = _safe_float(fila.get("impacto_trafico_pct"))
     temp_ev   = _safe_float(fila.get("media_temp_evento"))
     temp_bl   = _safe_float(fila.get("media_temp_baseline"))
-    n_dias_ev = _safe_int(fila.get("n_dias_evento"))
+    _safe_int(fila.get("n_dias_evento"))
     n_dias_bl = _safe_int(fila.get("n_dias_baseline"))
 
     c1, c2, c3, c4 = st.columns(4)
@@ -1109,7 +1109,7 @@ def _render_patrones_temporales(
 
     # Variable principal para analisis (la de mas registros)
     var_counts = df_work["variable"].value_counts()
-    var_principal = var_counts.index[0]
+    var_counts.index[0]
 
     var_selector = st.selectbox(
         "Variable para patrones temporales",

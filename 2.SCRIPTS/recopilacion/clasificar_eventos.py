@@ -698,18 +698,18 @@ def main():
     # Mensaje en consola
     print(f"\n✅ CLASIFICACIÓN COMPLETA: {meta['total_eventos']} eventos")
     print(f"   → {output_path.name}")
-    print(f"\n📊 Desglose:")
+    print("\n📊 Desglose:")
     for fuente, count in meta["eventos_por_fuente"].items():
         print(f"   {fuente}: {count} eventos")
-    print(f"\n📋 Tipo:")
+    print("\n📋 Tipo:")
     for tipo, count in meta["clasificacion"]["por_tipo"].items():
         print(f"   {tipo}: {count}")
-    print(f"\n⚡ Impacto esperado:")
+    print("\n⚡ Impacto esperado:")
     for impacto, count in meta["clasificacion"]["por_impacto"].items():
         print(f"   {impacto}: {count}")
 
     # Preview de los primeros 5 eventos clasificados
-    print(f"\n🔍 Preview (primeros 5 eventos):")
+    print("\n🔍 Preview (primeros 5 eventos):")
     print("-" * 60)
     for ev in todos_los_eventos[:5]:
         nombre = ev.get("nombre", ev.get("rival", "?"))[:45]

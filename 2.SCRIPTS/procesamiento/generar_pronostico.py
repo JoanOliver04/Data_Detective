@@ -67,7 +67,7 @@ import logging
 import sys
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any
 
 import pandas as pd
 import plotly.graph_objects as go

@@ -569,7 +569,7 @@ def capture_avamet_data(
         html = fetch_page(url, url_name, logger)
         
         if html is not None:
-            logger.info(f"  ✔ Página descargada. Parseando tablas...")
+            logger.info("  ✔ Página descargada. Parseando tablas...")
             
             if url_name == "precipitacion":
                 registros = parse_precipitation_table(html, logger)

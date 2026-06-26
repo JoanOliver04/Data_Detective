@@ -37,10 +37,9 @@ from data_loader import (
     diagnostico_datos,
 )
 from config import PAGE_CONFIG, TAB_NAMES, DESCRIPCION_TABS
-from streaming_background import iniciar_streaming_background, estado_streaming
+from streaming_background import iniciar_streaming_background
 from theme import get_theme
 import streamlit as st
-import pandas as pd
 
 try:
     from streamlit_autorefresh import st_autorefresh

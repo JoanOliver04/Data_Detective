@@ -46,7 +46,7 @@ import pandas as pd
 import logging
 import sys
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 # ==============================================================================
 # CONFIGURACIÓN
@@ -702,10 +702,10 @@ def main():
     if df_tendencias is not None:
         print(f"   → {OUT_TENDENCIAS}")
 
-    print(f"\nCommit sugerido:")
-    print(f"   git add 2.SCRIPTS/procesamiento/calcular_estadisticas.py")
-    print(f"   git add 3.DATOS_LIMPIOS/estadisticas/")
-    print(f'   git commit -m "feat: add Phase 5.4 aggregated statistics with weighted annual means"')
+    print("\nCommit sugerido:")
+    print("   git add 2.SCRIPTS/procesamiento/calcular_estadisticas.py")
+    print("   git add 3.DATOS_LIMPIOS/estadisticas/")
+    print('   git commit -m "feat: add Phase 5.4 aggregated statistics with weighted annual means"')
 
 
 # ==============================================================================

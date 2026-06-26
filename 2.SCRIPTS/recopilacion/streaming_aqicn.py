@@ -46,7 +46,7 @@ import logging
 import requests
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 import os
 from dotenv import load_dotenv
 import sys

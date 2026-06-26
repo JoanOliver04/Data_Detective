@@ -602,9 +602,9 @@ def _render_leyenda_fusion(
         return
 
     st.markdown(
-        f'<div style="background:rgba(255,255,255,0.03);border-radius:8px;'
-        f'padding:8px 14px;margin-bottom:10px;font-size:0.85rem;">'
-        f'<b>Contexto ciudad (mismo para todos los barrios):</b> '
+        '<div style="background:rgba(255,255,255,0.03);border-radius:8px;'
+        'padding:8px 14px;margin-bottom:10px;font-size:0.85rem;">'
+        '<b>Contexto ciudad (mismo para todos los barrios):</b> '
         + "".join(partes)
         + f'<span style="color:#666;font-size:0.75rem;">'
         f' · Pesos: contam. {int(_PESO_CONTAM*100)}%'

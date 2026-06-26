@@ -21,13 +21,12 @@ Rutas disponibles:
 
 import logging
 import math
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import folium
 import streamlit as st
 from streamlit_folium import st_folium
 
-from config import VALENCIA_CENTER_LAT, VALENCIA_CENTER_LON
 from theme import get_theme
 
 logger = logging.getLogger(__name__)

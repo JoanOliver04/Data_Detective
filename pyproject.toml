@@ -1,0 +1,41 @@
+# ==============================================================================
+# DATA DETECTIVE - VALENCIA  ·  Configuracion de herramientas de desarrollo
+# ==============================================================================
+# Centraliza la configuracion de black, ruff, pytest y coverage. No define un
+# paquete instalable: el proyecto se ejecuta como scripts + app Streamlit.
+
+[tool.black]
+line-length = 88
+target-version = ["py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+# Carpetas con nombre "N.NOMBRE" se analizan via la invocacion explicita en CI.
+extend-exclude = ["env_data_detective", "logs", "1.DATOS_EN_CRUDO"]
+
+[tool.ruff.lint]
+# Conjunto por defecto de ruff (pyflakes F + pycodestyle E): errores reales
+# (imports/variables sin usar, nombres indefinidos, claves duplicadas...).
+# No se activan I/UP para no reordenar imports ni eliminar la cabecera
+# obligatoria `# -*- coding: utf-8 -*-` que exige la guia del proyecto.
+# Codigos por defecto de ruff (no E501: la longitud la gobierna black).
+select = ["E4", "E7", "E9", "F"]
+# E701: sentencias en una linea (estilo compacto deliberado en formatters.py).
+ignore = ["E701"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.coverage.run]
+branch = true
+# Se mide la capa de logica pura (indices, pronostico, exportacion,
+# formateo), que es la que cubren los tests unitarios. La UI de Streamlit
+# se valida por separado con un arranque headless (smoke test).
+source = ["5.DASHBOARD/utils", "utils"]
+omit = ["*/__pycache__/*", "tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true

@@ -49,7 +49,7 @@ import sys
 import unicodedata
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 import folium

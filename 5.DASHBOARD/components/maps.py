@@ -21,7 +21,6 @@ Autor: Joan | Fecha: 2026
 
 import logging
 from datetime import datetime
-from pathlib import Path
 from typing import Optional, Dict, List
 
 import pandas as pd
@@ -29,11 +28,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from config import (
-    MAPAS_DIR, MAPA_NO2_HTML, MAPA_PM25_HTML,
+    MAPA_NO2_HTML, MAPA_PM25_HTML,
     VALENCIA_CENTER_LAT, VALENCIA_CENTER_LON,
     VARIABLE_COLORS, ESTACION_BARRIO_MAP,
-    UMBRALES_OMS, UMBRALES_UE,
-    DISTRITOS_VALENCIA, ESTACION_DISTRITO_MAP,
+    UMBRALES_OMS, DISTRITOS_VALENCIA, ESTACION_DISTRITO_MAP,
 )
 from data_loader import leer_html_visualizacion
 from theme import get_theme
@@ -598,21 +596,16 @@ def _filas_tabla_variables(
             ratio = media / umbral
             if ratio > 1.5:
                 estado = "🔴"
-                color_estado = "#d62728"
             elif ratio > 1.0:
                 estado = "🟠"
-                color_estado = "#ff7f0e"
             elif ratio > 0.75:
                 estado = "🟡"
-                color_estado = "#ffbb33"
             else:
                 estado = "🟢"
-                color_estado = "#2ca02c"
             umbral_str = f"{umbral:.0f}"
         else:
             ratio = None
             estado = "⬜"
-            color_estado = "#888"
             umbral_str = "-"
 
         # Fondo resaltado si es la variable seleccionada

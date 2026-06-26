@@ -25,7 +25,6 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
-import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -428,7 +427,7 @@ def render_pronostico_contaminacion(
         n_reg = datos["n_registros"]
         emoji_conf = _CONFIANZA_EMOJI.get(confianza, "⚪")
         var_display = _VAR_DISPLAY.get(variable, variable)
-        color_var = VARIABLE_COLORS.get(variable, "#888")
+        VARIABLE_COLORS.get(variable, "#888")
         umbral_oms = UMBRALES_OMS.get(variable)
 
         # Delta: comparar con umbral OMS

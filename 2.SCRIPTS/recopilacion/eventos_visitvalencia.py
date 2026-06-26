@@ -50,7 +50,6 @@ Proyecto: Data Detective Valencia
 
 import json
 import logging
-import time
 import requests
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
@@ -201,7 +200,7 @@ def fetch_page(
     Returns:
         Contenido HTML como string, o None si falla
     """
-    logger.info(f"Descargando página de Visit Valencia...")
+    logger.info("Descargando página de Visit Valencia...")
     logger.debug(f"  URL: {url}")
 
     try:

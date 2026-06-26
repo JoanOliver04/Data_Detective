@@ -54,7 +54,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional, Tuple
 from datetime import datetime
 
 import pandas as pd
@@ -108,8 +108,7 @@ VARIABLE_ALIASES = {
     "o3": "O3",
     "so2": "SO2",
     "co": "CO",
-    # Variantes AQICN (minúsculas en campo iaqi)
-    "pm25": "PM2.5",
+    # Variantes AQICN (minúsculas en campo iaqi): pm25 ya mapeado arriba
 }
 
 # Rangos físicos razonables para validación (µg/m³)
@@ -907,7 +906,7 @@ def main():
         if csv_path:
             print(f"   → CSV:     {csv_path}")
     else:
-        print(f"\n⚠️ Normalización completada pero sin Parquet. Revisa logs.")
+        print("\n⚠️ Normalización completada pero sin Parquet. Revisa logs.")
 
 
 # ==============================================================================

@@ -90,7 +90,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import List, Optional
 from datetime import datetime
 
 import pandas as pd
@@ -558,7 +558,7 @@ def extraer_hora(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
         return df
 
     df["hora"] = df["fecha"].dt.hour
-    logger.debug(f"Columna 'hora' extraída")
+    logger.debug("Columna 'hora' extraída")
 
     return df
 
@@ -886,7 +886,7 @@ def main():
             print(f"\n✅ PROCESAMIENTO COMPLETO: {len(df):,} incidencias CV")
             print(f"   → CSV: {csv_path}")
     else:
-        print(f"\n⚠️ Procesamiento completado pero sin CSV. Revisa logs.")
+        print("\n⚠️ Procesamiento completado pero sin CSV. Revisa logs.")
 
 
 # ==============================================================================

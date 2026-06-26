@@ -25,7 +25,7 @@ Autor: Joan | Fecha: 2026
 """
 
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 
 import pandas as pd
 import streamlit as st
@@ -385,7 +385,7 @@ def render_exportacion_multiple(
 
     # Selector
     opciones = list(disponibles.keys())
-    labels = [
+    [
         DATASET_INFO.get(k, {}).get("label", k.replace("_", " ").title())
         for k in opciones
     ]

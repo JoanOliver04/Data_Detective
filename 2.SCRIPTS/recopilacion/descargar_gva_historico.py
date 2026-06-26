@@ -37,7 +37,6 @@ import pandas as pd
 import logging
 import re
 from pathlib import Path
-from datetime import datetime
 from typing import List, Optional, Dict, Tuple
 import sys
 
@@ -596,7 +595,7 @@ def main():
         fecha_max = cleaned["fecha"].max().strftime("%Y-%m-%d")
         variables = cleaned["variable"].unique().tolist()
         
-        logger.info(f"")
+        logger.info("")
         logger.info(f"✓ Guardado: {output_file.name}")
         logger.info(f"  Estación: {station_code} - {nombre}")
         logger.info(f"  Registros: {len(cleaned):,}")

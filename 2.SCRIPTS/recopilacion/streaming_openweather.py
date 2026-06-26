@@ -449,13 +449,13 @@ def main():
         temp = weather.get("main", {}).get("temp", "N/A")
         humidity = weather.get("main", {}).get("humidity", "N/A")
         desc = weather.get("weather", [{}])[0].get("description", "N/A")
-        logger.info(f"  --- Condiciones actuales ---")
+        logger.info("  --- Condiciones actuales ---")
         logger.info(f"  Temperatura: {temp}°C | Humedad: {humidity}% | {desc}")
 
     if captured_data.get("forecast"):
         forecast = captured_data["forecast"]
         entries = forecast.get("cnt", 0)
-        logger.info(f"  --- Pronóstico ---")
+        logger.info("  --- Pronóstico ---")
         logger.info(f"  Entradas de pronóstico: {entries} (cada 3h, ~5 días)")
 
     logger.info("")

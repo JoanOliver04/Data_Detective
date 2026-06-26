@@ -55,7 +55,6 @@ Proyecto: Data Detective Valencia
 
 import json
 import logging
-import time
 import requests
 from pathlib import Path
 from datetime import datetime, timezone

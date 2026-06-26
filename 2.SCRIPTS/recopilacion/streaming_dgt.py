@@ -58,7 +58,7 @@ import logging
 import requests
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from lxml import etree
 import sys
 
@@ -158,7 +158,7 @@ def fetch_datex_xml(logger: logging.Logger) -> Optional[bytes]:
     Returns:
         Contenido XML como bytes, o None si hay error
     """
-    logger.info(f"Descargando XML DATEX II desde NAP DGT...")
+    logger.info("Descargando XML DATEX II desde NAP DGT...")
     logger.debug(f"URL: {DGT_URL}")
 
     try:
@@ -842,7 +842,7 @@ def main():
     # Mostrar estadísticas si hay datos
     stats = captured_data.get("estadisticas")
     if stats:
-        logger.info(f"  --- Desglose por severidad ---")
+        logger.info("  --- Desglose por severidad ---")
         for sev, count in sorted(
             stats.get("por_severidad", {}).items(),
             key=lambda x: x[1],
@@ -850,7 +850,7 @@ def main():
         ):
             logger.info(f"    {sev}: {count}")
 
-        logger.info(f"  --- Desglose por tipo de causa ---")
+        logger.info("  --- Desglose por tipo de causa ---")
         for causa, count in sorted(
             stats.get("por_tipo_causa", {}).items(),
             key=lambda x: x[1],
@@ -864,7 +864,7 @@ def main():
     if estado == "exitosa":
         print(f"\n✅ CAPTURA CORRECTA: {total} incidencias (España) → {output_path.name}")
     elif estado == "descarga_fallida":
-        print(f"\n❌ CAPTURA FALLIDA: no se pudo descargar el XML del NAP DGT.")
+        print("\n❌ CAPTURA FALLIDA: no se pudo descargar el XML del NAP DGT.")
     elif estado == "sin_incidencias":
         print(f"\n⚠️  XML descargado pero sin incidencias parseables → {output_path.name}")
     else:

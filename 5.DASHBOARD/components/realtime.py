@@ -25,7 +25,7 @@ from typing import Optional
 
 import streamlit as st
 
-from config import UMBRALES_OMS, ESTACION_BARRIO_MAP
+from config import UMBRALES_OMS
 from streaming_background import estado_streaming
 from utils.urban_quality_index import calcular_indice_urbano
 from utils.formatters import escape_html

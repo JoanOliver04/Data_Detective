@@ -570,7 +570,7 @@ def main():
                 logger.info(f"  ✓ {len(df_estacion)} registros obtenidos")
         else:
             estaciones_sin_datos.append(f"{codigo} ({nombre})")
-            logger.warning(f"  ✗ Sin datos disponibles para esta estación")
+            logger.warning("  ✗ Sin datos disponibles para esta estación")
 
     # Verificar si hay datos
     if not all_data:
@@ -601,7 +601,7 @@ def main():
     # Estadísticas finales
     fecha_min = combined["fecha"].min().strftime("%Y-%m-%d")
     fecha_max = combined["fecha"].max().strftime("%Y-%m-%d")
-    estaciones_unicas = combined["estacion"].nunique()
+    combined["estacion"].nunique()
     variables_unicas = combined["variable"].unique().tolist()
 
     logger.info("")

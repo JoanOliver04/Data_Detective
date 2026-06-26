@@ -4,15 +4,16 @@
 > An end-to-end Big Data platform that fuses 70+ years of environmental archives with live sensor streams to measure — quasi-experimentally — the real impact of Fallas, concerts and citywide festivities on Valencia's air quality and traffic.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white" alt="Python 3.10+" />
-  <img src="https://img.shields.io/badge/Streamlit-1.54+-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit" />
-  <img src="https://img.shields.io/badge/pandas-2.x-150458?logo=pandas&logoColor=white" alt="pandas" />
+  <a href="https://github.com/joan-oliver/Data_Detective/actions/workflows/ci.yml"><img src="https://github.com/joan-oliver/Data_Detective/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white" alt="Python 3.11+" />
+  <img src="https://img.shields.io/badge/Streamlit-1.56+-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit" />
+  <img src="https://img.shields.io/badge/pandas-3.x-150458?logo=pandas&logoColor=white" alt="pandas" />
   <img src="https://img.shields.io/badge/pyarrow-Parquet-FDEE21" alt="pyarrow Parquet" />
   <img src="https://img.shields.io/badge/Plotly-interactive-3F4F75?logo=plotly&logoColor=white" alt="Plotly" />
   <img src="https://img.shields.io/badge/Folium-geospatial-77B829?logo=leaflet&logoColor=white" alt="Folium" />
   <img src="https://img.shields.io/badge/data-121K%2B%20rows-brightgreen" alt="121K rows" />
   <img src="https://img.shields.io/badge/sources-9%20official-blue" alt="9 sources" />
-  <img src="https://img.shields.io/badge/tests-40%20passing-brightgreen" alt="40 tests" />
+  <img src="https://img.shields.io/badge/tests-65%20passing-brightgreen" alt="65 tests" />
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="License MIT" />
 </p>
 
@@ -204,7 +205,7 @@ DATA_DETECTIVE/                       ← project root (holds .env marker)
 │       ├── urban_quality_index.py    3-axis urban fusion (pollution+weather+traffic)
 │       ├── pronostico_estadistico.py statistical next-day pollution forecast
 │       └── exportador.py             format converters (BOM, XML sanitization)
-├── tests/                           integration suite (40 tests, fully offline)
+├── tests/                           integration suite (65 tests, fully offline)
 ├── utils/paths.py                   PROJECT_ROOT resolver (.env-anchored)
 ├── .env                             API keys (git-ignored)
 ├── requirements.txt · CLAUDE.md · README.md
@@ -355,11 +356,19 @@ python -m venv env_data_detective
 .\env_data_detective\Scripts\Activate.ps1
 
 pip install -r requirements.txt
+# Optional — linting/format/test tooling for contributors:
+# pip install -r requirements-dev.txt
 ```
+
+> `requirements.txt` lists the direct dependencies; pip resolves the rest. For a byte-for-byte reproducible environment, use the pinned lock `requirements-full.txt` instead.
 
 ### Configure
 
-Create a `.env` in the project root (already git-ignored):
+Copy the template and fill in your free API keys (`.env` is git-ignored):
+
+```powershell
+copy .env.example .env   # then edit .env
+```
 
 ```ini
 # .env — never commit this file
@@ -411,16 +420,23 @@ To capture live data every 10 minutes without keeping a terminal open:
 An integration suite validates core dashboard logic with **zero data files and zero network** — mock DataFrames, `st.cache_data` patched in `conftest.py`.
 
 ```powershell
-pytest tests/ -v          # 40 tests
-python tests/run_tests.py  # bundled runner
+pip install -r requirements-dev.txt   # ruff, black, pytest, pytest-cov
+
+ruff check  "5.DASHBOARD" "2.SCRIPTS" "utils" "tests"   # lint
+black --check "5.DASHBOARD" "2.SCRIPTS" "utils" "tests" # format
+pytest --cov --cov-report=term-missing                  # 65 tests + coverage
 ```
 
 Covered:
-- Air-quality index (0–10 scale, grade labels, edge cases)
+- Composite air-quality index and 3-axis urban index (0–10 scale, grade labels, weight redistribution, edge cases)
+- Export layer — CSV/Excel formula-injection sanitization, XLSX integrity, XML/JSON
+- HTML escaping of untrusted external strings (XSS hardening)
 - Data-loader functions (schema validation, column normalization)
 - Configuration integrity (WHO/EU thresholds, station maps, 19 districts)
 
-Style is enforced with `black` + `ruff`; every source file is UTF-8 with Google-style docstrings, type hints on public functions, and `logging` (never `print`) for diagnostics.
+Every push runs **GitHub Actions CI** (`ruff` + `black --check` + `pytest`) on Python 3.11 and 3.12. Style and config live in `pyproject.toml`; every source file is UTF-8 with Google-style docstrings, type hints on public functions, and `logging` (never `print`) for diagnostics.
+
+> Coverage is measured on the pure-logic layer (`utils/`); the Streamlit UI is validated separately via a headless smoke launch.
 
 ---
 

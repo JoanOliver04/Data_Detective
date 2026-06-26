@@ -1,0 +1,14 @@
+# ==============================================================================
+# DATA DETECTIVE - VALENCIA  ·  Dependencias de desarrollo
+# ==============================================================================
+# Herramientas de calidad de codigo y testing. No necesarias para ejecutar
+# el dashboard, solo para desarrollar/contribuir.
+#
+#   pip install -r requirements.txt -r requirements-dev.txt
+# ==============================================================================
+
+ruff==0.15.20
+black==26.5.1
+pytest==9.0.3
+pytest-cov==7.1.0
+mypy>=1.10

@@ -31,7 +31,7 @@ import pandas as pd
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, Any
 import sys
 
 # ==============================================================================
@@ -584,7 +584,7 @@ def main():
             if resultado["archivos_vacios"]:
                 logger.warning(f"  ⚠ Archivos vacíos: {len(resultado['archivos_vacios'])}")
         else:
-            logger.warning(f"  ✗ Directorio no encontrado")
+            logger.warning("  ✗ Directorio no encontrado")
     
     # Generar informe
     logger.info(f"\n{'─' * 50}")

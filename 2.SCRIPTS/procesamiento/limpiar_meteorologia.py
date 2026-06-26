@@ -56,7 +56,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 from datetime import datetime
 
 import pandas as pd
@@ -1114,7 +1114,7 @@ def main():
         print(f"\n✅ NORMALIZACIÓN COMPLETA: {len(df_final):,} registros")
         print(f"   → CSV: {csv_path}")
     else:
-        print(f"\n⚠️ Normalización completada pero sin CSV. Revisa logs.")
+        print("\n⚠️ Normalización completada pero sin CSV. Revisa logs.")
 
 
 # ==============================================================================

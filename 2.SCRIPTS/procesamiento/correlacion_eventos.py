@@ -549,7 +549,7 @@ def _build_baseline_mask(
     event_weekdays = set(d.dayofweek for d in event_range)
 
     # Fechas del propio evento (para excluir del baseline)
-    event_dates_self = set(d.date() for d in event_range)
+    set(d.date() for d in event_range)
 
     # Criterio 1: mismo mes
     mask_month = fechas_serie.dt.month.isin(event_months)
@@ -775,7 +775,7 @@ def compute_event_impact(
             else:
                 eventos_saltados += 1
                 logger.debug(
-                    f"    â†’ Saltado: sin datos de contaminaciÃ³n para sus fechas")
+                    "    â†’ Saltado: sin datos de contaminaciÃ³n para sus fechas")
 
         else:
             # Sin datos de contaminaciÃ³n: generar fila solo con trÃ¡fico

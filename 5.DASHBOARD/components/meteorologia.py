@@ -25,7 +25,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from theme import get_theme
-from config import TAB_NAMES, DESCRIPCION_TABS, COLORS
+from config import TAB_NAMES, DESCRIPCION_TABS
 
 logger = logging.getLogger("Meteorologia")
 

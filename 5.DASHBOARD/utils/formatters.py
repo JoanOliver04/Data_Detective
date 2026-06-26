@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Funciones de formateo para el dashboard."""
 import html as _html
-from typing import Optional
 
 
 def escape_html(valor) -> str:

@@ -59,7 +59,7 @@ import sys
 import time
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 
 
 # ==============================================================================

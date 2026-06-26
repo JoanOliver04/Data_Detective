@@ -75,7 +75,7 @@ def _filtrar_periodo_reciente(df: pd.DataFrame) -> tuple[pd.DataFrame, str]:
     if df_filtrado.empty:
         # Fallback: usar todos los datos disponibles
         logger.warning("[Alertas] Sin datos en los ultimos %d dias; usando todos.", VENTANA_DIAS)
-        return df, f"todos los datos disponibles (sin datos recientes)"
+        return df, "todos los datos disponibles (sin datos recientes)"
 
     fecha_min_real = col[col >= fecha_min_ventana].min()
     descripcion = (

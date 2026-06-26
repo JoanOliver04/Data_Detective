@@ -34,7 +34,7 @@ Proyecto: Data Detective Valencia
 import pandas as pd
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional, Generator
+from typing import List, Optional, Generator
 import sys
 
 # ==============================================================================
@@ -460,7 +460,7 @@ def main():
     logger.info("=" * 70)
     logger.info(f"Archivos procesados: {files_processed}")
     logger.info(f"Archivos con datos de Valencia: {files_with_data}")
-    logger.info(f"")
+    logger.info("")
     logger.info(f"✓ Guardado: {OUTPUT_FILE.name}")
     logger.info(f"  Registros totales: {len(cleaned):,}")
     logger.info(f"  Estaciones únicas: {estaciones}")

@@ -51,7 +51,7 @@ import logging
 import requests
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 import sys
 
 # ==============================================================================
