@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/tab_contaminacion.png" alt="Data Detective — Air Quality tab: composite index, sensor map and district ranking" width="100%" />
+  <img src="docs/screenshots/pantalla_principal.png" alt="Data Detective — main dashboard: Urban Quality Index fusing air quality, weather and traffic in real time" width="100%" />
 </p>
 
 ---
@@ -62,36 +62,111 @@ The whole thing runs self-contained on a single Windows machine — from raw HTT
 
 ## Screenshots
 
-> Run `streamlit run 5.DASHBOARD/app.py`, capture each tab and drop the PNGs into `docs/screenshots/` with these exact names:
-> `tab_contaminacion.png` · `tab_eventos.png` · `tab_ranking.png` · `tab_comparador.png` · `tab_precipitaciones.png` · `tab_pronostico.png`
-> (see [`docs/screenshots/README.md`](docs/screenshots/README.md)).
+> A dark/light Streamlit dashboard with 7 analytical tabs over Valencia's air quality, weather, traffic and mass events. The four core views below — expand the galleries for the full tour.
 
 <table>
   <tr>
     <td width="50%" align="center"><strong>Air Quality — index, map & ranking</strong><br/>
-      <img src="docs/screenshots/tab_contaminacion.png" alt="Air Quality tab" width="100%" />
+      <img src="docs/screenshots/contaminacion.png" alt="Air Quality tab: composite AQI, per-pollutant breakdown and real-time alerts" width="100%" />
     </td>
     <td width="50%" align="center"><strong>Mass Event Impact</strong><br/>
-      <img src="docs/screenshots/tab_eventos.png" alt="Event impact analysis" width="100%" />
+      <img src="docs/screenshots/eventos-masivos.png" alt="Quasi-experimental event impact: pollution and traffic Delta% vs baseline" width="100%" />
     </td>
   </tr>
   <tr>
     <td width="50%" align="center"><strong>District ranking & WHO alerts</strong><br/>
-      <img src="docs/screenshots/tab_ranking.png" alt="Neighborhood ranking and alerts" width="100%" />
+      <img src="docs/screenshots/ranking-barrios-calidad-aire.png" alt="Live league table over 19 districts with the urban fusion score" width="100%" />
     </td>
     <td width="50%" align="center"><strong>Historical comparator</strong><br/>
-      <img src="docs/screenshots/tab_comparador.png" alt="Historical comparator + pattern detective" width="100%" />
+      <img src="docs/screenshots/comparador.png" alt="Period vs period comparison and Pattern Detective" width="100%" />
     </td>
   </tr>
 </table>
 
 <details>
-<summary><b>🌦️ Precipitation, traffic & forecast</b></summary>
+<summary><b>🌫️ Air quality — map, ranking, alerts & annual trend</b></summary>
 <br/>
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/tab_precipitaciones.png" alt="Precipitation tab" width="100%" /><br/><sub>Precipitation + climatology</sub></td>
-    <td align="center"><img src="docs/screenshots/tab_pronostico.png" alt="Forecast tab" width="100%" /><br/><sub>72h weather + statistical next-day</sub></td>
+    <td align="center"><img src="docs/screenshots/contaminacion.png" alt="Air quality tab" width="100%" /><br/><sub>Composite AQI + pollutant breakdown</sub></td>
+    <td align="center"><img src="docs/screenshots/mapa-calidad-aire.png" alt="Air quality map" width="100%" /><br/><sub>Sensor map + heatmap</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/ranking-barrios-calidad-aire.png" alt="District ranking" width="100%" /><br/><sub>19-district ranking</sub></td>
+    <td align="center"><img src="docs/screenshots/alertas-tiempo-real-contaminacion.png" alt="Real-time alerts" width="100%" /><br/><sub>Real-time WHO-threshold alerts</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/evolucion-anual-indicador-contaminante.png" alt="Annual evolution" width="100%" /><br/><sub>Annual pollutant evolution</sub></td>
+    <td></td>
+  </tr>
+</table>
+</details>
+
+<details>
+<summary><b>🎉 Mass events — impact & timeline</b></summary>
+<br/>
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/eventos-masivos.png" alt="Event impact" width="100%" /><br/><sub>Event impact Δ% vs baseline</sub></td>
+    <td align="center"><img src="docs/screenshots/timeline-eventos-masivos.png" alt="Events timeline" width="100%" /><br/><sub>Gantt-style event timeline</sub></td>
+  </tr>
+</table>
+</details>
+
+<details>
+<summary><b>🔍 Comparator & Pattern Detective</b></summary>
+<br/>
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/comparador.png" alt="Comparator" width="100%" /><br/><sub>Period vs period</sub></td>
+    <td align="center"><img src="docs/screenshots/detective-de-patrones.png" alt="Pattern detective" width="100%" /><br/><sub>Pattern Detective</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/deteccion-anomalias.png" alt="Anomaly detection" width="100%" /><br/><sub>Anomaly detection</sub></td>
+    <td align="center"><img src="docs/screenshots/patrones-temporales.png" alt="Temporal patterns" width="100%" /><br/><sub>Temporal patterns</sub></td>
+  </tr>
+</table>
+</details>
+
+<details>
+<summary><b>🌦️ Precipitation & climatology</b></summary>
+<br/>
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/precipitaciones.png" alt="Precipitation" width="100%" /><br/><sub>Precipitation</sub></td>
+    <td align="center"><img src="docs/screenshots/climatologia-mensual.png" alt="Monthly climatology" width="100%" /><br/><sub>Monthly climatology</sub></td>
+  </tr>
+</table>
+</details>
+
+<details>
+<summary><b>🚗 Traffic — incidents & live map</b></summary>
+<br/>
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/trafico.png" alt="Traffic tab" width="100%" /><br/><sub>Traffic analysis</sub></td>
+    <td align="center"><img src="docs/screenshots/mapa-trafico-tiempo-real.png" alt="Real-time traffic map" width="100%" /><br/><sub>Real-time traffic map (DGT DATEX II)</sub></td>
+  </tr>
+</table>
+</details>
+
+<details>
+<summary><b>🔮 Forecast — 72h risk & statistical next-day</b></summary>
+<br/>
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/pronostico-72h.png" alt="72h forecast" width="100%" /><br/><sub>72h weather + air-quality risk</sub></td>
+    <td align="center"><img src="docs/screenshots/pronosticos-de-contaminacion.png" alt="Statistical pollution forecast" width="100%" /><br/><sub>Statistical next-day pollution</sub></td>
+  </tr>
+</table>
+</details>
+
+<details>
+<summary><b>🌳 Clean-air walking routes</b></summary>
+<br/>
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/rutas-limpias.png" alt="Clean-air routes" width="100%" /><br/><sub>Low-pollution routes with live AQI overlay</sub></td>
   </tr>
 </table>
 </details>
