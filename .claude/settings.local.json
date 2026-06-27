@@ -39,7 +39,8 @@
       "Bash(./env_data_detective/Scripts/python.exe -m black --check \"5.DASHBOARD\" \"2.SCRIPTS\" \"utils\" \"tests\")",
       "Bash(echo \"REAL black exit=$?\")",
       "Bash(rm -f black_out.txt)",
-      "Bash(echo \"black-check exit=$?\")"
+      "Bash(echo \"black-check exit=$?\")",
+      "Bash(xargs -n1 basename)"
     ]
   }
 }

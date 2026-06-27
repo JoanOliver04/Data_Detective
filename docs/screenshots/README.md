@@ -1,21 +1,32 @@
 # Screenshots
 
-Capturas usadas por el `README.md` principal. Para generarlas:
+Capturas del dashboard usadas por el `README.md` principal. Para regenerarlas:
 
 ```powershell
 streamlit run 5.DASHBOARD/app.py
 ```
 
-Abre `http://localhost:8501`, ve a cada pestaña y guarda la captura (PNG, ~1600px
-de ancho, tema oscuro) con el nombre exacto indicado:
+Abre `http://localhost:8501`, recorre las pestañas y exporta cada vista como PNG
+(tema oscuro, ~1600px de ancho) con su nombre correspondiente.
 
-| Archivo | Pestaña / contenido |
+| Archivo | Vista |
 |---|---|
-| `tab_contaminacion.png` | Contaminación — índice compuesto, mapa de sensores, ranking (también es la imagen hero) |
-| `tab_eventos.png` | Impacto de eventos masivos (timeline + barras) |
-| `tab_ranking.png` | Ranking de 19 distritos + alertas OMS |
-| `tab_comparador.png` | Comparador histórico + Pattern Detective |
-| `tab_precipitaciones.png` | Precipitaciones + climatología |
-| `tab_pronostico.png` | Pronóstico 72h + predicción estadística |
-
-Una vez añadidas, las imágenes aparecen automáticamente en el README.
+| `pantalla_principal.png` | Vista principal / Índice de Calidad Urbana (imagen hero) |
+| `contaminacion.png` | Contaminación — índice compuesto + desglose por contaminante |
+| `mapa-calidad-aire.png` | Mapa de sensores + heatmap de calidad del aire |
+| `ranking-barrios-calidad-aire.png` | Ranking de los 19 distritos |
+| `alertas-tiempo-real-contaminacion.png` | Alertas en tiempo real (umbrales OMS) |
+| `evolucion-anual-indicador-contaminante.png` | Evolución anual por contaminante |
+| `eventos-masivos.png` | Impacto de eventos masivos (Δ% vs baseline) |
+| `timeline-eventos-masivos.png` | Timeline de eventos |
+| `comparador.png` | Comparador histórico (periodo vs periodo) |
+| `detective-de-patrones.png` | Pattern Detective |
+| `deteccion-anomalias.png` | Detección de anomalías |
+| `patrones-temporales.png` | Patrones temporales |
+| `precipitaciones.png` | Precipitaciones |
+| `climatologia-mensual.png` | Climatología mensual |
+| `trafico.png` | Tráfico |
+| `mapa-trafico-tiempo-real.png` | Mapa de tráfico en tiempo real |
+| `pronostico-72h.png` | Pronóstico meteorológico 72h |
+| `pronosticos-de-contaminacion.png` | Pronóstico estadístico de contaminación |
+| `rutas-limpias.png` | Rutas pulmón limpio |
